@@ -1,0 +1,61 @@
+Edge cases for kd
+=================
+
+	>>> import kd
+
+More modules for testing
+------------------------
+
+	>>> import os
+	>>> import sys
+
+Command lines
+-------------
+
+We allow more than two args on command line
+
+	>>> sys.argv = ['kd.py', 'start', 'here', 'or', 'there']
+	>>> kd.parse_command_line()
+	('start', ['here', 'or', 'there'])
+
+And no args at all (use home directory)
+
+	>>> sys.argv = ['kd.py']
+	>>> path_to_dir, prefixes = kd.parse_command_line()
+	>>> path_to_dir == os.path.expanduser('~') and not prefixes
+	True
+
+find_directory()
+----------------
+
+Directories sought must be real
+
+	>>> kd.find_directory('rubbish', [])
+	Traceback (most recent call last):
+	...
+	ValueError: ...
+
+	>>> a_known_directory = os.environ['HOME']
+	>>> a_known_name = os.environ['USER']
+
+Can use empty prefixes - gives path to the directory
+
+	>>> kd.find_directory(a_known_directory, []).name == a_known_name
+	True
+
+If sub-dir is not found, get nothing
+	>>> kd.find_directory(a_known_directory, ['this_is_not_real']) is None
+	True
+
+main()
+------
+
+When main() fails it prints out an error
+	>>> sys.argv = [ 'kd', 'no_such_directory' ]
+	>>> kd.main()
+	Error 'no_such_directory' is not a directory
+	1
+
+Cleanup
+=======
+	>>> sys.argv = []
