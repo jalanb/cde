@@ -1,9 +1,15 @@
+kd
+==
+
 kd is intended to make cd'ing easier
 
 The script gets a close match to a directory from command line arguments then prints that to stdout which allows a usage in bash like
 
     $ cd $(python kd.py /usr local bin)
     $ cd $(python kd.py /bin/ls)
+
+Setup
+-----
 
 For convenience a bash function is also provided, which can be set up like
 
@@ -13,6 +19,9 @@ Then one can use "kd" as a replacement for cd
 
     $ cd /usr/local/lib/python2.7/site-packages
     $ kd /usr lo li py si
+
+Use
+---
 
 First argument is a directory, subsequent arguments are prefixes of sub-directories. For example:
 
