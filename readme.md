@@ -26,22 +26,26 @@ Use
 First argument is a directory, subsequent arguments are prefixes of sub-directories. For example:
 
     $ kd /usr/local bi
-    /usr/local/bi
 
-Or first argument is a file
+is equivalent to
+
+    $ cd /usr/local/bin
+
+Or first argument is a file (cd'ing to a file can be very handy in conjuction with copy-and-paste of filenames), for example
 
     $ kd /bin/ls
-    /bin
+    
+is equivalent to
 
-Or first argument is a stem of a directory/file. kd.py will add `*` on to such a stem, and will always find directories first, looking for files only if there are no such directories. In this example, kd looks for `/bin/l*`, and finds `/bin/ls`, which is a file, so the directory is again `/bin`
+	$ cd /bin
+
+Or the first argument is a stem of a directory/file. kd.py will add `*` on to such a stem, and cd to whatever that matches (see below). For example, `/bin/l*` matches `/bin/ls`, which is an existing file, whose parent is `/bin`. This can be handy when tab-completion only finds part of a filename
 
     $ kd /bin/l
-    /bin
 
-If nothing matches then give directories in $PATH which have matching executables
+If nothing matches then it tries directories in $PATH which have matching executables. For example, this will give `/bin`:
 
     $ kd ls
-    /bin
 
 When looking for partial names kd will look for each of these in turn, stopping as soon as it gets some match
 
