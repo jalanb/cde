@@ -33,7 +33,7 @@ Or first argument is a file
     $ kd /bin/ls
     /bin
 
-Or first argument is a stem of a directory/file. kd.py will add * on to such a stem, and will always find directories first, looking for files only if there are no such directories
+Or first argument is a stem of a directory/file. kd.py will add `*` on to such a stem, and will always find directories first, looking for files only if there are no such directories
 
     $ kd /bin/l
     /bin
