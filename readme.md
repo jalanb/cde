@@ -5,6 +5,15 @@ The script gets a close match to a directory from command line arguments then pr
     $ cd $(python kd.py /usr local bin)
     $ cd $(python kd.py /bin/ls)
 
+For convenience a bash function is also provided, which can be set up like
+
+    $ source kd.sh
+
+Then one can use "kd" as a replacement for cd
+
+    $ cd /usr/local/lib/python2.7/site-packages
+    $ kd /usr lo li py si
+
 First argument is a directory, subsequent arguments are prefixes of sub-directories. For example:
 
     $ python kd.py /usr/local bi
@@ -24,12 +33,3 @@ If nothing matches then give directories in $PATH which have matching executable
 
     $ python kd.py ls
     /bin
-
-For convenience a bash function is also provided, which can be set up like
-
-    $ source kd.sh
-
-Then one can use "kd" as a replacement for cd
-
-    $ cd /usr/local/lib/python2.7/site-packages
-    $ kd /usr lo li py si
