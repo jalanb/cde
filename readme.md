@@ -15,7 +15,7 @@ For convenience a bash function is also provided, which can be set up like
 
     $ source kd.sh
 
-Then one can use "kd" as a replacement for cd
+Then one can use `kd` as a replacement for cd
 
     $ cd /usr/local/lib/python2.7/site-packages
     $ kd /usr lo li py si
