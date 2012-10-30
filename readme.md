@@ -26,14 +26,14 @@ Use
 First argument is a directory, subsequent arguments are prefixes of sub-directories. For example:
 
     $ kd /usr/local bi
-    /usr/local/bin
+    /usr/local/bi
 
 Or first argument is a file
 
     $ kd /bin/ls
     /bin
 
-Or first argument is a stem of a directory/file. kd.py will add `*` on to such a stem, and will always find directories first, looking for files only if there are no such directories
+Or first argument is a stem of a directory/file. kd.py will add `*` on to such a stem, and will always find directories first, looking for files only if there are no such directories. In this example, kd looks for `/bin/l*`, and finds `/bin/ls`, which is a file, so the directory is again `/bin`
 
     $ kd /bin/l
     /bin
@@ -42,3 +42,11 @@ If nothing matches then give directories in $PATH which have matching executable
 
     $ kd ls
     /bin
+
+When looking for partial names kd will look for each of these in turn, stopping as soon as it gets some match
+
+1. directories with the same name
+2. directories that start with the given part
+3. files that start with the given part
+4. directories with the part in their name
+4. files with the part in their name
