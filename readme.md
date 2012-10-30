@@ -1,10 +1,9 @@
 kd is intended to make cd'ing easier
 
-The script gets a close match to a directory from command line arguments then prints that to stdout
-    which allows a usage in bash like
-        $ cd $(python kd.py /usr local bin)
-    or
-        $ cd $(python kd.py /bin/ls)
+The script gets a close match to a directory from command line arguments then prints that to stdout which allows a usage in bash like
+
+    $ cd $(python kd.py /usr local bin)
+    $ cd $(python kd.py /bin/ls)
 
 First argument is a directory
     subsequent arguments are prefixes of sub-directories
