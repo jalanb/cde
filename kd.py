@@ -41,7 +41,7 @@ class ToDo(NotImplementedError):
 	pass
 
 def make_needed(pattern, path_to_directory, wanted):
-	"""Make a mthod to check if an item matches the pattern, and is wanted
+	"""Make a method to check if an item matches the pattern, and is wanted
 
 	If wanted is None just check the pattern
 	"""
@@ -116,6 +116,9 @@ def look_under_directory(path_to_directory, prefixes):
 def find_under_directory(path_to_directory, prefixes):
 	"""Find one directory under path_to_directory, matching prefixes
 
+	Try any prefixed sub-directories
+		then any prefixed files
+
 	Can give None (no matches), or the match, or an Exception
 	"""
 	possibles = look_under_directory(path_to_directory, prefixes)
@@ -127,11 +130,7 @@ def find_under_directory(path_to_directory, prefixes):
 
 
 def find_under_here(prefixes):
-	"""Look for some other directories under current directory
-
-	Try any prefixed sub-directories
-		then any prefixed files
-	"""
+	"""Look for some other directories under current directory """
 	here = os.getcwd()
 	return find_under_directory(here, prefixes)
 
