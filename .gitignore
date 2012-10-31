@@ -1,5 +1,6 @@
 # Python
 *.py[co]
+*.fail
 
 # Packages
 *.egg
