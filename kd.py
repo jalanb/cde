@@ -229,8 +229,6 @@ def find_directory(item, prefixes):
 			prefixes.insert(0, item)
 		if prefixes:
 			path_to_item = find_under_here(prefixes)
-			if not path_to_item:
-				raise ToDo('could not use %r as a directory' % item)
 	if path_to_item:
 		return path_to_item
 	return find_in_environment_path(item)
@@ -257,7 +255,7 @@ def parse_command_line():
 def test():
 	"""Run all doctests based on this file
 
-	Tell any bash-runners that not to use any output by saying "Error" first
+	Tell any bash-runners not to use any output by saying "Error" first
 
 	>>> 'kd' in __file__
 	True
@@ -290,7 +288,7 @@ def show_path_to_item(item, prefixes):
 
 
 def main():
-	"""Show a directory from the command line arguments (or some derivative"""
+	"""Show a directory from the command line arguments (or some derivative)"""
 	try:
 		options, item, prefixes = parse_command_line()
 		if not options:
