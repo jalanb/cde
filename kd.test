@@ -8,6 +8,8 @@ More modules for testing
 
 	>>> import os
 	>>> import sys
+	>>> import time
+
 
 Command Line
 ------------
@@ -96,6 +98,14 @@ kd can also remeber a list of paths
 	parent was stored
 	>>> os.path.isfile(kd._path_to_history())
 	True
+
+timings
+-------
+
+The time_since() method converts a number of seconds to English
+	It gives only the two most significant numbers
+	>>> print kd.time_since(time.time() - (5*365*24*60*60 + 77*24*60*60 + 13*60*60 + 2*60 + 5))
+	5 years, 77 days
 
 Cleanup
 =======
