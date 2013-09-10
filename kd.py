@@ -24,6 +24,13 @@ Or first argument is a stem of a directory/file
 	$ python kd.py /bin/l
 	/bin
 
+Or first argument is part of a directory that kd has seen before
+	"part of" means the name or
+	the start of the name or
+	the name of a parent or
+	the start of a name of a parent
+	(or any part of the full path if you include a "/")
+
 If nothing matches then give directories in $PATH which have matching executables
 	$ python kd.py ls
 	/bin
