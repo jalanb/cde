@@ -419,6 +419,10 @@ def find_in_history(item, _prefixes):
 	Otherwise None
 	"""
 	paths = sorted_history_paths()
+	return _find_in_paths(item, _prefixes, paths)
+
+
+def _find_in_paths(item, _prefixes, paths):
 	if item in paths:
 		return item
 	for path in paths:
