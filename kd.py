@@ -39,6 +39,7 @@ import csv
 
 import timings
 
+
 class ToDo(NotImplementedError):
 	"""Errors raised by this script"""
 	pass
@@ -273,7 +274,14 @@ def parse_command_line():
 	parser.add_option('-a', '--add', dest='add', action="store_true", help='add a path to history')
 	parser.add_option('-l', '--list', dest='list', action="store_true", help='list paths in history')
 	parser.add_option('-o', '--old', dest='old', action="store_true", help='look for paths in history only')
+	parser.add_option('-U', '--pudb', dest='pudb', action="store_true", help='debugging with pudb')
 	options, args = parser.parse_args()
+	if options.pudb:
+		try:
+			import pudb as pdb
+		except ImportError:
+			import pdb
+		pdb.set_trace()
 	if not args:
 		item, prefixes = os.path.expanduser('~'), []
 	else:
