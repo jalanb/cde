@@ -283,7 +283,7 @@ def parse_command_line():
 	parser.add_option('-o', '--old', dest='old', action="store_true", help='look for paths in history only')
 	parser.add_option('-U', '--pdb', dest='pdb', action="store_true", help='For developers: debugging with pdb (or pudb if available)')
 	options, args = parser.parse_args()
-	if options.pudb:
+	if options.pdb:
 		try:
 			import pudb as pdb
 		except ImportError:
