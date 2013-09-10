@@ -423,16 +423,15 @@ def find_in_history(item, _prefixes):
 
 
 def _find_in_paths(item, _prefixes, paths):
-	possibles = [p for p in paths if item == p]
-	if possibles:
-		return possibles[0]
-	possibles = [p for p in paths if item == os.path.basename(p)]
-	if possibles:
-		return possibles[0]
-	pattern = '%s*' % item
-	possibles = [p for p in paths if fnmatch(os.path.basename(p), pattern)]
-	if possibles:
-		return possibles[0]
+	matchers = [
+		lambda path: item == path,
+		lambda path: item == os.path.basename(path),
+		lambda path: fnmatch(os.path.basename(path), '%s*' % item)
+	]
+	for matcher in matchers:
+		matches = [path for path in paths if matcher(path)]
+		if matches:
+			return matches[0]
 	return []
 
 
