@@ -416,6 +416,10 @@ def write_path(item):
 
 
 def _list_paths():
+	"""This method is deprecated, probably redundant
+
+	Show all paths in history in user-terminology
+	"""
 	for order, (_rank, path, atime) in enumerate(reversed(read_history())):
 		print '%3d: %r last used %s ago' % (order, path, timings.time_since(atime))
 
