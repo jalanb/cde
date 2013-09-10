@@ -118,6 +118,12 @@ Assuming we have remembered some paths
 	True
 	>>> '/usr/tin/local' == kd._find_in_paths('ti', [], history)
 	True
+	>>> not kd._find_in_paths('in', [], history)
+	True
+	>>> '/usr/tin/local' == kd._find_in_paths('in/', [], history)
+	True
+	>>> '/usr/bin/vocal' == kd._find_in_paths('in/v', [], history)
+	True
 
 
 Cleanup

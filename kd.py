@@ -425,11 +425,12 @@ def find_in_history(item, _prefixes):
 def _find_in_paths(item, _prefixes, paths):
 	"""Get the first of those paths which meets on of the criteria:
 
-	1. is same as item
-	2. has same basename as item
-	3. has same basename as "item*"
-	4. has a parent with same basename as item
-	5. has a parent with same basename as "item*"
+	1. has any substring that macthes (as long as the item contains a "/")
+	2. is same as item
+	3. has same basename as item
+	4. has same basename as "item*"
+	5. has a parent with same basename as item
+	6. has a parent with same basename as "item*"
 
 	paths are assumed to be ordered, so first path which matches wins
 	"""
@@ -443,6 +444,8 @@ def _find_in_paths(item, _prefixes, paths):
 		lambda path: item in path.split(os.path.sep),
 		lambda path: any([p for p in path.split(os.path.sep) if globbed(p)]),
 	]
+	if os.path.sep in item:
+		matchers.insert(0, lambda path: item in path)
 	# Use a generator in favour of a comprehension to stop on first match
 	# See http://www.goodmami.org/2013/01/python-one-liner-getting-only-the-first-match-in-a-list-comprehension/
 	for match in matchers:
