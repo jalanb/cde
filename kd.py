@@ -441,7 +441,7 @@ def _find_in_paths(item, _prefixes, paths):
 		lambda path: item == os.path.basename(path),
 		lambda path: globbed(os.path.basename(path)),
 		lambda path: item in path.split(os.path.sep),
-		lambda path: [p for p in path.split(os.path.sep) if globbed(p)],
+		lambda path: any([p for p in path.split(os.path.sep) if globbed(p)]),
 	]
 	# Use a generator in favour of a comprehension to stop on first match
 	# See http://www.goodmami.org/2013/01/python-one-liner-getting-only-the-first-match-in-a-list-comprehension/
