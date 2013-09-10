@@ -423,6 +423,14 @@ def find_in_history(item, _prefixes):
 
 
 def _find_in_paths(item, _prefixes, paths):
+	"""Get the first of those paths which meets on of the criteria:
+
+	1. is same as item
+	2. has same basename as item
+	3. has same basename as "item*"
+
+	paths are assumed to be ordered, so first path which matches wins
+	"""
 	matchers = [
 		lambda path: item == path,
 		lambda path: item == os.path.basename(path),
