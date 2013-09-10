@@ -433,12 +433,15 @@ def _find_in_paths(item, _prefixes, paths):
 
 	paths are assumed to be ordered, so first path which matches wins
 	"""
+	def globbed(p):
+		return fnmatch(p, '%s*' % item)
+
 	matchers = [
 		lambda path: item == path,
 		lambda path: item == os.path.basename(path),
-		lambda path: fnmatch(os.path.basename(path), '%s*' % item),
+		lambda path: globbed(os.path.basename(path)),
 		lambda path: item in path.split(os.path.sep),
-		lambda path: [p for p in path.split(os.path.sep) if fnmatch(p, '%s*' % item)],
+		lambda path: [p for p in path.split(os.path.sep) if globbed(p)],
 	]
 	# Use a generator in favour of a comprehension to stop on first match
 	# See http://www.goodmami.org/2013/01/python-one-liner-getting-only-the-first-match-in-a-list-comprehension/
