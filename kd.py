@@ -408,7 +408,7 @@ def write_path(item):
 			csvfile.close()
 
 
-def list_paths():
+def _list_paths():
 	for order, (_rank, path, atime) in enumerate(reversed(read_history())):
 		print '%3d: %r last used %s ago' % (order, path, timings.time_since(atime))
 
@@ -491,7 +491,7 @@ def main():
 			write_path(item)
 			return 1
 		elif options.list:
-			list_paths()
+			show_path_to_historical_item(item, prefixes)
 			return 1
 		elif options.old:
 			show_path_to_historical_item(item, prefixes)
