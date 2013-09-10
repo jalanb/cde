@@ -428,11 +428,13 @@ def _find_in_paths(item, _prefixes, paths):
 		lambda path: item == os.path.basename(path),
 		lambda path: fnmatch(os.path.basename(path), '%s*' % item)
 	]
-	for matcher in matchers:
-		matches = [path for path in paths if matcher(path)]
-		if matches:
-			return matches[0]
-	return []
+	# Use a generator in favour of a comprehension to stop on first match
+	# See http://www.goodmami.org/2013/01/python-one-liner-getting-only-the-first-match-in-a-list-comprehension/
+	for match in matchers:
+		try:
+			return (path for path in paths if match(path)).next()
+		except StopIteration:
+			continue
 
 
 def show_path_to_historical_item(item, prefixes):
