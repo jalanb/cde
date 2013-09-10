@@ -110,19 +110,19 @@ Assuming we have remembered some paths
 	...     '/usr/local/bib',
 	... ]
 
-	>>> '/usr/bin' == kd._find_in_paths('bin', [], history)
+	>>> '/usr/bin' == kd._find_in_paths('bin', history)
 	True
-	>>> '/usr/tin/local' == kd._find_in_paths('tin', [], history)
+	>>> '/usr/tin/local' == kd._find_in_paths('tin', history)
 	True
-	>>> '/usr/bin' == kd._find_in_paths('bi', [], history)
+	>>> '/usr/bin' == kd._find_in_paths('bi', history)
 	True
-	>>> '/usr/tin/local' == kd._find_in_paths('ti', [], history)
+	>>> '/usr/tin/local' == kd._find_in_paths('ti', history)
 	True
-	>>> not kd._find_in_paths('in', [], history)
+	>>> not kd._find_in_paths('in', history)
 	True
-	>>> '/usr/tin/local' == kd._find_in_paths('in/', [], history)
+	>>> '/usr/tin/local' == kd._find_in_paths('in/', history)
 	True
-	>>> '/usr/bin/vocal' == kd._find_in_paths('in/v', [], history)
+	>>> '/usr/bin/vocal' == kd._find_in_paths('in/v', history)
 	True
 
 

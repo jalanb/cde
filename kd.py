@@ -255,7 +255,7 @@ def find_directory(item, prefixes):
 	path_to_item = find_in_environment_path(item)
 	if path_to_item:
 		return path_to_item
-	path_to_item = find_in_history(item, prefixes)
+	path_to_item = find_in_history(item)
 	if path_to_item:
 		return path_to_item
 	path_to_item = find_at_home(item, prefixes)
@@ -413,16 +413,16 @@ def _list_paths():
 		print '%3d: %r last used %s ago' % (order, path, timings.time_since(atime))
 
 
-def find_in_history(item, _prefixes):
+def find_in_history(item):
 	"""If the given item and prefixes are in the history return that path
 
 	Otherwise None
 	"""
 	paths = sorted_history_paths()
-	return _find_in_paths(item, _prefixes, paths)
+	return _find_in_paths(item, paths)
 
 
-def _find_in_paths(item, _prefixes, paths):
+def _find_in_paths(item, paths):
 	"""Get the first of those paths which meets on of the criteria:
 
 	1. has any substring that macthes (as long as the item contains a "/")
@@ -455,9 +455,9 @@ def _find_in_paths(item, _prefixes, paths):
 			continue
 
 
-def show_path_to_historical_item(item, prefixes):
+def show_path_to_historical_item(item):
 	"""Get a path for the given item from history and show it"""
-	path_to_item = find_in_history(item, prefixes)
+	path_to_item = find_in_history(item)
 	show_found_item(path_to_item)
 
 
@@ -491,10 +491,10 @@ def main():
 			write_path(item)
 			return 1
 		elif options.list:
-			show_path_to_historical_item(item, prefixes)
+			show_path_to_historical_item(item)
 			return 1
 		elif options.old:
-			show_path_to_historical_item(item, prefixes)
+			show_path_to_historical_item(item)
 		else:
 			show_path_to_item(item, prefixes)
 		return 0
