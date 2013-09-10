@@ -428,13 +428,17 @@ def _find_in_paths(item, _prefixes, paths):
 	1. is same as item
 	2. has same basename as item
 	3. has same basename as "item*"
+	4. has a parent with same basename as item
+	5. has a parent with same basename as "item*"
 
 	paths are assumed to be ordered, so first path which matches wins
 	"""
 	matchers = [
 		lambda path: item == path,
 		lambda path: item == os.path.basename(path),
-		lambda path: fnmatch(os.path.basename(path), '%s*' % item)
+		lambda path: fnmatch(os.path.basename(path), '%s*' % item),
+		lambda path: item in path.split(os.path.sep),
+		lambda path: [p for p in path.split(os.path.sep) if fnmatch(p, '%s*' % item)],
 	]
 	# Use a generator in favour of a comprehension to stop on first match
 	# See http://www.goodmami.org/2013/01/python-one-liner-getting-only-the-first-match-in-a-list-comprehension/

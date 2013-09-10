@@ -110,9 +110,13 @@ Assuming we have remembered some paths
 	...     '/usr/local/bib',
 	... ]
 
-	>>> expected = history[0]
-	>>> sought = 'bin'
-	>>> expected == kd._find_in_paths(sought, [], history)
+	>>> '/usr/bin' == kd._find_in_paths('bin', [], history)
+	True
+	>>> '/usr/tin/local' == kd._find_in_paths('tin', [], history)
+	True
+	>>> '/usr/bin' == kd._find_in_paths('bi', [], history)
+	True
+	>>> '/usr/tin/local' == kd._find_in_paths('ti', [], history)
 	True
 
 
