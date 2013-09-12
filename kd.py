@@ -315,7 +315,8 @@ def parse_command_line():
 			import pdb
 		pdb.set_trace()
 	if not args:
-		item, prefixes = os.path.expanduser('~'), []
+		item = not options.old and os.path.expanduser('~') or None
+		prefixes = []
 	else:
 		item, prefixes = args[0], args[1:]
 		if args[0] == '-':
@@ -538,6 +539,10 @@ def main():
 			list_paths()
 			return 1
 		elif options.old:
+			if not item:
+				list_paths()
+				print
+				raise ToDo('Please specify a string to look for among the old paths (above)')
 			show_path_to_historical_item(item)
 		else:
 			show_path_to_item(item, prefixes)
