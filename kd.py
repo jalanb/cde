@@ -173,6 +173,8 @@ def look_under_directory(path_to_directory, prefixes):
 	prefix, prefixes = prefixes[0], prefixes[1:]
 	result = []
 	matched_sub_directories = matching_sub_directories(path_to_directory, prefix)
+	if not matched_sub_directories:
+		return []
 	try:
 		i = int(prefixes[0])
 	except (ValueError, IndexError):
