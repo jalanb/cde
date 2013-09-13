@@ -545,6 +545,7 @@ def main():
 				show_path_to_historical_item(item)
 			else:
 				list_paths()
+				return 1
 		else:
 			show_path_to_item(item, prefixes)
 		return 0
