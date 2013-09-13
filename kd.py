@@ -335,14 +335,15 @@ def test():
 	"""
 	stem, _ext = os.path.splitext(__file__)
 	stem = os.path.basename(stem)
-	from doctest import testfile, testmod, ELLIPSIS
-	result = testfile('%s.tests' % stem, optionflags=ELLIPSIS)
+	from doctest import testfile, testmod, ELLIPSIS, NORMALIZE_WHITESPACE
+	options = ELLIPSIS | NORMALIZE_WHITESPACE
+	result = testfile('%s.tests' % stem, optionflags=options)
 	if result.failed:
 		return
-	result = testfile('%s.test' % stem, optionflags=ELLIPSIS)
+	result = testfile('%s.test' % stem, optionflags=options)
 	if result.failed:
 		return
-	result = testmod()
+	result = testmod(optionflags=options)
 	if result.failed:
 		return
 	print 'All tests passed'
