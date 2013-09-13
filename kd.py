@@ -187,7 +187,7 @@ def look_under_directory(path_to_directory, prefixes):
 			try:
 				return [matched_sub_directories[i]]
 			except IndexError:
-				raise ToDo('Your choice of "%s" is out of range:\n\t%s' % (i, as_menu_string(matched_sub_directories)))
+				raise ToDo('Your choice of "%s" is not in range:\n\t%s' % (i, as_menu_string(matched_sub_directories)))
 		if contains_file(path_to_directory, '%s*' % prefix):
 			result = [path_to_directory]
 	return result
