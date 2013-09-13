@@ -297,9 +297,11 @@ def find_directory(item, prefixes):
 			return path_to_prefix
 	else:
 		if item:
-			prefixes.insert(0, item)
-		if prefixes:
-			path_to_item = find_under_here(prefixes)
+			args = [item] + prefixes
+		else:
+			args = prefixes
+		if args:
+			path_to_item = find_under_here(args)
 	if path_to_item:
 		return path_to_item
 	path_to_item = find_in_environment_path(item)
