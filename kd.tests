@@ -177,6 +177,16 @@ Assuming we have remembered some paths
 	True
 
 
+	>>> path_to_item = '/i/was/here'
+	>>> history_items = [
+	...  (0, path_to_item, 0),
+	...  (0, '/so/were/you', 0),
+	... ]
+	>>> new_items, changed = kd.exclude_path_from_items(history_items, path_to_item)
+	>>> changed is True and len(new_items) + 1 == len(history_items)
+	True
+
+
 Cleanup
 =======
 	>>> sys.argv = []
