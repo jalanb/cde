@@ -93,6 +93,16 @@ A number out of context is ignored
 	>>> kd.find_directory('/usr', ['1']) == '/usr'
 	True
 
+find a file
+-----------
+
+	>>> directory, filename = os.path.split(kd.__file__)
+	>>> kd.find_directory(kd.__file__, []) == directory
+	True
+	>>> kd.find_directory(directory, [filename]) == directory
+	True
+
+
 Find in home directory
 ----------------------
 

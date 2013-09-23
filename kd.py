@@ -174,6 +174,8 @@ def look_under_directory(path_to_directory, prefixes):
 	result = []
 	matched_sub_directories = matching_sub_directories(path_to_directory, prefix)
 	if not matched_sub_directories:
+		if contains_file(path_to_directory, '%s*' % prefix):
+			return [path_to_directory]
 		return []
 	try:
 		i = int(prefixes[0])
