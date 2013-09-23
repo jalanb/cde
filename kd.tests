@@ -85,7 +85,7 @@ Which can be suppressed by a numeric arg
 	>>> kd.find_directory('/usr', ['li', '2']) == '/usr/libexec'
 	Traceback (most recent call last):
 	...
-	ToDo: Your choice of "2" is out of range:
+	ToDo: Your choice of "2" is not in range:
 		 0: /usr/lib
 		 1: /usr/libexec
 
