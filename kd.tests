@@ -195,6 +195,9 @@ Assuming we have remembered some paths
 	>>> new_items, changed = kd.exclude_path_from_items(history_items, path_to_item)
 	>>> changed is True and len(new_items) + 1 == len(history_items)
 	True
+	>>> newer_items, changed = kd.exclude_path_from_items(new_items, path_to_item)
+	>>> changed is False and len(new_items) == len(newer_items)
+	True
 
 
 Cleanup
