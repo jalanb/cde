@@ -32,3 +32,6 @@ pip-log.txt
 
 # kd files
 kd.history
+
+# IDEs
+.idea
