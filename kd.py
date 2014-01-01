@@ -558,13 +558,16 @@ def _find_in_paths(item, prefixes, paths):
 		matched = [path for path in paths if match(path)]
 		if not matched:
 			continue
-		elif len(matched) == 1:
-			return matched[0]
+		if len(matched) == 1:
+			if i:
+				raise ToDo('Your choice of "%s" is out of range:\n\t%s' % (i, as_menu_string(matched)))
+			return find_under_directory(matched[0], prefixes)
 		if i is not None:
 			try:
-				return matched[i]
+				result = matched[i]
 			except IndexError:
 				raise ToDo('Your choice of "%s" is out of range:\n\t%s' % (i, as_menu_string(matched)))
+			return find_under_directory(result, prefixes)
 		raise TryAgain('Too many possiblities\n\t%s' % as_menu_string(matched))
 
 
