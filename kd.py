@@ -552,6 +552,7 @@ def _find_in_paths(item, prefixes, paths):
 		matchers.insert(0, lambda path: item in path)
 	try:
 		i = int(prefixes[0])
+		del prefixes[0]
 	except (ValueError, IndexError):
 		i = None
 	for match in matchers:
