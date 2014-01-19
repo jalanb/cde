@@ -11,16 +11,16 @@ def now():
 	return time.time()
 
 
-def time_since(atime):
-	"""Convert atime number of seconds to English
+def time_since(number_of_seconds):
+	"""Convert number of seconds to English
 
 	Retain only the two most significant numbers
 
 	>>> print time_since(time.time() - (13*60*60 + 2*60 + 5))
 	13 hours, 2 minutes
 	"""
-	interval = int(abs(float(atime)) - time.time())
-	interval = int(time.time() - float(atime))
+	interval = int(abs(float(number_of_seconds)) - time.time())
+	interval = int(time.time() - float(number_of_seconds))
 	minutes, seconds = divmod(interval, 60)
 	if not minutes:
 		return '%s seconds' % seconds
