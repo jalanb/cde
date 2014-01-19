@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Kd : kd is a smarter cd" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Kd</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/jalanb/kd">View on GitHub</a>
+
+          <h1 id="project_title">Kd</h1>
+          <h2 id="project_tagline">kd is a smarter cd</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/jalanb/kd/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/jalanb/kd/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="kd" class="anchor" href="#kd"><span class="octicon octicon-link"></span></a>kd</h1>
+
+<p>kd is a smarter cd.</p>
+
+<p>It knows more about the directories you are going to because it knows which ones you have gone to. It is written in Python for use at the bash shell.</p>
+
+<p>The script gets a close match to a directory from command line arguments then prints that to stdout which allows a usage in bash like</p>
+
+<pre><code>$ cd $(python kd.py /usr local bin)
+$ cd $(python kd.py /bin/ls)
+</code></pre>
+
+<h2>
+<a name="setup" class="anchor" href="#setup"><span class="octicon octicon-link"></span></a>Setup</h2>
+
+<p>For convenience a bash function is also provided, which can be set up like</p>
+
+<pre><code>$ source kd.sh
+</code></pre>
+
+<p>Then one can use <code>kd</code> as a replacement for cd</p>
+
+<pre><code>$ cd /usr/local/lib/python2.7/site-packages
+$ kd /usr lo li py si
+</code></pre>
+
+<h2>
+<a name="use" class="anchor" href="#use"><span class="octicon octicon-link"></span></a>Use</h2>
+
+<p>First argument is a directory, subsequent arguments are prefixes of sub-directories. For example:</p>
+
+<pre><code>$ kd /usr/local bi
+</code></pre>
+
+<p>is equivalent to</p>
+
+<pre><code>$ cd /usr/local/bin
+</code></pre>
+
+<p>Or first argument is a file (cd'ing to a file can be very handy in conjuction with copy-and-paste of filenames), for example</p>
+
+<pre><code>$ kd /bin/ls
+</code></pre>
+
+<p>is equivalent to</p>
+
+<pre><code>$ cd /bin
+</code></pre>
+
+<p>Or the first argument is a stem of a directory/file. kd.py will add <code>*</code> on to such a stem, and cd to whatever that matches (see below). For example, <code>/bin/l*</code> matches <code>/bin/ls</code>, which is an existing file, whose parent is <code>/bin</code>. This can be handy when tab-completion only finds part of a filename</p>
+
+<pre><code>$ kd /bin/l
+</code></pre>
+
+<p>If nothing matches then it tries directories in $PATH which have matching executables. For example, this will give <code>/bin</code>:</p>
+
+<pre><code>$ kd ls
+</code></pre>
+
+<p>When looking for partial names kd will look for each of these in turn, stopping as soon as it gets some match</p>
+
+<ol>
+<li>directories with the same name</li>
+<li>directories that start with the given part</li>
+<li>files that start with the given part</li>
+<li>directories with the part in their name</li>
+<li>files with the part in their name</li>
+</ol>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Kd maintained by <a href="https://github.com/jalanb">jalanb</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
