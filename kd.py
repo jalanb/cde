@@ -1,4 +1,4 @@
-"""Script to find a directory to cd to
+"""kd is a better cd
 
 Usage: kd [options] [items]
 
