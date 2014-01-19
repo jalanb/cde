@@ -63,7 +63,7 @@ import csv
 
 import timings
 
-__version__ = '0.3.3'
+__version__ = '0.3.4'
 
 class ToDo(NotImplementedError):
 	"""Errors raised by this script"""
