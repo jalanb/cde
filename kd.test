@@ -2,13 +2,15 @@ kd is a cd replacer
 ===================
 
 	>>> import kd
+	>>> print kd.__doc__
+	kd is a better cd
+	...
 
 More modules for testing
 ------------------------
 
 	>>> import os
 	>>> import sys
-
 
 Command Line
 ------------
