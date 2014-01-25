@@ -161,6 +161,37 @@ def as_menu_string(strings):
 	return '\n\t'.join(as_menu_items(strings))
 
 
+def take_first_integer(items):
+	"""Take the first item as an integer, or None
+
+	>>> items = ['1', '2']
+	>>> i = take_first_integer(items)
+	>>> i == 1 and items == ['2']
+	True
+	>>> items = ['one', '2']
+	>>> i = take_first_integer(items)
+	>>> i is None and items == ['one', '2']
+	True
+	"""
+	i = first_integer(items)
+	if i is not None:
+		del items[0]
+	return i
+
+def first_integer(items):
+	"""Return the int value of the first item
+
+	>>> first_integer(['3', '2']) == 3
+	True
+	>>> first_integer(['three', '2']) is None
+	True
+	"""
+	try:
+		return int(items[0])
+	except (ValueError, IndexError):
+		return None
+
+
 def look_under_directory(path_to_directory, prefixes):
 	"""Look under the given directory for matching sub-directories
 
@@ -178,10 +209,7 @@ def look_under_directory(path_to_directory, prefixes):
 		if contains_file(path_to_directory, '%s*' % prefix):
 			return [path_to_directory]
 		return []
-	try:
-		i = int(prefixes[0])
-	except (ValueError, IndexError):
-		i = None
+	i = first_integer(prefixes)
 	for path_to_sub_directory in matched_sub_directories:
 		paths = look_under_directory(path_to_sub_directory, prefixes)
 		result.extend(paths)
@@ -552,11 +580,7 @@ def _find_in_paths(item, prefixes, paths):
 	]
 	if os.path.sep in item:
 		matchers.insert(0, lambda path: item in path)
-	try:
-		i = int(prefixes[0])
-		del prefixes[0]
-	except (ValueError, IndexError):
-		i = None
+	i = take_first_integer(prefixes)
 	for match in matchers:
 		matched = [path for path in paths if match(path)]
 		if not matched:
