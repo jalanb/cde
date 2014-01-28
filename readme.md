@@ -56,3 +56,6 @@ When looking for partial names kd will look for each of these in turn, stopping 
 3. files that start with the given part
 4. directories with the part in their name
 4. files with the part in their name
+
+
+[![Stories in Ready](https://badge.waffle.io/jalanb/kd.png?label=ready)](http://waffle.io/jalanb/kd) 
