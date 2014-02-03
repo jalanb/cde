@@ -13,6 +13,7 @@ kd ()
 { 
 	local python_directory=$(dirname $BASH_SOURCE)
 	local python_script=$python_directory/kd.py
+	value=1
 	if ! destination=$(PYTHONPATH=$python_directory python $python_script "$@" 2>&1)
 	then
 		echo "$destination"
@@ -27,8 +28,10 @@ kd ()
 			echo "cd $destination"
 		fi
 		cd "$destination"
+		value=0
 	fi
 	unset destination
+	return $value
 }
 
 kg ()
