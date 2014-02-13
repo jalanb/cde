@@ -363,7 +363,7 @@ def find_directory(item, prefixes):
     path_to_item = find_at_home(item, prefixes)
     if path_to_item:
         return path_to_item
-    raise ToDo('could not use %r as a directory' % item)
+    raise ToDo('could not use %r as a directory' % ' '.join([item] + prefixes))
 
 
 def parse_command_line():
