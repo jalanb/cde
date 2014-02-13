@@ -428,10 +428,19 @@ def test():
     print 'All tests passed'
 
 
+def _path_to_config():
+    """Path where our config files are kept"""
+    stem, _ext = os.path.splitext(os.path.basename(__file__))
+    result = os.path.expanduser('~/.config/%s' % stem)
+    if not os.path.isdir(result):
+        os.makedirs(result)
+    return result
+
+
 def _path_to_history():
     """Path to where history of paths is stored"""
-    stem, _ext = os.path.splitext(__file__)
-    return '%s.history' % stem
+    path_to_config = _path_to_config()
+    return os.path.join(path_to_config, 'history')
 
 
 def read_history():
