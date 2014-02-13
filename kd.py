@@ -8,12 +8,12 @@ Arguments:
     Second and other items are used to choose under that path
 
 Options:
-    -h	--help	show this help and exit
-    -a	--add	add a path to history
-    -o	--old	look for paths in history
-    -t	--test	run all tests and exit
-    -v	--version	show the version and exit
-    -U	--pdb	For developers: debugging with pdb (or pudb if available)
+    -h  --help  show this help and exit
+    -a  --add   add a path to history
+    -o  --old   look for paths in history
+    -t  --test  run all tests and exit
+    -v  --version   show the version and exit
+    -U  --pdb   For developers: debugging with pdb (or pudb if available)
 
 Explanation:
 
