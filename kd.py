@@ -311,6 +311,8 @@ def find_path_to_item(item):
     pattern = '%s*' % os.path.basename(item)
     if contains_glob(parent, pattern):
         return parent
+    if os.path.isdir(parent):
+        return parent
     return None
 
 
