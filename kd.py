@@ -356,10 +356,10 @@ def find_directory(item, prefixes):
             path_to_item = find_under_here(args)
     if path_to_item:
         return path_to_item
-    path_to_item = find_in_environment_path(item)
+    path_to_item = find_in_history(item, prefixes)
     if path_to_item:
         return path_to_item
-    path_to_item = find_in_history(item, prefixes)
+    path_to_item = find_in_environment_path(item)
     if path_to_item:
         return path_to_item
     path_to_item = find_at_home(item, prefixes)
