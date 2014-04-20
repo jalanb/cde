@@ -445,7 +445,7 @@ def _path_to_history():
 
 
 def read_history():
-    """Recall a remembered path"""
+    """Recall remembered paths"""
     csvfile = None
     try:
         try:
