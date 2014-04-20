@@ -446,18 +446,10 @@ def _path_to_history():
 
 def read_history():
     """Recall remembered paths"""
-    stream = None
-    try:
-        try:
-            stream = open(_path_to_history(), 'rb')
-        except IOError:
-            return []
+    with open(_path_to_history(), 'rb') as stream:
         reader = csv.reader(stream, delimiter=',', quotechar='"',
                             quoting=csv.QUOTE_MINIMAL)
         return [row for row in reader]
-    finally:
-        if stream:
-            stream.close()
 
 
 def sort_history(history):
@@ -535,15 +527,10 @@ def rewrite_history_with_path(item):
 
 def write_paths(paths):
     """Write the given paths to the history file"""
-    csvfile = None
-    try:
-        csvfile = open(_path_to_history(), 'wb')
-        writer = csv.writer(csvfile, delimiter=',', quotechar='"',
+    with open(_path_to_history(), 'wb') as stream:
+        writer = csv.writer(stream, delimiter=',', quotechar='"',
                             quoting=csv.QUOTE_MINIMAL)
         writer.writerows(paths)
-    finally:
-        if csvfile:
-            csvfile.close()
 
 
 def rewrite_history_without_path(path_to_item):
