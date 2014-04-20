@@ -446,18 +446,18 @@ def _path_to_history():
 
 def read_history():
     """Recall remembered paths"""
-    csvfile = None
+    stream = None
     try:
         try:
-            csvfile = open(_path_to_history(), 'rb')
+            stream = open(_path_to_history(), 'rb')
         except IOError:
             return []
-        reader = csv.reader(csvfile, delimiter=',', quotechar='"',
+        reader = csv.reader(stream, delimiter=',', quotechar='"',
                             quoting=csv.QUOTE_MINIMAL)
         return [row for row in reader]
     finally:
-        if csvfile:
-            csvfile.close()
+        if stream:
+            stream.close()
 
 
 def sort_history(history):
