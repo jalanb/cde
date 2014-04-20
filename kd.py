@@ -322,7 +322,6 @@ def previous_directory():
         return os.environ['OLDPWD']
     except KeyError:
         return '~'
-    return None
 
 
 def find_directory(item, prefixes):
