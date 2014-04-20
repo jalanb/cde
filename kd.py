@@ -417,14 +417,14 @@ def test():
     stem = os.path.basename(stem)
     from doctest import testfile, testmod, ELLIPSIS, NORMALIZE_WHITESPACE
     options = ELLIPSIS | NORMALIZE_WHITESPACE
-    result = testfile('%s.tests' % stem, optionflags=options)
-    if result.failed:
+    failed, _ = testfile('%s.tests' % stem, optionflags=options)
+    if failed:
         return
-    result = testfile('%s.test' % stem, optionflags=options)
-    if result.failed:
+    failed, _ = testfile('%s.test' % stem, optionflags=options)
+    if failed:
         return
-    result = testmod(optionflags=options)
-    if result.failed:
+    failed, _ = testmod(optionflags=options)
+    if failed:
         return
     print 'All tests passed'
 
