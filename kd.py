@@ -577,7 +577,7 @@ def find_in_history(item, prefixes):
 def _find_in_paths(item, prefixes, paths):
     """Get the first of those paths which meets one of the criteria:
 
-    1. has any substring that macthes (as long as the item contains a "/")
+    1. has any substring that matches (as long as the item contains a "/")
     2. is same as item
     3. has same basename as item
     4. has same basename as "item*"
