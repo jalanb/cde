@@ -30,8 +30,8 @@ pip-log.txt
 .*.swp
 *~
 
-# kd files
-kd.history
+# Sphinx documentation
+docs/_build/
 
 # IDEs
 .idea
