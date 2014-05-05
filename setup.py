@@ -28,6 +28,7 @@ setup(
         'Topic :: System :: Shells',
     ],
     test_suite='nose.collector',
+    install_requires=['path.py'],
     tests_require=['nose'],
     extras_require={
         'docs': ['Sphinx'],
