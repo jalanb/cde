@@ -14,7 +14,7 @@ setup(
     license='MIT License',
     author='J Alan Brogan',
     author_email='kd@al-got-rhythm.net',
-    description='kd is a smarter cd',
+    description=kd.__doc__.splitlines()[0],
     platforms='any',
     classifiers=[
         'Programming Language :: Python :: 2.7',
