@@ -8,12 +8,16 @@ Arguments:
     Second and other items are used to choose under that path
 
 Options:
-    -h  --help  show this help and exit
-    -a  --add   add a path to history
-    -o  --old   look for paths in history
-    -t  --test  run all tests and exit
-    -v  --version   show the version and exit
-    -U  --pdb   For developers: debugging with pdb (or pudb if available)
+  -h, --help     show this help message and exit
+  -a, --add      add a path to history
+  -d, --delete   delete a path from history
+  -p, --purge    remove all non-existent paths from history
+  -o, --old      look for paths in history
+  -t, --test     test the script
+  -v, --version  show version of the script
+  -U, --pdb      For developer: debug with pdb (pudb if available)
+
+
 
 Explanation:
 
@@ -378,7 +382,9 @@ def parse_command_line():
     parser.add_option('-a', '--add', dest='add', action="store_true",
                       help='add a path to history')
     parser.add_option('-d', '--delete', dest='delete', action="store_true",
-                      help='delete paths from history')
+                      help='delete a path from history')
+    parser.add_option('-p', '--purge', dest='purge', action="store_true",
+                      help='remove all non-existent paths from history')
     parser.add_option('-o', '--old', dest='old', action="store_true",
                       help='look for paths in history')
     parser.add_option('-t', '--test', dest='test', action="store_true",
@@ -533,6 +539,25 @@ def write_paths(paths):
         writer.writerows(paths)
 
 
+def rewrite_history_with_existing_paths():
+    """Delete the given path from the history"""
+    history_items = read_history()
+    new_items, changed = keep_existing_paths(history_items)
+    if changed:
+        write_paths(new_items)
+
+
+def keep_existing_paths(history_items):
+    new_items = []
+    changed = False
+    for rank, path, time in history_items:
+        if not os.path.exists(path):
+            changed = True
+        else:
+            new_items.append((rank, path, time))
+    return new_items, changed
+
+
 def rewrite_history_without_path(path_to_item):
     """Delete the given path from the history"""
     history_items = read_history()
@@ -586,6 +611,7 @@ def _find_in_paths(item, prefixes, paths):
 
     paths are assumed to be ordered, so first matching path wins
     """
+    # pylint: disable=R0912
     def globbed(p):
         return fnmatch(p, '%s*' % item)
 
@@ -698,6 +724,8 @@ def main():
             else:
                 list_paths()
                 return 1
+        elif options.purge:
+            rewrite_history_with_existing_paths()
         else:
             show_path_to_item(item, prefixes)
         return 0
