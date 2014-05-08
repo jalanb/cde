@@ -263,8 +263,11 @@ def find_under_directory(path_to_directory, prefixes):
 
 def find_under_here(prefixes):
     """Look for some other directories under current directory """
-    here = os.getcwd()
-    return find_under_directory(here, prefixes)
+    try:
+        here = os.getcwd()
+        return find_under_directory(here, prefixes)
+    except OSError:
+        return []
 
 
 def find_in_environment_path(filename):
