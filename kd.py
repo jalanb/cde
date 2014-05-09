@@ -258,6 +258,17 @@ def find_under_directory(path_to_directory, prefixes):
         return None
     if len(possibles) == 1:
         return possibles[0]
+    return too_many_possibles(possibles)
+
+
+def too_many_possibles(possibles):
+    possibles = [p for p in possibles if os.path.exists(p)]
+    if len(possibles) < 2:
+        rewrite_history_with_existing_paths()
+    if not possibles:
+        return None
+    if len(possibles) == 1:
+        return possibles[0]
     raise TryAgain('Too many possiblities\n\t%s' % as_menu_string(possibles))
 
 
