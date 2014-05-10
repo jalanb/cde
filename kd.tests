@@ -145,13 +145,6 @@ Assuming we have remembered some paths
     True
     >>> kd._find_in_paths('bin', ['1'], history) == '/usr/local/bin'
     True
-    >>> kd._find_in_paths('bi', [], history)
-    Traceback (most recent call last):
-    ...
-    TryAgain: Too many possiblities
-         0: /usr/bin
-         1: /usr/local/bin
-         2: /usr/local/bib
     >>> kd._find_in_paths('bi', ['0'], history) == '/usr/bin'
     True
     >>> kd._find_in_paths('bi', ['1'], history) == '/usr/local/bin'
@@ -164,12 +157,6 @@ Assuming we have remembered some paths
     True
     >>> not kd._find_in_paths('in', [], history)
     True
-    >>> kd._find_in_paths('in/', [], history)
-    Traceback (most recent call last):
-    ...
-    TryAgain: Too many possiblities
-         0: /usr/tin/local
-         1: /usr/bin/vocal
     >>> kd._find_in_paths('in/', ['0'], history) == '/usr/tin/local'
     True
     >>> kd._find_in_paths('in/v', [], history) == '/usr/bin/vocal'
@@ -180,9 +167,6 @@ Assuming we have remembered some paths
     TryAgain: Too many possiblities
          0: /usr/bin
          1: /usr/local/bin
-         2: /usr/tin/local
-         3: /usr/bin/vocal
-         4: /usr/local/bib
     >>> kd._find_in_paths('usr', ['3'], history) == '/usr/bin/vocal'
     True
 
@@ -197,6 +181,18 @@ Assuming we have remembered some paths
     True
     >>> newer_items, changed = kd.exclude_path_from_items(new_items, path_to_item)
     >>> changed is False and len(new_items) == len(newer_items)
+    True
+
+
+Python dirs
+-----------
+
+kd has a setup.py
+
+    >>> project_dir = os.path.dirname(kd.__file__)
+    >>> code_dir = os.path.join(project_dir, 'kd')
+    >>> possibles = [code_dir, project_dir]
+    >>> kd.find_python_root_dir(possibles) == project_dir
     True
 
 

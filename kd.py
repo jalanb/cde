@@ -261,6 +261,22 @@ def find_under_directory(path_to_directory, prefixes):
     return too_many_possibles(possibles)
 
 
+def find_python_root_dir(possibles):
+    """Find a python root in a list of dirs
+
+    If all dirs have the same name, and one of them has setup.py
+    then it is probably common Python project tree, like
+        /path/to/projects/kd
+        /path/to/projects/kd/kd
+    """
+    names = {os.path.basename(p) for p in possibles}
+    if len(names) == 1:
+        for path in possibles:
+            setup = os.path.join(path, 'setup.py')
+            if os.path.isfile(setup):
+                return path
+
+
 def too_many_possibles(possibles):
     possibles = [p for p in possibles if os.path.exists(p)]
     if len(possibles) < 2:
@@ -269,6 +285,10 @@ def too_many_possibles(possibles):
         return None
     if len(possibles) == 1:
         return possibles[0]
+    if len(possibles) == 2:
+        python_path = find_python_root_dir(possibles)
+        if python_path:
+            return python_path
     raise TryAgain('Too many possiblities\n\t%s' % as_menu_string(possibles))
 
 
@@ -666,6 +686,7 @@ def _find_in_paths(item, prefixes, paths):
             found = [f for f in found if f]
             if len(found) == 1:
                 return found[0]
+            return too_many_possibles(found)
         raise TryAgain('Too many possiblities\n\t%s' % as_menu_string(matched))
 
 
