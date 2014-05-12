@@ -683,9 +683,9 @@ def _find_in_paths(item, prefixes, paths):
             return find_under_directory(result, prefixes)
         elif len(matched) > 1:
             found = [find_under_directory(m, prefixes) for m in matched]
-            found = [f for f in found if f]
+            found = set([f for f in found if f])
             if len(found) == 1:
-                return found[0]
+                return found.pop()
             return too_many_possibles(found)
         raise TryAgain('Too many possiblities\n\t%s' % as_menu_string(matched))
 
