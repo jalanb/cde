@@ -683,7 +683,8 @@ def _find_in_paths(item, prefixes, paths):
             return find_under_directory(result, prefixes)
         elif len(matched) > 1:
             found = [find_under_directory(m, prefixes) for m in matched]
-            unique = {f for f in found if f}
+            found = [f for f in found if f]
+            unique = set(found)
             if len(unique) == 1:
                 return unique.pop()
             return too_many_possibles(found)
