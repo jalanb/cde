@@ -486,7 +486,10 @@ def _path_to_history():
 
 def read_history():
     """Recall remembered paths"""
-    with open(_path_to_history(), 'rb') as stream:
+    path = _path_to_history()
+    if not os.path.isfile(path):
+        return []
+    with open(path, 'rb') as stream:
         reader = csv.reader(stream, delimiter=',', quotechar='"',
                             quoting=csv.QUOTE_MINIMAL)
         return [row for row in reader]
