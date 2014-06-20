@@ -734,6 +734,17 @@ def version():
     print 'kd %s' % __version__
 
 
+def chdir(string):
+
+    def chdir_found_item(path_to_item):
+        os.chdir(path_to_item)
+
+    global show_found_item  # pylint: disable=global-variable-undefined
+    show_found_item = chdir_found_item
+    sys.argv = [__file__] + string.split()
+    main()
+
+
 def main():
     """Show a directory from the command line arguments (or some derivative)"""
     # pylint: disable=R0912
