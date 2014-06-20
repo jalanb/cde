@@ -648,7 +648,7 @@ def _find_in_paths(item, prefixes, paths):
 
     paths are assumed to be ordered, so first matching path wins
     """
-    # pylint: disable=R0912
+    # pylint: disable=too-many-branches
     def globbed(p):
         return fnmatch(p, '%s*' % item)
 
@@ -664,7 +664,7 @@ def _find_in_paths(item, prefixes, paths):
         lambda path: globbed(os.path.basename(path)),
         lambda path: item in path.split(os.path.sep),
         #  (lambda *is* necessary (to stop E0601 using path before assignment))
-        #  pylint: disable=W0108
+        #  pylint: disable=unnecessary-lambda
         lambda path: glob_match(path),
     ]
     if os.path.sep in item:
@@ -747,7 +747,7 @@ def chdir(string):
 
 def main():
     """Show a directory from the command line arguments (or some derivative)"""
-    # pylint: disable=R0912
+    # pylint: disable=too-many-branches
     # Of course there are too many branches - it's an event dispatcher
     try:
         options, item, prefixes = parse_command_line()
