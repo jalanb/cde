@@ -734,7 +734,7 @@ def version():
     print 'kd %s' % __version__
 
 
-def chdir(string):
+def kd(string):
 
     def chdir_found_item(path_to_item):
         os.chdir(path_to_item)
