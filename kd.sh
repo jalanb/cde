@@ -18,7 +18,7 @@ kd ()
 	then
 		echo "$destination"
 	else
-		real_destination=$(PYTHONPATH=$python_directory python -c "import os; print os.path.realpath('$destination')")
+		local real_destination=$(PYTHONPATH=$python_directory python -c "import os; print os.path.realpath('$destination')")
 		if [[ $destination != $real_destination ]]
 		then
 			echo "cd ($destination ->) $real_destination"
