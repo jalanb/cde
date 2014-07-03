@@ -33,6 +33,10 @@ is equivalent to
 
     $ cd /usr/local/bin
 
+Or first argument is (stem of) a diretory you have been to. For example, given that we have kd'd to it already, you can get back to /usr/local/bin (from anywhere else) by
+
+    $ kd b
+
 Or first argument is a file (cd'ing to a file can be very handy in conjuction with copy-and-paste of filenames), for example
 
     $ kd /bin/ls
