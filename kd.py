@@ -59,6 +59,7 @@ If no matches then give directories in $PATH which have matching executables
 
 
 import os
+import bdb
 import sys
 from fnmatch import fnmatch
 from optparse import OptionParser
@@ -268,6 +269,11 @@ def find_python_root_dir(possibles):
     then it is probably common Python project tree, like
         /path/to/projects/kd
         /path/to/projects/kd/kd
+    Or, if all dirs are the same,
+        except that one has an egg suffix, like
+            /path/to/dotsite/dotsite
+            /path/to/dotsite/dotsite.egg-info
+    then ignore the egg
     """
     names = {os.path.basename(p) for p in possibles}
     if len(names) == 1:
@@ -275,6 +281,9 @@ def find_python_root_dir(possibles):
             setup = os.path.join(path, 'setup.py')
             if os.path.isfile(setup):
                 return path
+    eggless = {p.replace('.egg-info', '') for p in possibles}
+    if len(eggless) == 1:
+        return eggless.pop()
 
 
 def too_many_possibles(possibles):
@@ -785,6 +794,8 @@ def main():
     except ToDo, e:
         print 'Error:', e
         return 1
+    except bdb.BdbQuit:
+        return 0
     except SystemExit:
         return 1
 
