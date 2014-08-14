@@ -11,14 +11,14 @@ fi
 
 kd ()
 { 
-	local python_directory=$(dirname $BASH_SOURCE)
-	local python_script=$python_directory/kd.py
+	local kd_source_dir=$(dirname $BASH_SOURCE)
+	local kd_script=$kd_source_dir/kd.py
 	value=1
-	if ! destination=$(PYTHONPATH=$python_directory python $python_script "$@" 2>&1)
+	if ! destination=$(PYTHONPATH=$kd_source_dir python $kd_script "$@" 2>&1)
 	then
 		echo "$destination"
 	else
-		local real_destination=$(PYTHONPATH=$python_directory python -c "import os; print os.path.realpath('$destination')")
+		local real_destination=$(PYTHONPATH=$kd_source_dir python -c "import os; print os.path.realpath('$destination')")
 		if [[ $destination != $real_destination ]]
 		then
 			echo "cd ($destination ->) $real_destination"
@@ -36,7 +36,7 @@ kd ()
 
 kg ()
 {
-	local python_directory=$(dirname $BASH_SOURCE)
-	local python_script=$python_directory/kd.py
-	PYTHONPATH=$python_directory python $python_script -U "$@"
+	local kd_source_dir=$(dirname $BASH_SOURCE)
+	local kd_script=$kd_source_dir/kd.py
+	PYTHONPATH=$kd_source_dir python $kd_script -U "$@"
 }
