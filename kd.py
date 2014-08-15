@@ -15,7 +15,7 @@ Options:
   -o, --old      look for paths in history
   -t, --test     test the script
   -v, --version  show version of the script
-  -U, --pdb      For developer: debug with pdb (pudb if available)
+  -U, --Use_debugger      For developer: debug with pdb (pudb if available)
 
 
 
@@ -62,7 +62,7 @@ import os
 import bdb
 import sys
 from fnmatch import fnmatch
-from optparse import OptionParser
+import argparse
 import csv
 
 
@@ -418,44 +418,46 @@ def parse_command_line():
     """Get the arguments from the command line.
 
     Insist on at least one empty string"""
-    usage = '''usage: %%prog directory prefix ...
+    usage = '''usage: kd directory prefix ...
 
     %s''' % __doc__
-    parser = OptionParser(usage)
-    parser.add_option('-a', '--add', dest='add', action="store_true",
-                      help='add a path to history')
-    parser.add_option('-d', '--delete', dest='delete', action="store_true",
-                      help='delete a path from history')
-    parser.add_option('-p', '--purge', dest='purge', action="store_true",
-                      help='remove all non-existent paths from history')
-    parser.add_option('-o', '--old', dest='old', action="store_true",
-                      help='look for paths in history')
-    parser.add_option('-t', '--test', dest='test', action="store_true",
-                      help='test the script')
-    parser.add_option('-v', '--version', dest='version', action="store_true",
-                      help='show version of the script')
-    parser.add_option('-U', '--pdb', dest='pdb', action="store_true",
-                      help='For developer: debug with pdb (pudb if available)')
-    options, args = parser.parse_args()
-    if options.pdb:
+    parser = argparse.ArgumentParser(
+        description='Find a directory to cd to', usage=usage)
+    parser.add_argument('-a', '--add', action='store_true',
+                        help='add a path to history')
+    parser.add_argument('-d', '--delete', action='store_true',
+                        help='delete a path from history')
+    parser.add_argument('-p', '--purge', action='store_true',
+                        help='remove all non-existent paths from history')
+    parser.add_argument('-o', '--old', action='store_true',
+                        help='look for paths in history')
+    parser.add_argument('-t', '--test', action='store_true',
+                        help='test the script')
+    parser.add_argument('-v', '--version', action='store_true',
+                        help='show version of the script')
+    parser.add_argument('-U', '--Use_debugger', action='store_true',
+                        help='debug with pdb (pudb if available)')
+    parser.add_argument('directory', metavar='item', nargs='?', default='',
+                        help='(partial) directory name')
+    parser.add_argument('prefixes', nargs='*',
+                        help='(partial) sub directory names')
+    args = parser.parse_args()
+    if args.Use_debugger:
         try:
             import pudb as pdb
         except ImportError:
             import pdb
         pdb.set_trace()
-    if not args:
-        item = None
-        if options.add:
-            item = '.'
-        elif not options.old:
-            item = os.path.expanduser('~')
-        prefixes = []
+    if not args.directory:
+        if args.add:
+            args.directory = '.'
+        elif not args.old:
+            args.directory = os.path.expanduser('~')
+        args.prefixes = []
     else:
-        item, prefixes = args[0], args[1:]
-        if args[0] == '-':
-            item = previous_directory()
-        args[0] = previous_directory()
-    return options, item, prefixes
+        if args.directory == '-':
+            args.directory = previous_directory()
+    return args
 
 
 def test():
@@ -763,34 +765,34 @@ def main():
     # pylint: disable=too-many-branches
     # Of course there are too many branches - it's an event dispatcher
     try:
-        options, item, prefixes = parse_command_line()
-        if not options:
+        args = parse_command_line()
+        if not args:
             return 1
-        if options.test:
+        if args.test:
             test()
             return 1
-        elif options.version:
+        elif args.version:
             version()
             return 1
-        elif options.add:
-            rewrite_history_with_path(item)
+        elif args.add:
+            rewrite_history_with_path(args.directory)
             return 1
-        elif options.old:
-            if item:
-                show_path_to_historical_item(item, prefixes)
+        elif args.old:
+            if args.directory:
+                show_path_to_historical_item(args.directory, args.prefixes)
             else:
                 list_paths()
                 return 1
-        elif options.delete:
-            if item:
-                delete_path_to_historical_item(item, prefixes)
+        elif args.delete:
+            if args.directory:
+                delete_path_to_historical_item(args.directory, args.prefixes)
             else:
                 list_paths()
                 return 1
-        elif options.purge:
+        elif args.purge:
             rewrite_history_with_existing_paths()
         else:
-            show_path_to_item(item, prefixes)
+            show_path_to_item(args.directory, args.prefixes)
         return 0
     except TryAgain, e:
         print 'Try again:', e
