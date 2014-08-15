@@ -664,6 +664,9 @@ def _find_in_paths(item, prefixes, paths):
     paths are assumed to be ordered, so first matching path wins
     """
     # pylint: disable=too-many-branches
+    def double_globbed(p):
+        return fnmatch(p, '*%s*' % item)
+
     def globbed(p):
         return fnmatch(p, '%s*' % item)
 
@@ -681,6 +684,7 @@ def _find_in_paths(item, prefixes, paths):
         #  (lambda *is* necessary (to stop E0601 using path before assignment))
         #  pylint: disable=unnecessary-lambda
         lambda path: glob_match(path),
+        lambda path: double_globbed(os.path.basename(path)),
     ]
     if os.path.sep in item:
         matchers.insert(0, lambda path: item in path)
