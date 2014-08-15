@@ -444,7 +444,11 @@ def parse_command_line():
             import pdb
         pdb.set_trace()
     if not args:
-        item = not options.old and os.path.expanduser('~') or None
+        item = None
+        if options.add:
+            item = '.'
+        elif not options.old:
+            item = os.path.expanduser('~')
         prefixes = []
     else:
         item, prefixes = args[0], args[1:]
