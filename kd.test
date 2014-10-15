@@ -22,15 +22,15 @@ On the command line we expect two arguments:
     The rest are prefixes of possible sub-directories
 
     >>> sys.argv = ['kd.py', 'start', 'here']
-    >>> options, item, prefixes = kd.parse_command_line()
-    >>> item == 'start' and prefixes == ['here']
+    >>> args = kd.parse_command_line()
+    >>> args.directory == 'start' and args.prefixes == ['here']
     True
 
 No prefixes is fine too
 
     >>> sys.argv = ['kd.py', 'start']
-    >>> options, item, prefixes = kd.parse_command_line()
-    >>> item == 'start' and prefixes == []
+    >>> args = kd.parse_command_line()
+    >>> args.directory == 'start' and args.prefixes == []
     True
 
 
@@ -67,7 +67,7 @@ Fallbacks
 ---------
 
 If directory is not found directly then try in PATH
-    >>> kd.find_directory('ls', []) == '/bin'
+    >>> kd.find_directory('grep', []) == '/bin'
     True
 
 If that fails, then try in home directory
@@ -91,11 +91,11 @@ Hence the main method will print the found directory
 Remembering history
 -------------------
 
-kd can also remeber a list of paths
+kd can also remember a list of paths
 
     >>> kd._path_to_history().endswith('kd/history')
     True
-    >>> kd.rewrite_history_with_path(kd.__file__)
+    >>> kd.add(kd.__file__)
     >>> for _rank, path, _time in kd.read_history():
     ...     if path == os.path.dirname(kd.__file__):
     ...          print 'parent was stored'

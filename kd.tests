@@ -15,40 +15,16 @@ Command lines
 We allow more than two args on command line
 
     >>> sys.argv = ['kd.py', 'start', 'here', 'or', 'there']
-    >>> options, item, prefixes = kd.parse_command_line()
-    >>> item == 'start' and prefixes == ['here', 'or', 'there']
+    >>> args = kd.parse_command_line()
+    >>> args.directory == 'start' and args.prefixes == ['here', 'or', 'there']
     True
 
 And no args at all (use home directory)
 
     >>> sys.argv = ['kd.py']
-    >>> options, path_to_dir, prefixes = kd.parse_command_line()
-    >>> path_to_dir == os.path.expanduser('~') and not prefixes
+    >>> args = kd.parse_command_line()
+    >>> args.directory == os.path.expanduser('~') and not args.prefixes
     True
-
-List directories
-----------------
-
-    >>> kd.contains_glob('/usr','*oca*')
-    True
-    >>> kd.contains_glob('/usr','*oca')
-    False
-    >>> kd.contains_file('/usr','*oca*')
-    False
-    >>> kd.contains_file('/usr','*oca')
-    False
-    >>> kd.contains_directory('/usr','*oca*')
-    True
-    >>> kd.contains_directory('/usr','*oca')
-    False
-    >>> '/usr/lib' in kd.list_sub_directories('/usr','l*')
-    True
-    >>> '/usr/lib' in kd.list_sub_directories('/usr','a*')
-    False
-    >>> '/bin/ls' in kd.list_files('/bin','l*')
-    True
-    >>> '/bin/ls' in kd.list_files('/bin','a*')
-    False
 
 find_directory()
 ----------------
@@ -82,10 +58,10 @@ If the sub-dir matches too many directories then an exception is raised
 Which can be suppressed by a numeric arg
     >>> kd.find_directory('/usr', ['li', '1']).startswith('/usr/li')
     True
-    >>> kd.find_directory('/usr', ['li', '2']) == '/usr/libexec'
+    >>> kd.find_directory('/usr', ['li', '99'])
     Traceback (most recent call last):
     ...
-    ToDo: Your choice of "2" is not in range:
+    ToDo: Your choice of "99" is not in range:
          0: /usr/li...
          1: /usr/li...
 
@@ -155,7 +131,7 @@ Assuming we have remembered some paths
     True
     >>> kd._find_in_paths('ti', [], history) == '/usr/tin/local'
     True
-    >>> not kd._find_in_paths('in', [], history)
+    >>> not kd._find_in_paths('sin', [], history)
     True
     >>> kd._find_in_paths('in/', ['0'], history) == '/usr/tin/local'
     True
