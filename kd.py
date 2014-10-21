@@ -229,7 +229,7 @@ def find_python_root_dir(possibles):
             setup = possible / 'setup.py'
             if setup.isfile():
                 return possible
-    eggless = {p.replace('.egg-info', '') for p in possibles}
+    eggless = {paths.makepath(p.replace('.egg-info', '')) for p in possibles}
     if len(eggless) == 1:
         return eggless.pop()
 
@@ -264,7 +264,7 @@ def find_in_environment_path(filename):
     """
     if not filename:
         return None
-    for path_to_directory in os.environ['PATH'].split(':'):
+    for path_to_directory in paths.environ_paths('PATH'):
         if not path_to_directory:
             continue
         path_to_file = path_to_directory / filename
@@ -671,7 +671,12 @@ def _find_in_paths(item, prefixes, frecent_paths):
                 raise RangeError(i, matched)
             return find_under_directory(result, prefixes)
         elif len(matched) > 1:
-            found = [find_under_directory(m, prefixes) for m in matched]
+            found = []
+            for m in matched:
+                f = find_under_directory(m, prefixes)
+                if f:
+                    found.append(f)
+            #found = [find_under_directory(m, prefixes) for m in matched]
             found = [f for f in found if f]
             unique = set(found)
             if len(unique) == 1:
