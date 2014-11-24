@@ -569,7 +569,7 @@ def write_paths(paths_to_remember):
         writer.writerows(paths_to_remember)
 
 
-def purge():
+def purge(_args=None):
     """Delete the given path from the history"""
     history_items = read_history()
     new_items, changed = keep_existing_paths(history_items)
