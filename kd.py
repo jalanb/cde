@@ -580,7 +580,7 @@ def keep_existing_paths(history_items):
     new_items = []
     changed = False
     for rank, path, time in history_items:
-        if not path.exists():
+        if not os.path.exists(path):
             changed = True
         else:
             new_items.append((rank, path, time))
