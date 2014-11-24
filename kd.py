@@ -106,7 +106,8 @@ def matching_sub_directories(path_to_directory, prefix):
         If that gives one exact match, prefer that
     """
     prefix_glob = prefix.endswith('/') and prefix.rstrip('/') or '%s*' % prefix
-    sub_directories = paths.list_sub_directories(path_to_directory, prefix_glob)
+    sub_directories = paths.list_sub_directories(
+        path_to_directory, prefix_glob)
 
     if len(sub_directories) < 2:
         return sub_directories
@@ -671,12 +672,7 @@ def _find_in_paths(item, prefixes, frecent_paths):
                 raise RangeError(i, matched)
             return find_under_directory(result, prefixes)
         elif len(matched) > 1:
-            found = []
-            for m in matched:
-                f = find_under_directory(m, prefixes)
-                if f:
-                    found.append(f)
-            #found = [find_under_directory(m, prefixes) for m in matched]
+            found = [find_under_directory(m, prefixes) for m in matched]
             found = [f for f in found if f]
             unique = set(found)
             if len(unique) == 1:
