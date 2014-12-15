@@ -305,7 +305,9 @@ def find_path_to_item(item):
     if path_to_item.isfile():
         return parent
     pattern = '%s*' % path_to_item.basename()
-    if paths.contains_glob(parent, pattern):
+    if paths.contains_directory(parent, pattern):
+        return parent.dirs(pattern).pop()
+    elif paths.contains_glob(parent, pattern):
         return parent
     if parent.isdir():
         raise FoundParent(parent)
