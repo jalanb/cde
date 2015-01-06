@@ -555,7 +555,10 @@ def include_new_path_in_items(history_items, new_path):
 
 def add(args):
     """Remember the given path for later use"""
-    arg_path = paths.makepath(args.directory)
+    try:
+        arg_path = paths.makepath(args.directory)
+    except OSError as e:
+        raise SystemExit(str(e))
     add_path(arg_path)
 
 
