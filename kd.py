@@ -11,6 +11,7 @@ Options:
   -h, --help     show this help message and exit
   -a, --add      add a path to history
   -d, --delete   delete a path from history
+  -m, --makedir  make a directory
   -p, --purge    remove all non-existent paths from history
   -o, --old      look for paths in history
   -t, --test     test the script
@@ -405,6 +406,8 @@ def parse_args(methods):
                         help='add a path to history')
     parser.add_argument('-d', '--delete', action='store_true',
                         help='delete a path from history')
+    parser.add_argument('-m', '--makedir', action='store_true',
+                        help='Make sure the given directory exists')
     parser.add_argument('-p', '--purge', action='store_true',
                         help='remove all non-existent paths from history')
     parser.add_argument('-o', '--old', action='store_true',
@@ -569,6 +572,14 @@ def write_paths(paths_to_remember):
         writer = csv.writer(stream, delimiter=',', quotechar='"',
                             quoting=csv.QUOTE_MINIMAL)
         writer.writerows(paths_to_remember)
+
+
+def makedir(args):
+    """Make the directory in the args unless it exists"""
+    arg_path = paths.makepath(args.directory)
+    if arg_path.isdir():
+        return True
+    return arg_path.make_directory_exist()
 
 
 def purge(_args=None):
