@@ -9,7 +9,7 @@ then
     echo "  sh $0"
 fi
 
-KD_DIR=$(dirname $BASH_SOURCE)
+export KD_DIR=$(dirname $(readlink -f $BASH_SOURCE))
 
 kd ()
 { 
