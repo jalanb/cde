@@ -1,7 +1,7 @@
 kd
 ==
 
-kd is a [Python](https://github.com/jalanb/kd/blob/master/kd.py#L758)ised version of [Bash(https://github.com/jalanb/kd/blob/master/kd.sh#L12)'s cd command.
+kd is a [Python](https://github.com/jalanb/kd/blob/master/kd.py#L758)ised version of [Bash](https://github.com/jalanb/kd/blob/master/kd.sh#L12)'s cd command.
 
 It knows where you are going because it knows where you've been.
 
