@@ -10,16 +10,17 @@ then
 fi
 
 export KD_DIR=$(dirname $(readlink -f $BASH_SOURCE))
+PYTHON=${PYTHON:-python}
 
 kd ()
 { 
 	local kd_script=$KD_DIR/kd.py
 	kd_result=1
-	if ! destination=$(PYTHONPATH=$KD_DIR python $kd_script "$@" 2>&1)
+	if ! destination=$(PYTHONPATH=$KD_DIR $PYTHON $kd_script "$@" 2>&1)
 	then
 		echo "$destination"
 	else
-		local real_destination=$(PYTHONPATH=$KD_DIR python -c "import os; print os.path.realpath('$destination')")
+		local real_destination=$(PYTHONPATH=$KD_DIR $PYTHON -c "import os; print os.path.realpath('$destination')")
 		if [[ $destination != $real_destination ]]
 		then
 			echo "cd ($destination ->) $real_destination"
@@ -39,5 +40,5 @@ kg ()
 {
 	local KD_DIR=$(dirname $BASH_SOURCE)
 	local kd_script=$KD_DIR/kd.py
-	PYTHONPATH=$KD_DIR python $kd_script -U "$@"
+	PYTHONPATH=$KD_DIR $PYTHON $kd_script -U "$@"
 }
