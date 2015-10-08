@@ -38,7 +38,8 @@ kd ()
 
 kg ()
 {
-	local KD_DIR=$(dirname $BASH_SOURCE)
-	local kd_script=$KD_DIR/kd.py
-	PYTHONPATH=$KD_DIR $PYTHON $kd_script -U "$@"
+    local __doc__="Debug the kd function and script"
+    set -x
+    kd -U "$@"
+    set +x
 }
