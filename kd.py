@@ -12,6 +12,7 @@ Options:
   -a, --add      add a path to history
   -d, --delete   delete a path from history
   -m, --makedir  make a directory
+  -l, --lost     show all non-existent paths in history
   -p, --purge    remove all non-existent paths from history
   -o, --old      look for paths in history
   -t, --test     test the script
@@ -408,6 +409,8 @@ def parse_args(methods):
                         help='delete a path from history')
     parser.add_argument('-m', '--makedir', action='store_true',
                         help='Make sure the given directory exists')
+    parser.add_argument('-l', '--lost', action='store_true',
+                        help='show all non-existent paths in history')
     parser.add_argument('-p', '--purge', action='store_true',
                         help='remove all non-existent paths from history')
     parser.add_argument('-o', '--old', action='store_true',
@@ -583,6 +586,13 @@ def makedir(args):
     if arg_path.isdir():
         return True
     return arg_path.make_directory_exist()
+
+
+def lost(_args=None):
+    history_items = read_history()
+    for _rank, path, _time in history_items:
+        if not os.path.exists(path):
+            print(path)
 
 
 def purge(_args=None):
