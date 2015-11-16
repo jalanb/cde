@@ -10,7 +10,7 @@ then
 fi
 
 export KD_DIR=$(dirname $(readlink -f $BASH_SOURCE))
-PYTHON=${PYTHON:-python}
+PYTHON=${PYTHON:mython}
 
 kd ()
 { 
@@ -42,4 +42,10 @@ kg ()
     set -x
     kd -U "$@"
     set +x
+}
+
+kd () {
+	local KD_DIR=$(dirname $BASH_SOURCE)
+	local kd_script=$KD_DIR/kd.py
+	PYTHONPATH=$KD_DIR $PYTHON $kd_script -U "$@"
 }
