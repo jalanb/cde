@@ -10,30 +10,32 @@ then
 fi
 
 export KD_DIR=$(dirname $(readlink -f $BASH_SOURCE))
-PYTHON=${PYTHON:mython}
+PYTHON=${PYTHON:-python}
 
 kd ()
-{ 
-	local kd_script=$KD_DIR/kd.py
-	kd_result=1
-	if ! destination=$(PYTHONPATH=$KD_DIR $PYTHON $kd_script "$@" 2>&1)
-	then
-		echo "$destination"
-	else
-		local real_destination=$(PYTHONPATH=$KD_DIR $PYTHON -c "import os; print os.path.realpath('$destination')")
-		if [[ $destination != $real_destination ]]
-		then
-			echo "cd ($destination ->) $real_destination"
-			destination=$real_destination
-		elif [[ $destination != $1 && $1 != "-" ]]
-		then
-			echo "cd $destination"
-		fi
-		cd "$destination"
-		kd_result=0
-	fi
-	unset destination
-	return $kd_result
+{
+    local kd_script=$KD_DIR/kd.py
+    kd_result=1
+    if ! destination=$(PYTHONPATH=$KD_DIR $PYTHON $kd_script "$@" 2>&1)
+    then
+        echo "$destination"
+    elif [[ $destination =~ ^[uU]sage ]]; then
+        PYTHONPATH=$KD_DIR $PYTHON $kd_script "$@"
+    else
+        local real_destination=$(PYTHONPATH=$KD_DIR $PYTHON -c "import os; print os.path.realpath('$destination')")
+        if [[ $destination != $real_destination ]]
+        then
+            echo "cd ($destination ->) $real_destination"
+            destination=$real_destination
+        elif [[ $destination != $1 && $1 != "-" ]]
+        then
+            echo "cd $destination"
+        fi
+        cd "$destination"
+        kd_result=0
+    fi
+    unset destination
+    return $kd_result
 }
 
 kg ()
@@ -44,8 +46,4 @@ kg ()
     set +x
 }
 
-kd () {
-	local KD_DIR=$(dirname $BASH_SOURCE)
-	local kd_script=$KD_DIR/kd.py
-	PYTHONPATH=$KD_DIR $PYTHON $kd_script -U "$@"
-}
+# echo from kd.sh
