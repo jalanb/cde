@@ -489,7 +489,7 @@ def read_history():
     with open(path, 'rb') as stream:
         reader = csv.reader(stream, delimiter=',', quotechar='"',
                             quoting=csv.QUOTE_MINIMAL)
-        return [row for row in reader]
+        return [row for row in reader if row]
 
 
 def sort_history(history):
