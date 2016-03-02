@@ -113,9 +113,7 @@ def matching_sub_directories(path_to_directory, prefix):
 
     if len(sub_directories) < 2:
         return sub_directories
-    exacts = [directory
-              for directory in sub_directories
-              if directory.basename() == prefix]
+    exacts = [_ for _ in sub_directories if _.basename() == prefix]
     if exacts:
         return exacts
     return sub_directories
@@ -226,19 +224,19 @@ def find_python_root_dir(possibles):
             /path/to/dotsite/dotsite.egg-info
     then ignore the egg
     """
-    names = {p.basename() for p in possibles}
+    names = {_.basename() for _ in possibles}
     if len(names) == 1:
         for possible in possibles:
             setup = possible / 'setup.py'
             if setup.isfile():
                 return possible
-    eggless = {paths.makepath(p.replace('.egg-info', '')) for p in possibles}
+    eggless = {paths.makepath(_.replace('.egg-info', '')) for _ in possibles}
     if len(eggless) == 1:
         return eggless.pop()
 
 
 def too_many_possibles(possibles):
-    possibles = [p for p in possibles if p.exists()]
+    possibles = [_ for _ in possibles if _.exists()]
     if len(possibles) < 2:
         purge()
     if not possibles:
@@ -375,7 +373,7 @@ def run_args(args, methods):
     if not args:
         return False
     valuable_args = {k for k, v in args.__dict__.items() if v}
-    arg_methods = {methods[a] for a in valuable_args if a in methods}
+    arg_methods = {methods[_] for _ in valuable_args if _ in methods}
     for method in arg_methods:
         method(args)
 
@@ -489,7 +487,7 @@ def read_history():
     with open(path, 'rb') as stream:
         reader = csv.reader(stream, delimiter=',', quotechar='"',
                             quoting=csv.QUOTE_MINIMAL)
-        return [row for row in reader if row]
+        return [_ for _ in reader if _]
 
 
 def sort_history(history):
@@ -684,7 +682,7 @@ def _find_in_paths(item, prefixes, frecent_paths):
         matchers.insert(0, lambda path: item in path)
     i = take_first_integer(prefixes)
     for match in matchers:
-        matched = [path for path in frecent_paths if match(path)]
+        matched = [_ for _ in frecent_paths if match(_)]
         if not matched:
             continue
         if len(matched) == 1:
@@ -698,8 +696,8 @@ def _find_in_paths(item, prefixes, frecent_paths):
                 raise RangeError(i, matched)
             return find_under_directory(result, prefixes)
         elif len(matched) > 1:
-            found = [find_under_directory(m, prefixes) for m in matched]
-            found = [f for f in found if f]
+            found = [find_under_directory(_, prefixes) for _ in matched]
+            found = [_ for _ in found if _]
             unique = set(found)
             if len(unique) == 1:
                 return unique.pop()
