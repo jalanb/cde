@@ -304,6 +304,10 @@ def find_path_to_item(item):
     parent = path_to_item.dirname()
     if path_to_item.isfile():
         return parent
+    elif os.path.islink(item):
+        parent = os.path.dirname(item)
+        if os.path.isdir(parent):
+            return paths.makepath(parent)
     pattern = '%s*' % path_to_item.basename()
     if paths.contains_directory(parent, pattern):
         return parent.dirs(pattern).pop()
