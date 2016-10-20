@@ -230,11 +230,7 @@ def find_python_root_dir(possibles):
             setup = possible / 'setup.py'
             if setup.isfile():
                 return possible
-<<<<<<< f1ff6f8b0fa4113dc5151d69daddc4b239f95df4
-    eggless = {paths.makepath(_.replace('.egg-info', '')) for _ in possibles}
-=======
     eggless = {paths.path(p.replace('.egg-info', '')) for p in possibles}
->>>>>>> Be more quiet when kd'ing around
     if len(eggless) == 1:
         return eggless.pop()
 
