@@ -230,7 +230,11 @@ def find_python_root_dir(possibles):
             setup = possible / 'setup.py'
             if setup.isfile():
                 return possible
+<<<<<<< f1ff6f8b0fa4113dc5151d69daddc4b239f95df4
     eggless = {paths.makepath(_.replace('.egg-info', '')) for _ in possibles}
+=======
+    eggless = {paths.path(p.replace('.egg-info', '')) for p in possibles}
+>>>>>>> Be more quiet when kd'ing around
     if len(eggless) == 1:
         return eggless.pop()
 
@@ -293,12 +297,12 @@ def find_path_to_item(item):
 
     Either the directory itself, or directory of the file itself, or nothing
     """
-    user_says_its_a_directory = lambda x: x[-1] == '/'
+    def user_says_its_a_directory(p):
+        return p[-1] == '/'
+
     if user_says_its_a_directory(item):
-        if len(item) > 1:
-            item = item.rstrip('/')
-        return item
-    path_to_item = paths.makepath(item)
+        return item.rstrip('/')
+    path_to_item = paths.path(item)
     if path_to_item.isdir():
         return path_to_item
     parent = path_to_item.dirname()
@@ -405,6 +409,8 @@ def parse_args(methods):
     %s''' % __doc__
     parser = argparse.ArgumentParser(
         description='Find a directory to cd to', usage=usage)
+    parser.add_argument('-1', '--one', action='store_true',
+                        help='Only show one path')
     parser.add_argument('-a', '--add', action='store_true',
                         help='add a path to history')
     parser.add_argument('-d', '--delete', action='store_true',
@@ -453,7 +459,7 @@ def test(_args):
     >>> 'kd' in __file__
     True
     """
-    stem = paths.makepath(__file__).namebase
+    stem = paths.path(__file__).namebase
     from doctest import testfile, testmod, ELLIPSIS, NORMALIZE_WHITESPACE
     options = ELLIPSIS | NORMALIZE_WHITESPACE
     failed, _ = testfile('%s.tests' % stem, optionflags=options)
@@ -470,7 +476,7 @@ def test(_args):
 
 def _path_to_config():
     """Path where our config files are kept"""
-    stem = paths.makepath(__file__).namebase
+    stem = paths.path(__file__).namebase
     config = paths.home() / str('.config/%s' % stem)
     if not config.isdir():
         os.makedirs(config)
@@ -527,7 +533,7 @@ def frecent_history():
 
 def frecent_history_paths():
     """A list of paths, sorted from history"""
-    return [paths.makepath(p) for _rank, p, _time in frecent_history()]
+    return [paths.path(p) for _rank, p, _time in frecent_history()]
 
 
 def increment(string):
@@ -561,7 +567,7 @@ def include_new_path_in_items(history_items, new_path):
 def add(args):
     """Remember the given path for later use"""
     try:
-        arg_path = paths.makepath(args.directory)
+        arg_path = paths.path(args.directory)
     except OSError as e:
         raise SystemExit(str(e))
     add_path(arg_path)
@@ -584,7 +590,7 @@ def write_paths(paths_to_remember):
 
 def makedir(args):
     """Make the directory in the args unless it exists"""
-    arg_path = paths.makepath(args.directory)
+    arg_path = paths.path(args.directory)
     if arg_path.isdir():
         return True
     return arg_path.make_directory_exist()
@@ -772,6 +778,7 @@ def old(args):
         show_path_to_historical_item(args.directory, args.prefixes)
     else:
         show_paths()
+    raise SystemExit(os.EX_OK)
 
 
 def delete(args):

@@ -1,5 +1,7 @@
 #! /bin/cat
 
+[[ -n $WELCOME_BYE ]] && echo Welcome to $(basename "$BASH_SOURCE") in $(dirname $(readlink -f "$BASH_SOURCE")) on $(hostname -f)
+
 # This script is intended to be sourced, not run
 if [[ $0 == $BASH_SOURCE ]]
 then
@@ -12,8 +14,7 @@ fi
 export KD_DIR=$(dirname $(readlink -f $BASH_SOURCE))
 PYTHON=${PYTHON:-python}
 
-kd ()
-{
+kd () {
     local kd_script=$KD_DIR/kd.py
     kd_result=1
     if ! destination=$(PYTHONPATH=$KD_DIR $PYTHON $kd_script "$@" 2>&1)
@@ -29,7 +30,7 @@ kd ()
             destination=$real_destination
         elif [[ $destination != $1 && $1 != "-" ]]
         then
-            echo "cd $destination"
+            [[ -n $KD_QUIET ]] || echo "cd $destination"
         fi
         cd "$destination"
         kd_result=0
@@ -46,4 +47,4 @@ kg ()
     set +x
 }
 
-# echo from kd.sh
+[[ -n $WELCOME_BYE ]] && echo Bye from $(basename "$BASH_SOURCE") in $(dirname $(readlink -f "$BASH_SOURCE")) on $(hostname -f)
