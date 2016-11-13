@@ -1,10 +1,15 @@
 """Set up the kd project"""
 
-
+import os
 from setuptools import setup
 
 
 import kd
+
+
+p = os.path.join(os.path.dirname(__file__), 'requirements.txt')
+with open(p) as stream:
+    required = stream.read().splitlines()
 
 
 setup(
@@ -28,7 +33,7 @@ setup(
         'Topic :: System :: Shells',
     ],
     test_suite='nose.collector',
-    install_requires=['path.py'],
+    install_requires=required,
     tests_require=['nose'],
     extras_require={
         'docs': ['Sphinx'],

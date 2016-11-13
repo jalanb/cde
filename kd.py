@@ -72,7 +72,10 @@ import csv
 import timings
 
 
-from dotsite import paths
+try:
+    from dotsite import paths
+except ImportError:
+    pass  # assuming this will only happen from setup.py
 
 __version__ = '0.4.1'
 
