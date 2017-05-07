@@ -399,28 +399,18 @@ def parse_args(methods):
     %s''' % __doc__
     parser = argparse.ArgumentParser(
         description='Find a directory to cd to', usage=usage)
-    parser.add_argument('-1', '--one', action='store_true',
-                        help='Only show one path')
-    parser.add_argument('-a', '--add', action='store_true',
-                        help='add a path to history')
-    parser.add_argument('-d', '--delete', action='store_true',
-                        help='delete a path from history')
-    parser.add_argument('-m', '--makedir', action='store_true',
-                        help='Make sure the given directory exists')
-    parser.add_argument('-l', '--lost', action='store_true',
-                        help='show all non-existent paths in history')
-    parser.add_argument('-p', '--purge', action='store_true',
-                        help='remove all non-existent paths from history')
-    parser.add_argument('-o', '--old', action='store_true',
-                        help='look for paths in history')
-    parser.add_argument('-t', '--test', action='store_true',
-                        help='test the script')
-    parser.add_argument('-v', '--version', action='store_true',
-                        help='show version of the script')
-    parser.add_argument('directory', metavar='item', nargs='?', default='',
-                        help='(partial) directory name')
-    parser.add_argument('prefixes', nargs='*',
-                        help='(partial) sub directory names')
+    pa = parser.add_argument
+    pa('-1', '--one', action='store_true', help='Only show one path')
+    pa('-a', '--add', action='store_true', help='add a path to history')
+    pa('-d', '--delete', action='store_true', help='delete a path from history')  # noqa
+    pa('-m', '--makedir', action='store_true', help='Make sure the given directory exists')  # noqa
+    pa('-l', '--lost', action='store_true', help='show all non-existent paths in history')  # noqa
+    pa('-p', '--purge', action='store_true', help='remove all non-existent paths from history')  # noqa
+    pa('-o', '--old', action='store_true', help='look for paths in history')
+    pa('-t', '--test', action='store_true', help='test the script')
+    pa('-v', '--version', action='store_true', help='show version of the script')  # noqa
+    pa('directory', metavar='item', nargs='?', default='', help='(partial) directory name')  # noqa
+    pa('prefixes', nargs='*', help='(partial) sub directory names')
     args = parser.parse_args()
     run_args(args, methods)
     args.directory = set_args_directory(args)
