@@ -17,7 +17,6 @@ Options:
   -o, --old      look for paths in history
   -t, --test     test the script
   -v, --version  show version of the script
-  -U, --Use_debugger      For developer: debug with pdb (pudb if available)
 
 
 
@@ -391,14 +390,6 @@ def version(_args):
     raise SystemExit
 
 
-def Use_debugger(_args):
-    try:
-        import pudb as pdb
-    except ImportError:
-        import pdb
-    pdb.set_trace()
-
-
 def parse_args(methods):
     """Get the arguments from the command line.
 
@@ -426,8 +417,6 @@ def parse_args(methods):
                         help='test the script')
     parser.add_argument('-v', '--version', action='store_true',
                         help='show version of the script')
-    parser.add_argument('-U', '--Use_debugger', action='store_true',
-                        help='debug with pdb (pudb if available)')
     parser.add_argument('directory', metavar='item', nargs='?', default='',
                         help='(partial) directory name')
     parser.add_argument('prefixes', nargs='*',
