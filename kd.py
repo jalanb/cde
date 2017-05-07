@@ -780,10 +780,17 @@ def main():
         go_away = 'attribute \'path\'" in <function _remove'
         if go_away not in str(e):
             raise
-    except TryAgain, e:
+    except TryAgain as e:
+        if args.one:
+            lines = [_.split(':')[-1].strip()
+                     for _ in e.message.splitlines()
+                     if '0:' in _]
+            if lines:
+                print(lines[0])
+                return os.EX_OK
         print('Try again:', e)
         return not os.EX_OK
-    except ToDo, e:
+    except ToDo as e:
         print('Error:', e)
         return not os.EX_OK
 
