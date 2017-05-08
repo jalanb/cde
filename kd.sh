@@ -38,7 +38,7 @@ kd () {
        if [[ $KD_PATH_ONLY == 1 ]]; then
             echo "$destination"
         else
-            cd "$destination"
+            same_path . "$destination" || pushd "$destination" >/dev/null 2>&1
         fi
         _kd_result=0
     fi
@@ -65,6 +65,10 @@ kpp () {
     else
         kp .
     fi
+}
+
+same_path () {
+    [[ $(readlink -f "$1") == $(readlink -f "$2") ]]
 }
 
 [[ -n $WELCOME_BYE ]] && echo Bye from $(basename "$BASH_SOURCE") in $(dirname $(readlink -f "$BASH_SOURCE")) on $(hostname -f)
