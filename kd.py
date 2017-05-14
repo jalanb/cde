@@ -76,7 +76,7 @@ try:
 except ImportError:
     pass  # assuming this will only happen from setup.py
 
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 
 
 class ToDo(NotImplementedError):
