@@ -387,7 +387,14 @@ def run_args(args, methods):
 def version(_args):
     """Show version of the script"""
     print('kd %s' % __version__)
-    raise SystemExit
+    raise SystemExit(os.EX_OK)
+
+
+def unused(args):
+    used = ['-u', '--unused', args.directory] + args.prefixes
+    unused_args = [_ for _ in sys.argv[1:] if _ not in used]
+    print(' '.join(unused_args))
+    raise SystemExit(os.EX_OK)
 
 
 def parse_args(methods):
@@ -403,11 +410,12 @@ def parse_args(methods):
     pa('-1', '--one', action='store_true', help='Only show one path')
     pa('-a', '--add', action='store_true', help='add a path to history')
     pa('-d', '--delete', action='store_true', help='delete a path from history')  # noqa
-    pa('-m', '--makedir', action='store_true', help='Make sure the given directory exists')  # noqa
     pa('-l', '--lost', action='store_true', help='show all non-existent paths in history')  # noqa
-    pa('-p', '--purge', action='store_true', help='remove all non-existent paths from history')  # noqa
+    pa('-m', '--makedir', action='store_true', help='Make sure the given directory exists')  # noqa
     pa('-o', '--old', action='store_true', help='look for paths in history')
+    pa('-p', '--purge', action='store_true', help='remove all non-existent paths from history')  # noqa
     pa('-t', '--test', action='store_true', help='test the script')
+    pa('-u', '--unused', action='store_true', help='show unused args')  # noqa
     pa('-v', '--version', action='store_true', help='show version of the script')  # noqa
     pa('directory', metavar='item', nargs='?', default='', help='(partial) directory name')  # noqa
     pa('prefixes', nargs='*', help='(partial) sub directory names')
@@ -579,6 +587,7 @@ def lost(_args=None):
     for _rank, path, _time in history_items:
         if not os.path.exists(path):
             print(path)
+    raise SystemExit(os.EX_OK)
 
 
 def purge(_args=None):
@@ -772,6 +781,8 @@ def main():
     # Of course there are too many branches - it's an event dispatcher
     try:
         args = parse_args(globals())
+        if args.unused:
+            pass
         status = show_path_to_item(args.directory, args.prefixes)
         return os.EX_OK if status else not os.EX_OK
     except (bdb.BdbQuit, SystemExit):

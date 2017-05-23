@@ -23,6 +23,8 @@ kd () {
     if ! destination=$(PYTHONPATH=$KD_DIR $PYTHON $_kd_script $_kd_options "$@" 2>&1)
     then
         echo "$destination"
+    elif [[ "$@" =~ -[lp] ]]; then
+        echo "$destination"
     elif [[ $destination =~ ^[uU]sage ]]; then
         PYTHONPATH=$KD_DIR $PYTHON $_kd_script "$@"
     else
@@ -46,17 +48,19 @@ kd () {
     return $_kd_result
 }
 
-kg ()
-{
+kg () {
     local __doc__="Debug the kd function and script"
-    set -x
+    # set -x
     kd -U "$@"
-    set +x
+    # set +x
 }
 
 kp () {
     local __doc__="Show the path that kd would go to"
-    KD_QUIET=1 KD_PATH_ONLY=1 kd "$@"; KD_PATH_ONLY=0
+    KD_QUIET=1 KD_PATH_ONLY=1 kd "$@";
+    local _result=$?
+    KD_PATH_ONLY=0
+    return $_result
 }
 
 kpp () {
@@ -64,7 +68,7 @@ kpp () {
         kp "$@"
     else
         kp .
-    fi
+    fi | grep -v -- '->'
 }
 
 same_path () {
