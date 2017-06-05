@@ -28,7 +28,7 @@ kd () {
     elif [[ $destination =~ ^[uU]sage ]]; then
         PYTHONPATH=$KD_DIR $PYTHON $_kd_script "$@"
     else
-        local real_destination=$(PYTHONPATH=$KD_DIR $PYTHON -c "import os; print os.path.realpath('$destination')")
+        local real_destination=$(PYTHONPATH=$KD_DIR $PYTHON -c "import os; print(os.path.realpath('$destination'))")
         if [[ "$destination" != "$real_destination" ]]
         then
             echo "cd ($destination ->) $real_destination"

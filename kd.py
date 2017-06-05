@@ -480,7 +480,7 @@ def read_history():
     path = _path_to_history()
     if not path.isfile():
         return []
-    with open(path, 'rb') as stream:
+    with open(path, 'r') as stream:
         reader = csv.reader(stream, delimiter=',', quotechar='"',
                             quoting=csv.QUOTE_MINIMAL)
         return [_ for _ in reader if _]
@@ -568,7 +568,7 @@ def add_path(path_to_add):
 
 def write_paths(paths_to_remember):
     """Write the given paths to the history file"""
-    with open(_path_to_history(), 'wb') as stream:
+    with open(_path_to_history(), 'w') as stream:
         writer = csv.writer(stream, delimiter=',', quotechar='"',
                             quoting=csv.QUOTE_MINIMAL)
         writer.writerows(paths_to_remember)
