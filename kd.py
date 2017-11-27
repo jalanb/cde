@@ -299,6 +299,8 @@ def find_path_to_item(item):
         return p[-1] == '/'
 
     if user_says_its_a_directory(item):
+        if item[0] == '/':
+            return paths.path(item)
         return item.rstrip('/')
     path_to_item = paths.path(item)
     if path_to_item.isdir():
