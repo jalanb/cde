@@ -1,3 +1,4 @@
+#! /usr/bin/env python2
 """kd is a better cd
 
 Usage: kd [options] [items]
@@ -486,7 +487,7 @@ def read_history():
     path = _path_to_history()
     if not path.isfile():
         return []
-    with open(path, 'rb') as stream:
+    with open(path, 'r') as stream:
         reader = csv.reader(stream, delimiter=',', quotechar='"',
                             quoting=csv.QUOTE_MINIMAL)
         return [_ for _ in reader if _]
