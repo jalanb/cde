@@ -22,14 +22,14 @@ On the command line we expect two arguments:
     The rest are prefixes of possible sub-directories
 
     >>> sys.argv = ['kd.py', 'start', 'here']
-    >>> args = kd.parse_command_line()
+    >>> args = kd.parse_args()
     >>> args.directory == 'start' and args.prefixes == ['here']
     True
 
 No prefixes is fine too
 
     >>> sys.argv = ['kd.py', 'start']
-    >>> args = kd.parse_command_line()
+    >>> args = kd.parse_args()
     >>> args.directory == 'start' and args.prefixes == []
     True
 
@@ -67,7 +67,7 @@ Fallbacks
 ---------
 
 If directory is not found directly then try in PATH
-    >>> kd.find_directory('grep', []) == '/bin'
+    >>> kd.find_directory('grep', []) in { '/bin', '/usr/bin' }
     True
 
 If that fails, then try in home directory
@@ -95,7 +95,9 @@ kd can also remember a list of paths
 
     >>> kd._path_to_history().endswith('kd/history')
     True
-    >>> kd.add(kd.__file__)
+    >>> class Args:
+    ...     directory = kd.__file__
+    >>> kd.add(Args())
     >>> for _rank, path, _time in kd.read_history():
     ...     if path == os.path.dirname(kd.__file__):
     ...          print 'parent was stored'
@@ -125,12 +127,13 @@ Then we should be able to search that history for a remembered item
 
 Or even if it is just the name of one
     >>> sought = os.path.basename(sought)
-    >>> expected == kd._find_in_paths(sought, [], history)
+    >>> history_paths = [kd.paths.path(_) for _ in history]
+    >>> expected == kd._find_in_paths(sought, [], history_paths)
     True
 
 Or even just the stem of the name
     >>> sought = sought[:3]
-    >>> expected == kd._find_in_paths(sought, [], history)
+    >>> expected == kd._find_in_paths(sought, [], history_paths)
     True
 
 

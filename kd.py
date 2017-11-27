@@ -399,7 +399,11 @@ def unused(args):
     raise SystemExit(os.EX_OK)
 
 
-def parse_args(methods):
+def parse_args():
+    return parse_my_args(globals())
+
+
+def parse_my_args(methods):
     """Get the arguments from the command line.
 
     Insist on at least one empty string"""
@@ -778,12 +782,13 @@ def main():
     """Show a directory from the command line arguments (or some derivative)"""
     # pylint: disable=too-many-branches
     # Of course there are too many branches - it's an event dispatcher
+    not_EX_OK = 1
     try:
-        args = parse_args(globals())
+        args = parse_args()
         if args.unused:
             pass
         status = show_path_to_item(args.directory, args.prefixes)
-        return os.EX_OK if status else not os.EX_OK
+        return os.EX_OK if status else not_EX_OK
     except (bdb.BdbQuit, SystemExit):
         return os.EX_OK
     except AttributeError as e:
@@ -799,10 +804,10 @@ def main():
                 print(lines[0])
                 return os.EX_OK
         print('Try again:', e)
-        return not os.EX_OK
+        return not_EX_OK
     except ToDo as e:
         print('Error:', e)
-        return not os.EX_OK
+        return not_EX_OK
 
 
 if __name__ == '__main__':
