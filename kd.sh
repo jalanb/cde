@@ -33,9 +33,12 @@ kd () {
         then
             echo "cd ($destination ->) $real_destination"
             destination="$real_destination"
-        elif [[ "$destination" != $(readlink -f "$1") && $1 != "-" ]]
-        then
-            [[ -n $KD_QUIET ]] || echo "cd $destination"
+        else
+            [[ $1 =~ '--' ]] && shift
+            if [[ "$destination" != $(readlink -f "$1") && $1 != "-" ]]
+            then
+                [[ -n $KD_QUIET ]] || echo "cd $destination"
+            fi
         fi
         if [[ $KD_PATH_ONLY == 1 ]]; then
             echo "$destination"
