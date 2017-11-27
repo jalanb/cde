@@ -15,14 +15,14 @@ Command lines
 We allow more than two args on command line
 
     >>> sys.argv = ['kd.py', 'start', 'here', 'or', 'there']
-    >>> args = kd.parse_command_line()
+    >>> args = kd.parse_args()
     >>> args.directory == 'start' and args.prefixes == ['here', 'or', 'there']
     True
 
 And no args at all (use home directory)
 
     >>> sys.argv = ['kd.py']
-    >>> args = kd.parse_command_line()
+    >>> args = kd.parse_args()
     >>> args.directory == os.path.expanduser('~') and not args.prefixes
     True
 
@@ -110,40 +110,41 @@ Assuming we have remembered some paths
     ...     '/usr/bin/vocal',
     ...     '/usr/local/bib',
     ... ]
+    >>> history_paths = [kd.paths.path(_) for _ in history]
 
-    >>> kd._find_in_paths('bin', [], history)
+    >>> kd._find_in_paths('bin', [], history_paths)
     Traceback (most recent call last):
     ...
     TryAgain: Too many possiblities
          0: /usr/bin
          1: /usr/local/bin
-    >>> kd._find_in_paths('bin', ['0'], history) == '/usr/bin'
+    >>> kd._find_in_paths('bin', ['0'], history_paths) == '/usr/bin'
     True
-    >>> kd._find_in_paths('bin', ['1'], history) == '/usr/local/bin'
+    >>> kd._find_in_paths('bin', ['1'], history_paths) == '/usr/local/bin'
     True
-    >>> kd._find_in_paths('bi', ['0'], history) == '/usr/bin'
+    >>> kd._find_in_paths('bi', ['0'], history_paths) == '/usr/bin'
     True
-    >>> kd._find_in_paths('bi', ['1'], history) == '/usr/local/bin'
+    >>> kd._find_in_paths('bi', ['1'], history_paths) == '/usr/local/bin'
     True
-    >>> kd._find_in_paths('bi', ['2'], history) == '/usr/local/bib'
+    >>> kd._find_in_paths('bi', ['2'], history_paths) == '/usr/local/bib'
     True
-    >>> kd._find_in_paths('tin', [], history) == '/usr/tin/local'
+    >>> kd._find_in_paths('tin', [], history_paths) == '/usr/tin/local'
     True
-    >>> kd._find_in_paths('ti', [], history) == '/usr/tin/local'
+    >>> kd._find_in_paths('ti', [], history_paths) == '/usr/tin/local'
     True
-    >>> not kd._find_in_paths('sin', [], history)
+    >>> not kd._find_in_paths('sin', [], history_paths)
     True
-    >>> kd._find_in_paths('in/', ['0'], history) == '/usr/tin/local'
+    >>> kd._find_in_paths('in/', ['0'], history_paths) == '/usr/tin/local'
     True
-    >>> kd._find_in_paths('in/v', [], history) == '/usr/bin/vocal'
+    >>> kd._find_in_paths('in/v', [], history_paths) == '/usr/bin/vocal'
     True
-    >>> kd._find_in_paths('usr', [], history)
+    >>> kd._find_in_paths('usr', [], history_paths)
     Traceback (most recent call last):
     ...
     TryAgain: Too many possiblities
          0: /usr/bin
          1: /usr/local/bin
-    >>> kd._find_in_paths('usr', ['3'], history) == '/usr/bin/vocal'
+    >>> kd._find_in_paths('usr', ['3'], history_paths) == '/usr/bin/vocal'
     True
 
 
@@ -165,8 +166,8 @@ Python dirs
 
 kd has a setup.py
 
-    >>> project_dir = os.path.dirname(kd.__file__)
-    >>> code_dir = os.path.join(project_dir, 'kd')
+    >>> project_dir = kd.paths.path(os.path.dirname(kd.__file__))
+    >>> code_dir = project_dir / 'kd'
     >>> possibles = [code_dir, project_dir]
     >>> kd.find_python_root_dir(possibles) == project_dir
     True

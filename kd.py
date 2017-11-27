@@ -300,6 +300,8 @@ def find_path_to_item(item):
         return p[-1] == '/'
 
     if user_says_its_a_directory(item):
+        if item[0] == '/':
+            return paths.path(item)
         return item.rstrip('/')
     path_to_item = paths.path(item)
     if path_to_item.isdir():
@@ -398,7 +400,11 @@ def unused(args):
     raise SystemExit(os.EX_OK)
 
 
-def parse_args(methods):
+def parse_args():
+    return parse_my_args(globals())
+
+
+def parse_my_args(methods):
     """Get the arguments from the command line.
 
     Insist on at least one empty string"""
@@ -536,19 +542,16 @@ def include_new_path_in_items(history_items, new_path):
     """Add the given path to the existing history
 
     Or update it if already present"""
-    is_new_path = True
-    result = []
     new_time = timings.now()
+    found = False
     for old_rank, old_path, old_time in history_items:
-        if new_path == old_path:
-            result.append((increment(old_rank), new_path, new_time))
-            is_new_path = False
+        if old_path == new_path:
+            yield increment(old_rank), old_path, new_time
+            found = True
         else:
-            result.append((old_rank, old_path, old_time))
-    if is_new_path:
-        new_rank = 1
-        result.append((new_rank, new_path, new_time))
-    return sorted(result)
+            yield old_rank, old_path, old_time
+    if not found:
+        yield 1, paths.path(new_path), new_time
 
 
 def add(args):
@@ -667,17 +670,17 @@ def _find_in_paths(item, prefixes, frecent_paths):
         return False
 
     matchers = [
-        lambda path: item == path,
-        lambda path: item == path.basename(),
-        lambda path: globbed(path.basename()),
-        lambda path: item in path.split(os.path.sep),
-        #  (lambda *is* necessary (to stop E0601 using path before assignment))
+        lambda p: item == p,
+        lambda p: item == p.basename(),
+        lambda p: globbed(p.basename()),
+        lambda p: item in p.split(os.path.sep),
         #  pylint: disable=unnecessary-lambda
-        lambda path: glob_match(path),
-        lambda path: double_globbed(path.basename()),
+        #  (lambda *is* necessary (stops E0601: "using path before assign..."))
+        lambda p: glob_match(p),
+        lambda p: double_globbed(p.basename()),
     ]
     if os.path.sep in item:
-        matchers.insert(0, lambda path: item in path)
+        matchers.insert(0, lambda p: item in p)
     i = take_first_integer(prefixes)
     for match in matchers:
         matched = [_ for _ in frecent_paths if match(_)]
@@ -780,12 +783,13 @@ def main():
     """Show a directory from the command line arguments (or some derivative)"""
     # pylint: disable=too-many-branches
     # Of course there are too many branches - it's an event dispatcher
+    not_EX_OK = 1
     try:
-        args = parse_args(globals())
+        args = parse_args()
         if args.unused:
             pass
         status = show_path_to_item(args.directory, args.prefixes)
-        return os.EX_OK if status else not os.EX_OK
+        return os.EX_OK if status else not_EX_OK
     except (bdb.BdbQuit, SystemExit):
         return os.EX_OK
     except AttributeError as e:
@@ -801,10 +805,10 @@ def main():
                 print(lines[0])
                 return os.EX_OK
         print('Try again:', e)
-        return not os.EX_OK
+        return not_EX_OK
     except ToDo as e:
         print('Error:', e)
-        return not os.EX_OK
+        return not_EX_OK
 
 
 if __name__ == '__main__':
