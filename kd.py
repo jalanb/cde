@@ -537,19 +537,16 @@ def include_new_path_in_items(history_items, new_path):
     """Add the given path to the existing history
 
     Or update it if already present"""
-    is_new_path = True
-    result = []
     new_time = timings.now()
+    found = False
     for old_rank, old_path, old_time in history_items:
-        if new_path == old_path:
-            result.append((increment(old_rank), new_path, new_time))
-            is_new_path = False
+        if old_path == new_path:
+            yield increment(old_rank), old_path, new_time
+            found = True
         else:
-            result.append((old_rank, old_path, old_time))
-    if is_new_path:
-        new_rank = 1
-        result.append((new_rank, new_path, new_time))
-    return sorted(result)
+            yield old_rank, old_path, old_time
+    if not found:
+        yield 1, paths.path(new_path), new_time
 
 
 def add(args):
@@ -668,17 +665,17 @@ def _find_in_paths(item, prefixes, frecent_paths):
         return False
 
     matchers = [
-        lambda path: item == path,
-        lambda path: item == path.basename(),
-        lambda path: globbed(path.basename()),
-        lambda path: item in path.split(os.path.sep),
-        #  (lambda *is* necessary (to stop E0601 using path before assignment))
+        lambda p: item == p,
+        lambda p: item == p.basename(),
+        lambda p: globbed(p.basename()),
+        lambda p: item in p.split(os.path.sep),
         #  pylint: disable=unnecessary-lambda
-        lambda path: glob_match(path),
-        lambda path: double_globbed(path.basename()),
+        #  (lambda *is* necessary (stops E0601: "using path before assign..."))
+        lambda p: glob_match(p),
+        lambda p: double_globbed(p.basename()),
     ]
     if os.path.sep in item:
-        matchers.insert(0, lambda path: item in path)
+        matchers.insert(0, lambda p: item in p)
     i = take_first_integer(prefixes)
     for match in matchers:
         matched = [_ for _ in frecent_paths if match(_)]
