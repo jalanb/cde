@@ -494,17 +494,12 @@ def read_history():
 
 
 def sort_history(history):
-    def compare(one, two):
-        rank1, path1, time1 = one
-        rank2, path2, time2 = two
-        diff = cmp(int(rank1), int(rank2))
-        if diff:
-            return diff
-        diff = cmp(float(time2), float(time1))
-        if diff:
-            return -diff
-        return cmp(path1, path2)
-    return sorted(history, cmp=compare)
+
+    def as_key(item):
+        rank, path, time = item
+        return (rank, time, path)
+
+    return sorted(history, key=as_key)
 
 
 def sorted_history():
