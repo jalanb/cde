@@ -73,7 +73,7 @@ import timings
 
 
 try:
-    from dotsite import paths
+    from pysyte import paths
 except ImportError:
     pass  # assuming this will only happen from setup.py
 
