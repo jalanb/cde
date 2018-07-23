@@ -49,7 +49,7 @@ $ cd /; cde /u loc bi; pwd
 ```
 
 `cde` can be [abbreviated](https://github.com/jalanb/kd/blob/v0.4.5/cd.sh#L19) to just `c`, e.g.
-```
+```shell
 $ c ..; pwd
 /usr/local
 ```
@@ -65,8 +65,7 @@ $ ...; pwd
 args
 ----
 
-(If `c` doesn't understand args they get passed on to `cd`, so options like `-@` might still work.)
-
+```shell
 $ cd /usr/local/bin/..
 $ pwd
 /usr/local
