@@ -1,10 +1,16 @@
 cde
 ===
 
-`cde` is a shell function that uses `cd.py` (a more [python](https://github.com/jalanb/kd/blob/v0.5.0/cd.sh#L101)onic version of [Bash](https://github.com/jalanb/kd/blob/v0.5.0/cd.sh#L36)'s `cd` command) to find out how to get to a directory, but knows what to do once it gets there.
+`cde` is a shell function that needs a `cd.py` to find out how to get to a directory, but knows what to do once it gets there.
 
-`cd.py` knows where you are going because it knows where you've been, and what directory structures looked like when you were there the last time.
+`cd.py` knows where you are going because it knows where you've been, and what directory structures look like.
 
+Naming
+------
+
+In an older version of this project the shell function was called `kd`.
+
+`cde` could be an acronym for "cd evolved/extra/egg salad/extended", but really it's just easier than `kd` on a `qwerty` keyboard.
 
 Install
 =======
@@ -13,18 +19,18 @@ This package does *not* change the `cd` command, and trys not to hurt your syste
 
 We cool?
 
-OK, clone the repo, and source the bash functions
+OK, clone the repo, and source the bash functions:
 ```shell
 $ git clone https://github.com/jalanb/kd/kd.git
 $ . kd/cd.sh
 ```
 
-Add `. .../kd/cd.sh` to your `~/.bashrc`, or try the next repo.
+And add similar to your `bashrc` if needed.
 
 Usage
 =====
 
-You just got a bash function called `cde()` which is intended as a drop-in replacement for the `cd` command.
+You just added a bash function called `cde` which is intended as a drop-in replacement for the `cd` command.
 ```shell
 cde -h
 cd to a dir and react to it
@@ -36,25 +42,23 @@ cde [dirname [subdirname ...]]
 
 A dirname can abbreviate a path, e.g.
 ```shell
-$ cd /
-$ cde /u loc bi && pwd
+$ cd /; cd /usr/local/bin; pwd
 /usr/local/bin
-$ cd /
-$ cd /usr/local && pwd
+$ cd /; cde /u loc bi; pwd
+/usr/local/bin
+```
+
+`cde` can be [abbreviated](https://github.com/jalanb/kd/blob/v0.5.0/cd.sh#L19) to just `c`, e.g.
+```
+$ c ..; pwd
 /usr/local
 ```
 
-`cde` can be abbreviated to just `c`, e.g.
-```
-$ c .. && pwd
-/usr
-```
-
-And sometimes can be abbreviated away entirely, e.g.
+And sometimes can be [abbreviated](https://github.com/jalanb/kd/blob/v0.5.0/cd.sh#L90) away entirely, e.g.
 ```shell
-$ c /u l b && pwd
+$ c /u l b; pwd
 /usr/local/bin
-$ ... && pwd
+$ ...; pwd
 /usr
 ```
 
