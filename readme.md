@@ -65,64 +65,71 @@ $ ...; pwd
 args
 ----
 
-```shell
-$ cd /usr/local/bin/..
-$ pwd
-/usr/local
-$ cd bin; pwd
-/usr/local/bin
-$ cd -
-$ c b; pwd
-/usr/local/bin
-```
-
 The first argument to `c` is a `dirname`, further arguments are `subdirnames`. This makes it easier to leave out all those annoying "/"s, e.g.
-```
-$ cd /
-$ c usr lo b; pwd
+```shell
+$ cd /usr/local/bin; pwd
+/usr/local/bin
+$ c /usr local bin; pwd
 /usr/local/bin
 ```
 
-Although full paths work too, e.g.
+A full path to a directory works as a `dirname`
 ```shell
 $ c /usr/local/bin; pwd
 /usr/local/bin
 ```
-If you give `c` a path to a file, it will go to the parent directory (very handy with "/path/to/file.txt" in the clipboard)
+
+A full path to a file can also be a dirname `dirname` (`c` will use to the parent directory (very handy with "/path/to/file.txt" in the clipboard))
 ```shell
 $ c /usr/local/bin/python; pwd
 /usr/local/bin
 ```
 
-First argument is a directory, subsequent arguments are prefixes of sub-directories. For example:
+A globbed path to a file or directory can also be a `dirname` (`c` will take the first match). This can be handy when tab-completion only finds part of a filename. For example, `/bin/l*` matches `/bin/ls`, which is an existing file, whose parent is `/bin`. 
+```shell
+$ c /bin/l*; pwd
+/bin
+```
 
-    $ [kd](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L698) /usr/local bi
+A "dirname" can be a short name for a directory, and a "subdirname" is a prefix for a sub-directory. Names can be shortened as much as you like while keeping them unique
 
-is equivalent to
+```shell
+$ cd /usr/local/bin; pwd
+/usr/local/bin
+$ c /u lo b; pwd
+/usr/local/bin
+```
 
-    $ cd /usr/local/bin
+If you abbreviate too much, `c` will refuse to guess, unless told to
+```shell
+$ c /u l
+Try again: Too many possiblities
+	 0: /usr/lib
+	 1: /usr/libexec
+	 2: /usr/local
+$ c -2 /u l; pwd
+/usr/lbexec
+```
 
-Or first argument is ([stem](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L624) of) a [directory](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L302) you have been to. For example, given that we have kd'd to it already, you can get back to /usr/local/bin (from anywhere else) by
+History
+-------
 
-    $ [kd](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L758) b
+`c` keeps a history of everywhere it has been to, and so a `dirname` can just use the old directory's name (not path). For example, given that we have `cde`'d to it already, we can get back to /usr/local/bin (from anywhere else) by simply
+```shell
+$ c b
+```
 
-Or first argument is a file (cd'ing to a file can be very handy in conjuction with copy-and-paste of filenames), for example
+If nothing matches then `c` [tries directories in $PATH which have matching executables](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L261). For example, this will give `/bin`:
 
-    $ [kd](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L758) /bin/ls
+```shell
+$ c python; pwd
+/usr/local/bin
+```
 
-is equivalent to
+Biases
+------
 
-    $ cd /bin
-
-Or the first argument is a stem of a directory/file. [kd](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L758).py [will add `*` on to such a stem](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L108), and cd [to whatever that matches](https://github.com/jalanb/kd/blob/v0.4.5/cd.sh#L30) (see below). For example, `/bin/l*` matches `/bin/ls`, which is an existing file, whose parent is `/bin`. This can be handy when tab-completion only finds part of a filename
-
-    $ [kd](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L310) /bin/l
-
-If nothing matches then it [tries directories in $PATH which have matching executables](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L261). For example, this will give `/bin`:
-
-    $ [kd](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L261) ls
-
-When looking for partial names kd will [look for each of these in turn](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L649), stopping as soon as it gets some match
+When looking for partial names `c` will [look for each of these in turn](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L649), stopping as soon as it gets some match
 
 1. directories with the same name
 2. directories that start with the given part

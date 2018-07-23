@@ -1,12 +1,12 @@
 #! /usr/bin/env python3
 """cd.py is a better cd
 
-Usage: cd.py [options] [items]
+Usage: cd.py [options] [dirname [subdirname ...]]
 
 Arguments:
     items are strings which indicate a path to a directory or file
-    The first item might be a full path
-    Second and other items are used to choose under that path
+    The dirname might be a full path to a directory
+    Any subdirnames are used to choose a sub-(sub-)directory under there.
 
 Options:
   -h, --help     show this help message and exit
@@ -85,7 +85,7 @@ class ToDo(NotImplementedError):
     pass
 
 
-class TryAgain(NotImplementedError):
+class TryAgain(ValueError):
     """Warnings raised by this script"""
     pass
 
@@ -162,16 +162,16 @@ def first_integer(items):
         return None
 
 
-def look_under_directory(path_to_directory, prefixes):
+def look_under_directory(path_to_directory, subdirnames):
     """Look under the given directory for matching sub-directories
 
-    Sub-directories match if they are prefixed with given prefixes
+    Sub-directories match if they are prefixed with given subdirnames
     If no sub-directories match, but a file matches
         then use the directory
     """
-    if not prefixes:
+    if not subdirnames:
         return [path_to_directory]
-    prefix, prefixes = prefixes[0], prefixes[1:]
+    prefix, subdirnames = subdirnames[0], subdirnames[1:]
     result = []
     matched_sub_directories = matching_sub_directories(
         path_to_directory, prefix)
@@ -182,9 +182,9 @@ def look_under_directory(path_to_directory, prefixes):
         if path_to_sub_directory.isdir():
             return [path_to_sub_directory]
         return []
-    i = first_integer(prefixes)
+    i = first_integer(subdirnames)
     for path_to_sub_directory in matched_sub_directories:
-        paths_under = look_under_directory(path_to_sub_directory, prefixes)
+        paths_under = look_under_directory(path_to_sub_directory, subdirnames)
         result.extend(paths_under)
     if not result:
         if i is not None:
@@ -198,15 +198,15 @@ def look_under_directory(path_to_directory, prefixes):
     return result
 
 
-def find_under_directory(path_to_directory, prefixes):
-    """Find one directory under path_to_directory, matching prefixes
+def find_under_directory(path_to_directory, subdirnames):
+    """Find one directory under path_to_directory, matching subdirnames
 
     Try any prefixed sub-directories
         then any prefixed files
 
     Can give None (no matches), or the match, or an Exception
     """
-    possibles = look_under_directory(path_to_directory, prefixes)
+    possibles = look_under_directory(path_to_directory, subdirnames)
     if not possibles:
         return None
     if len(possibles) == 1:
@@ -254,10 +254,10 @@ def too_many_possibles(possibles):
     raise TryAgain('Too many possiblities\n\t%s' % as_menu_string(possibles))
 
 
-def find_under_here(prefixes):
+def find_under_here(subdirnames):
     """Look for some other directories under current directory """
     try:
-        return find_under_directory(paths.here(), prefixes)
+        return find_under_directory(paths.here(), subdirnames)
     except OSError:
         return []
 
@@ -278,7 +278,7 @@ def find_in_environment_path(filename):
     return None
 
 
-def find_at_home(item, prefixes):
+def find_at_home(item, subdirnames):
     """Return the first directory under the home directory matching the item
 
     Match on sub-directories first, then files
@@ -287,9 +287,9 @@ def find_at_home(item, prefixes):
     >>> print(find_at_home('bin', []))
     /.../bin
     """
-    if item in prefixes:
-        return find_under_directory(paths.home(), prefixes)
-    return find_under_directory(paths.home(), [item] + prefixes)
+    if item in subdirnames:
+        return find_under_directory(paths.home(), subdirnames)
+    return find_under_directory(paths.home(), [item] + subdirnames)
 
 
 def find_path_to_item(item):
@@ -332,8 +332,8 @@ def previous_directory():
         return '~'
 
 
-def find_directory(item, prefixes):
-    """Find a relevant directory relative to the item, and using prefixes
+def find_directory(item, subdirnames):
+    """Find a relevant directory relative to the item, and using subdirnames
 
     item can be
         empty (use home directory)
@@ -341,41 +341,41 @@ def find_directory(item, prefixes):
 
     Return item if it is a directory,
         or its parent if it is a file
-        or one of its sub-directories (if they match prefixes)
+        or one of its sub-directories (if they match subdirnames)
         or a directory in $PATH
         or an item in history (if any)
         or a directory under $HOME
-    Otherwise look for prefixes as a partial match
+    Otherwise look for subdirnames as a partial match
     """
     try:
         path_to_item = find_path_to_item(item)
     except FoundParent:
         path_to_item = None
     if path_to_item:
-        if not prefixes:
+        if not subdirnames:
             return path_to_item
-        path_to_prefix = find_under_directory(path_to_item, prefixes)
+        path_to_prefix = find_under_directory(path_to_item, subdirnames)
         if path_to_prefix:
             return path_to_prefix
     else:
         if item:
-            args = [item] + prefixes
+            args = [item] + subdirnames
         else:
-            args = prefixes
+            args = subdirnames
         if args:
             path_to_item = find_under_here(args)
     if path_to_item:
         return path_to_item
-    path_to_item = find_in_history(item, prefixes)
+    path_to_item = find_in_history(item, subdirnames)
     if path_to_item:
         return path_to_item
     path_to_item = find_in_environment_path(item)
     if path_to_item:
         return path_to_item
-    path_to_item = find_at_home(item, prefixes)
+    path_to_item = find_at_home(item, subdirnames)
     if path_to_item:
         return path_to_item
-    raise ToDo('could not use %r as a directory' % ' '.join([item] + prefixes))
+    raise ToDo('could not use %r as a directory' % ' '.join([item] + subdirnames))
 
 
 def run_args(args, methods):
@@ -395,7 +395,7 @@ def version(_args):
 
 
 def unused(args):
-    used = ['-u', '--unused', args.directory] + args.prefixes
+    used = ['-u', '--unused', args.dirname] + args.subdirnames
     unused_args = [_ for _ in sys.argv[1:] if _ not in used]
     print(' '.join(unused_args))
     raise SystemExit(os.EX_OK)
@@ -415,7 +415,9 @@ def parse_my_args(methods):
     parser = argparse.ArgumentParser(
         description='Find a directory to cd to', usage=usage)
     pa = parser.add_argument
-    pa('-1', '--one', action='store_true', help='Only show one path')
+    pa('-1', '--first', action='store_true', help='Only show first path')
+    pa('-2', '--second', action='store_true', help='Only show second path')
+    pa('-3', '--third', action='store_true', help='Only show third path')
     pa('-a', '--add', action='store_true', help='add a path to history')
     pa('-d', '--delete', action='store_true', help='delete a path from history')  # noqa
     pa('-l', '--lost', action='store_true', help='show all non-existent paths in history')  # noqa
@@ -425,24 +427,24 @@ def parse_my_args(methods):
     pa('-t', '--test', action='store_true', help='test the script')
     pa('-u', '--unused', action='store_true', help='show unused args')  # noqa
     pa('-v', '--version', action='store_true', help='show version of the script')  # noqa
-    pa('directory', metavar='item', nargs='?', default='', help='(partial) directory name')  # noqa
-    pa('prefixes', nargs='*', help='(partial) sub directory names')
+    pa('dirname', metavar='item', nargs='?', default='', help='(partial) directory name')  # noqa
+    pa('subdirnames', nargs='*', help='(partial) sub directory names')
     args = parser.parse_args()
     run_args(args, methods)
-    args.directory = set_args_directory(args)
+    args.dirname = set_args_directory(args)
     return args
 
 
 def set_args_directory(args):
-    if not args.directory:
-        args.prefixes = []
+    if not args.dirname:
+        args.subdirnames = []
         if args.add:
             return '.'
         if not args.old:
             return paths.home()
-    if args.directory == '-':
+    if args.dirname == '-':
         return previous_directory()
-    return args.directory
+    return args.dirname
 
 
 def test(_args):
@@ -553,10 +555,10 @@ def include_new_path_in_items(history_items, new_path):
 def add(args):
     """Remember the given path for later use"""
     try:
-        arg_path = paths.path(args.directory)
+        path_to_dirname = paths.path(args.dirname)
     except OSError as e:
         raise SystemExit(str(e))
-    add_path(arg_path)
+    add_path(path_to_dirname)
 
 
 def add_path(path_to_add):
@@ -576,10 +578,10 @@ def write_paths(paths_to_remember):
 
 def makedir(args):
     """Make the directory in the args unless it exists"""
-    arg_path = paths.path(args.directory)
-    if arg_path.isdir():
+    path_to_dirname = paths.path(args.dirname)
+    if path_to_dirname.isdir():
         return True
-    return arg_path.make_directory_exist()
+    return path_to_dirname.make_directory_exist()
 
 
 def lost(_args=None):
@@ -628,8 +630,8 @@ def exclude_path_from_items(history_items, path_to_item):
     return new_items, changed
 
 
-def find_in_history(item, prefixes):
-    """If the given item and prefixes are in the history return that path
+def find_in_history(item, subdirnames):
+    """If the given item and subdirnames are in the history return that path
 
     Otherwise None
     """
@@ -637,10 +639,10 @@ def find_in_history(item, prefixes):
     try:
         return frecent_paths[int(item) - 1]
     except ValueError:
-        return _find_in_paths(item, prefixes, frecent_paths)
+        return _find_in_paths(item, subdirnames, frecent_paths)
 
 
-def _find_in_paths(item, prefixes, frecent_paths):
+def _find_in_paths(item, subdirnames, frecent_paths):
     """Get the first of those paths which meets one of the criteria:
 
     1. has any substring that matches (as long as the item contains a "/")
@@ -677,7 +679,7 @@ def _find_in_paths(item, prefixes, frecent_paths):
     ]
     if os.path.sep in item:
         matchers.insert(0, lambda p: item in p)
-    i = take_first_integer(prefixes)
+    i = take_first_integer(subdirnames)
     for match in matchers:
         matched = [_ for _ in frecent_paths if match(_)]
         if not matched:
@@ -685,15 +687,15 @@ def _find_in_paths(item, prefixes, frecent_paths):
         if len(matched) == 1:
             if i:
                 raise RangeError(i, matched)
-            return find_under_directory(matched[0], prefixes)
+            return find_under_directory(matched[0], subdirnames)
         if i is not None:
             try:
                 result = matched[i]
             except IndexError:
                 raise RangeError(i, matched)
-            return find_under_directory(result, prefixes)
+            return find_under_directory(result, subdirnames)
         elif len(matched) > 1:
-            found = [find_under_directory(_, prefixes) for _ in matched]
+            found = [find_under_directory(_, subdirnames) for _ in matched]
             found = [_ for _ in found if _]
             unique = set(found)
             if len(unique) == 1:
@@ -702,25 +704,25 @@ def _find_in_paths(item, prefixes, frecent_paths):
         raise TryAgain('Too many possiblities\n\t%s' % as_menu_string(matched))
 
 
-def show_path_to_historical_item(item, prefixes):
+def show_path_to_historical_item(item, subdirnames):
     """Get a path for the given item from history and show it"""
-    path_to_item = find_in_history(item, prefixes)
+    path_to_item = find_in_history(item, subdirnames)
     show_found_item(path_to_item)
 
 
-def delete_path_to_historical_item(item, prefixes):
+def delete_path_to_historical_item(item, subdirnames):
     """Get a path for the given item from history and remove it from history"""
-    path_to_item = find_in_history(item, prefixes)
+    path_to_item = find_in_history(item, subdirnames)
     delete_found_item(path_to_item)
 
 
-def show_path_to_item(item, prefixes):
+def show_path_to_item(item, subdirnames):
     """Get a path for the given item and show it
 
     >>> _ = show_path_to_item('/', ['us', 'lo'])
     /usr/local
     """
-    path_to_item = find_directory(item, prefixes)
+    path_to_item = find_directory(item, subdirnames)
     return show_found_item(path_to_item)
 
 
@@ -761,16 +763,16 @@ def show_paths():
 
 
 def old(args):
-    if args.directory:
-        show_path_to_historical_item(args.directory, args.prefixes)
+    if args.dirname:
+        show_path_to_historical_item(args.dirname, args.subdirnames)
     else:
         show_paths()
     raise SystemExit(os.EX_OK)
 
 
 def delete(args):
-    if args.directory:
-        delete_path_to_historical_item(args.directory, args.prefixes)
+    if args.dirname:
+        delete_path_to_historical_item(args.dirname, args.subdirnames)
     else:
         show_paths()
 
@@ -784,7 +786,7 @@ def main():
         args = parse_args()
         if args.unused:
             pass
-        status = show_path_to_item(args.directory, args.prefixes)
+        status = show_path_to_item(args.dirname, args.subdirnames)
         return os.EX_OK if status else not_EX_OK
     except (bdb.BdbQuit, SystemExit):
         return os.EX_OK
@@ -793,9 +795,9 @@ def main():
         if go_away not in str(e):
             raise
     except TryAgain as e:
-        if args.one:
+        if args.first:
             lines = [_.split(':')[-1].strip()
-                     for _ in e.message.splitlines()
+                     for _ in str(e).splitlines()
                      if '0:' in _]
             if lines:
                 print(lines[0])

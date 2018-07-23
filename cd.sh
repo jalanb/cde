@@ -99,9 +99,6 @@ cdupp () {
 
 py_cd () {
     local __doc__="""Ask cd.py for a destination"""
-    local _debug=
-    [[ $1 == "-U" ]] && _debug=1
-    [[ $_debug == 1 ]] && set -x
     local _cd_dir=$(dirname $(readlink -f $BASH_SOURCE))
     local _cd_script=$_cd_dir/cd.py
     local _cd_result=1
@@ -109,8 +106,11 @@ py_cd () {
     [[ $CD_PATH_ONLY == 1 ]] && _cd_options=--one
     local _python=$(head -n 1 $_cd_script | cut -d' ' -f3)
     local _interpreter=$_python
-    [[ $_debug == 1 ]] && _interpreter=pudb
-    if ! destination=$(PYTHONPATH=$_cd_dir $_interpreter $_cd_script $_cd_options "$@" 2>&1)
+    if [[ -n $PUDB_CD ]]; then
+        set -x
+        PYTHONPATH=$_cd_dir pudb $_cd_script $_cd_options "$@"
+        set +x
+    elif ! destination=$(PYTHONPATH=$_cd_dir $_interpreter $_cd_script $_cd_options "$@" 2>&1)
     then
         echo "$destination"
     elif [[ "$@" =~ -[lp] ]]; then
@@ -124,9 +124,10 @@ py_cd () {
             echo "cd ($destination ->) $real_destination"
             destination="$real_destination"
         else
-            [[ $1 =~ '--' ]] && shift
-            if [[ "$destination" != $(readlink -f "$1") && $1 != "-" ]]
-            then
+            while [[ $1 =~ ^- ]]; do
+                shift
+            done
+            if [[ "$destination" != $(readlink -f "$1") ]]; then
                 [[ -n $CD_QUIET ]] || echo "cd $destination"
             fi
         fi
@@ -138,13 +139,13 @@ py_cd () {
         _cd_result=0
     fi
     unset destination
-    [[ $_debug == 1 ]] && set +x
+    PUDB_CD=
     return $_cd_result
 }
 
 py_cg () {
     local __doc__="Debug the py_cd function and script"
-    py_cd -U "$@"
+    PUDB_CD=1 py_cd "$@"
 }
 
 py_pp () {
@@ -165,10 +166,11 @@ cduppp () {
 
 _active () {
     local __doc__"""Whether the $ACTIVATE script is in same dir as current python or virtualenv"""
-    local _activate_dir=$(dirname_ $ACTIVATE)
-    local _python_dir=$(dirname_ $(readlink -f $(command -v python)))
+    local _activate_dir=$(_dirnames $ACTIVATE)
+    local _python_dir=$(_dirnames $(readlink -f $(command -v python)))
+    same_path $_activate_dir $_python_dir && return 0
     local _venv_dir="$VIRTUAL_ENV/bin"
-    [[ $_activate_dir == $_python_dir ]] || [[ $_activate_dir == $_venv_dir ]]
+    same_path $_activate_dir $_venv_dir
 }
 
 _pre_cd () {
@@ -225,6 +227,17 @@ _activate () {
     # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
     hash -d python ipython pip pudb >/dev/null 2>&1
     . $ACTIVATE
+}
+
+_dirnames () {
+    local __doc__="""show dirnames for all args that are paths"""
+    local _result=1
+    for _arg in "$@"; do
+        [[ -e "$_arg" ]] || continue
+        dirname "$_arg"
+        _result=0
+    done
+    return $_result
 }
 
 _here_bin () {
