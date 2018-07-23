@@ -1,63 +1,5 @@
 #! /usr/bin/env python3
-"""cd.py is a better cd
-
-Usage: cd.py [options] [dirname [subdirname ...]]
-
-Arguments:
-    items are strings which indicate a path to a directory or file
-    The dirname might be a full path to a directory
-    Any subdirnames are used to choose a sub-(sub-)directory under there.
-
-Options:
-  -h, --help     show this help message and exit
-  -a, --add      add a path to history
-  -d, --delete   delete a path from history
-  -m, --makedir  make a directory
-  -l, --lost     show all non-existent paths in history
-  -p, --purge    remove all non-existent paths from history
-  -o, --old      look for paths in history
-  -t, --test     test the script
-  -v, --version  show version of the script
-
-
-
-Explanation:
-
-It gets a close match to a directory from command line arguments
-    Then prints that to stdout
-    which allows a usage in bash like
-        $ cd $(python cd.py /usr local bin)
-    or
-        $ cd $(python cd.py /bin/ls)
-
-First argument is a directory
-    subsequent arguments are prefixes of sub-directories
-    For example:
-        $ python cd.py /usr/local bi
-        /usr/local/bin
-
-Or first argument is a file
-    $ python cd.py /bin/ls
-    /bin
-
-Or first argument is a stem of a directory/file
-    cd.py will add * on to such a stem,
-    and will always find directories first,
-        looking for files only if there are no such directories
-    $ python cd.py /bin/l
-    /bin
-
-Or first argument is part of a directory that cd.py has seen before
-    "part of" means the name or
-    the start of the name or
-    the name of a parent or
-    the start of a name of a parent
-    (or any part of the full path if you include a "/")
-
-If no matches then give directories in $PATH which have matching executables
-    $ python cd.py ls
-    /bin
-"""
+"""cd.py knows where you are going because it knows where you've been"""
 
 
 from __future__ import print_function
@@ -409,15 +351,12 @@ def parse_my_args(methods):
     """Get the arguments from the command line.
 
     Insist on at least one empty string"""
-    usage = '''usage: cd.py directory prefix ...
-
-    %s''' % __doc__
-    parser = argparse.ArgumentParser(
-        description='Find a directory to cd to', usage=usage)
+    usage = '%(prog)s [dirname [subdirname ...]'
+    parser = argparse.ArgumentParser(description=__doc__, usage=usage)
     pa = parser.add_argument
-    pa('-1', '--first', action='store_true', help='Only show first path')
-    pa('-2', '--second', action='store_true', help='Only show second path')
-    pa('-3', '--third', action='store_true', help='Only show third path')
+    pa('-0', '--first', action='store_true', help='Only show first path')
+    pa('-1', '--second', action='store_true', help='Only show second path')
+    pa('-2', '--third', action='store_true', help='Only show third path')
     pa('-a', '--add', action='store_true', help='add a path to history')
     pa('-d', '--delete', action='store_true', help='delete a path from history')  # noqa
     pa('-l', '--lost', action='store_true', help='show all non-existent paths in history')  # noqa
@@ -430,6 +369,14 @@ def parse_my_args(methods):
     pa('dirname', metavar='item', nargs='?', default='', help='(partial) directory name')  # noqa
     pa('subdirnames', nargs='*', help='(partial) sub directory names')
     args = parser.parse_args()
+    args.index = None
+    args.index = None
+    if args.first:
+        args.index = 0
+    if args.second:
+        args.index = 1
+    if args.third:
+        args.index = 2
     run_args(args, methods)
     args.dirname = set_args_directory(args)
     return args
@@ -795,10 +742,10 @@ def main():
         if go_away not in str(e):
             raise
     except TryAgain as e:
-        if args.first:
-            lines = [_.split(':')[-1].strip()
-                     for _ in str(e).splitlines()
-                     if '0:' in _]
+        if args.index is not None:
+            separator = '%d:' % args.index
+            seperable = [l for l in str(e).splitlines() if separator in l]
+            lines = [s.split(separator)[-1].strip() for s in seperable]
             if lines:
                 print(lines[0])
                 return os.EX_OK

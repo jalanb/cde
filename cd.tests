@@ -16,14 +16,14 @@ We allow more than two args on command line
 
     >>> sys.argv = ['cd.py', 'start', 'here', 'or', 'there']
     >>> args = cd.parse_args()
-    >>> args.directory == 'start' and args.prefixes == ['here', 'or', 'there']
+    >>> args.dirname == 'start' and args.subdirnames == ['here', 'or', 'there']
     True
 
 And no args at all (use home directory)
 
     >>> sys.argv = ['cd.py']
     >>> args = cd.parse_args()
-    >>> args.directory == os.path.expanduser('~') and not args.prefixes
+    >>> args.dirname == os.path.expanduser('~') and not args.subdirnames
     True
 
 find_directory()

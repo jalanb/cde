@@ -2,7 +2,7 @@ cd is a cd replacer
 ===================
 
     >>> import cd
-    >>> assert cd.__doc__.splitlines()[0] == 'cd.py is a better cd'
+    >>> assert cd.__doc__.startswith('cd.py knows where you are going')
 
 More modules for testing
 ------------------------
@@ -21,13 +21,13 @@ On the command line we expect two arguments:
 
     >>> sys.argv = ['cd.py', 'start', 'here']
     >>> args = cd.parse_args()
-    >>> assert args.directory == 'start' and args.prefixes == ['here']
+    >>> assert args.dirname == 'start' and args.subdirnames == ['here']
 
 No prefixes is fine too
 
     >>> sys.argv = ['cd.py', 'start']
     >>> args = cd.parse_args()
-    >>> assert args.directory == 'start' and args.prefixes == []
+    >>> assert args.dirname == 'start' and args.subdirnames == []
 
 
 Finding sub-directories
@@ -83,7 +83,7 @@ cd can also remember a list of paths
 
     >>> assert cd._path_to_history().endswith('cd/history')
     >>> class Args:
-    ...     directory = cd.__file__
+    ...     dirname = cd.__file__
     >>> cd.add(Args())
     >>> stored = False
     >>> for _rank, path, _time in cd.read_history():

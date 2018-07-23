@@ -32,10 +32,13 @@ Usage
 
 You just added a bash function called `cde` which is intended as a drop-in replacement for the `cd` command.
 ```shell
-cde -h
+$ cde -h
 cd to a dir and react to it
 
 cde [dirname [subdirname ...]]
+
+$ cde /usr/local/bin; pwd
+/usr/local/bin
 ```
 
 (Examples will work depending on system layout, please allow reasonable defaults, and no history yet)
@@ -79,19 +82,19 @@ $ c /usr/local/bin; pwd
 /usr/local/bin
 ```
 
-A full path to a file can also be a dirname `dirname` (`c` will use to the parent directory (very handy with "/path/to/file.txt" in the clipboard))
+A full path to a file can also be a dirname `dirname` (`c` will use the parent directory).
 ```shell
 $ c /usr/local/bin/python; pwd
 /usr/local/bin
 ```
 
-A globbed path to a file or directory can also be a `dirname` (`c` will take the first match). This can be handy when tab-completion only finds part of a filename. For example, `/bin/l*` matches `/bin/ls`, which is an existing file, whose parent is `/bin`. 
+A globbed path to a file or directory can also be a `dirname` (`c` will take the first match). For example, `/bin/l*` matches `/bin/ls`, which is an existing file, whose parent is `/bin`, so
 ```shell
 $ c /bin/l*; pwd
 /bin
 ```
 
-A "dirname" can be a short name for a directory, and a "subdirname" is a prefix for a sub-directory. Names can be shortened as much as you like while keeping them unique
+A "dirname" can be a short name for a directory, and a "subdirname" can be a prefix for a sub-directory. Names can be shortened as much as you like while keeping them unique
 
 ```shell
 $ cd /usr/local/bin; pwd
@@ -107,7 +110,7 @@ Try again: Too many possiblities
 	 0: /usr/lib
 	 1: /usr/libexec
 	 2: /usr/local
-$ c -2 /u l; pwd
+$ c -1 /u l; pwd
 /usr/lbexec
 ```
 
