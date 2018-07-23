@@ -87,6 +87,9 @@ cdup () {
     done
     cde .. "$@"
 }
+alias ..=cdup
+alias ...="cdup 2"
+alias ....="cdup 3"
 # xxxxx
 
 cdupp () {
@@ -183,7 +186,6 @@ cde_help () {
 _here_ls () {
     ls 2> ~/bash/null
 }
-
 
 _post_cd () {
     local _path=$(~/jab/bin/short_dir $PWD)
