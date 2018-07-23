@@ -1,1 +1,1 @@
-kd is a smarter cd command. It knows where you're going, because it knows where you've been and is written in Python for any contributions.
+cd_py is a smarter cd command. It knows where you're going, because it knows where you've been.

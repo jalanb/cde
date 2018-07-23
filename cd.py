@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
-"""kd is a better cd
+"""cd.py is a better cd
 
-Usage: kd [options] [items]
+Usage: cd.py [options] [items]
 
 Arguments:
     items are strings which indicate a path to a directory or file
@@ -26,28 +26,28 @@ Explanation:
 It gets a close match to a directory from command line arguments
     Then prints that to stdout
     which allows a usage in bash like
-        $ cd $(python kd.py /usr local bin)
+        $ cd $(python cd.py /usr local bin)
     or
-        $ cd $(python kd.py /bin/ls)
+        $ cd $(python cd.py /bin/ls)
 
 First argument is a directory
     subsequent arguments are prefixes of sub-directories
     For example:
-        $ python kd.py /usr/local bi
+        $ python cd.py /usr/local bi
         /usr/local/bin
 
 Or first argument is a file
-    $ python kd.py /bin/ls
+    $ python cd.py /bin/ls
     /bin
 
 Or first argument is a stem of a directory/file
-    kd.py will add * on to such a stem,
+    cd.py will add * on to such a stem,
     and will always find directories first,
         looking for files only if there are no such directories
-    $ python kd.py /bin/l
+    $ python cd.py /bin/l
     /bin
 
-Or first argument is part of a directory that kd has seen before
+Or first argument is part of a directory that cd.py has seen before
     "part of" means the name or
     the start of the name or
     the name of a parent or
@@ -55,7 +55,7 @@ Or first argument is part of a directory that kd has seen before
     (or any part of the full path if you include a "/")
 
 If no matches then give directories in $PATH which have matching executables
-    $ python kd.py ls
+    $ python cd.py ls
     /bin
 """
 
@@ -219,8 +219,8 @@ def find_python_root_dir(possibles):
 
     If all dirs have the same name, and one of them has setup.py
     then it is probably common Python project tree, like
-        /path/to/projects/kd
-        /path/to/projects/kd/kd
+        /path/to/projects/cd
+        /path/to/projects/cd/cd
     Or, if all dirs are the same,
         except that one has an egg suffix, like
             /path/to/dotsite/dotsite
@@ -236,6 +236,7 @@ def find_python_root_dir(possibles):
     eggless = {paths.path(p.replace('.egg-info', '')) for p in possibles}
     if len(eggless) == 1:
         return eggless.pop()
+    return None
 
 
 def too_many_possibles(possibles):
@@ -389,7 +390,7 @@ def run_args(args, methods):
 
 def version(_args):
     """Show version of the script"""
-    print('kd %s' % __version__)
+    print('cd.py %s' % __version__)
     raise SystemExit(os.EX_OK)
 
 
@@ -408,7 +409,7 @@ def parse_my_args(methods):
     """Get the arguments from the command line.
 
     Insist on at least one empty string"""
-    usage = '''usage: kd directory prefix ...
+    usage = '''usage: cd.py directory prefix ...
 
     %s''' % __doc__
     parser = argparse.ArgumentParser(
@@ -449,7 +450,7 @@ def test(_args):
 
     Tell any bash-runners not to use any output by saying "Error" first
 
-    >>> 'kd' in __file__
+    >>> 'cd.py' in __file__
     True
     """
     stem = paths.path(__file__).namebase
@@ -738,7 +739,7 @@ def delete_found_item(path_to_item):
         rewrite_history_without_path(path_to_item)
 
 
-def kd(string):
+def cd(string):
 
     def chdir_found_item(path_to_item):
         os.chdir(path_to_item)
