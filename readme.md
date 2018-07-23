@@ -48,13 +48,13 @@ $ cd /; cde /u loc bi; pwd
 /usr/local/bin
 ```
 
-`cde` can be [abbreviated](https://github.com/jalanb/kd/blob/v0.5.0/cd.sh#L19) to just `c`, e.g.
+`cde` can be [abbreviated](https://github.com/jalanb/kd/blob/v0.4.5/cd.sh#L19) to just `c`, e.g.
 ```
 $ c ..; pwd
 /usr/local
 ```
 
-And sometimes can be [abbreviated](https://github.com/jalanb/kd/blob/v0.5.0/cd.sh#L90) away entirely, e.g.
+And sometimes can be [abbreviated](https://github.com/jalanb/kd/blob/v0.4.5/cd.sh#L90) away entirely, e.g.
 ```shell
 $ c /u l b; pwd
 /usr/local/bin
@@ -97,33 +97,33 @@ $ c /usr/local/bin/python; pwd
 
 First argument is a directory, subsequent arguments are prefixes of sub-directories. For example:
 
-    $ [kd](https://github.com/jalanb/kd/blob/v0.5.0/cd.py#L698) /usr/local bi
+    $ [kd](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L698) /usr/local bi
 
 is equivalent to
 
     $ cd /usr/local/bin
 
-Or first argument is ([stem](https://github.com/jalanb/kd/blob/v0.5.0/cd.py#L624) of) a [directory](https://github.com/jalanb/kd/blob/v0.5.0/cd.py#L302) you have been to. For example, given that we have kd'd to it already, you can get back to /usr/local/bin (from anywhere else) by
+Or first argument is ([stem](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L624) of) a [directory](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L302) you have been to. For example, given that we have kd'd to it already, you can get back to /usr/local/bin (from anywhere else) by
 
-    $ [kd](https://github.com/jalanb/kd/blob/v0.5.0/cd.py#L758) b
+    $ [kd](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L758) b
 
 Or first argument is a file (cd'ing to a file can be very handy in conjuction with copy-and-paste of filenames), for example
 
-    $ [kd](https://github.com/jalanb/kd/blob/v0.5.0/cd.py#L758) /bin/ls
+    $ [kd](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L758) /bin/ls
 
 is equivalent to
 
     $ cd /bin
 
-Or the first argument is a stem of a directory/file. [kd](https://github.com/jalanb/kd/blob/v0.5.0/cd.py#L758).py [will add `*` on to such a stem](https://github.com/jalanb/kd/blob/v0.5.0/cd.py#L108), and cd [to whatever that matches](https://github.com/jalanb/kd/blob/v0.5.0/cd.sh#L30) (see below). For example, `/bin/l*` matches `/bin/ls`, which is an existing file, whose parent is `/bin`. This can be handy when tab-completion only finds part of a filename
+Or the first argument is a stem of a directory/file. [kd](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L758).py [will add `*` on to such a stem](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L108), and cd [to whatever that matches](https://github.com/jalanb/kd/blob/v0.4.5/cd.sh#L30) (see below). For example, `/bin/l*` matches `/bin/ls`, which is an existing file, whose parent is `/bin`. This can be handy when tab-completion only finds part of a filename
 
-    $ [kd](https://github.com/jalanb/kd/blob/v0.5.0/cd.py#L310) /bin/l
+    $ [kd](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L310) /bin/l
 
-If nothing matches then it [tries directories in $PATH which have matching executables](https://github.com/jalanb/kd/blob/v0.5.0/cd.py#L261). For example, this will give `/bin`:
+If nothing matches then it [tries directories in $PATH which have matching executables](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L261). For example, this will give `/bin`:
 
-    $ [kd](https://github.com/jalanb/kd/blob/v0.5.0/cd.py#L261) ls
+    $ [kd](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L261) ls
 
-When looking for partial names kd will [look for each of these in turn](https://github.com/jalanb/kd/blob/v0.5.0/cd.py#L649), stopping as soon as it gets some match
+When looking for partial names kd will [look for each of these in turn](https://github.com/jalanb/kd/blob/v0.4.5/cd.py#L649), stopping as soon as it gets some match
 
 1. directories with the same name
 2. directories that start with the given part
