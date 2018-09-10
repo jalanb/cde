@@ -235,7 +235,7 @@ same_path () {
 _activate () {
     # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
     hash -d python ipython pip pudb >/dev/null 2>&1
-    . $ACTIVATE
+    [[ -f $ACTIVATE ]] && . $ACTIVATE
 }
 
 _dirnames () {
@@ -389,26 +389,21 @@ any_python_scripts_here () {
 }
 
 find_activate_script () {
-    local _pwd=$(pwd)
-    local _project_activate=
-    local _local_activate=
-    for _activate_dir in .venv/bin bin .; do
-        local _activate=$_activate_dir/activate
-        local _project_root=$(git rev-parse --git-dir . 2>/dev/null)
-        [[ -n $_project_root ]] && _project_activate="$_project_root/$_activate"
-        if [[ -f $_project_activate ]]; then
-            ACTIVATE=$_project_activate
-        else:
-            _local_activate="$(readlink -f $_activate)"
-            [[ -f "$_local_activate" ]] && ACTIVATE=$_local_activate
+    local _activate_here=
+    local _dirs="venv/bin .venv/bin bin ."
+    local _top=$(git rev-parse --show-toplevel . 2>/dev/null | head -n 1)
+    [[ -d $_top ]] && _dirs="$_dirs $_top/venv/bin $_top/.venv/bin $_top/bin $top"
+    for _activate_bin in $_dirs; do
+        local _activate=$_activate_bin/activate
+        if [[ -f $_activate ]]; then
+            . $_activate
+            _activate_here="$(readlink -f $_activate)"
+            break
         fi
-        [[ -f $ACTIVATE ]] || continue
-        export ACTIVATE
-        return 0
     done
-    ACTIVATE=
+    [[ -f $_activate_here ]] && ACTIVATE="$_activate_here"
     export ACTIVATE
-    return 1
+    [[ -f $ACTIVATE ]]
 }
 
 [[ -n $WELCOME_BYE ]] && echo Bye from $(basename "$BASH_SOURCE") in $(dirname $(readlink -f "$BASH_SOURCE")) on $(hostname -f)
