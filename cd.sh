@@ -15,12 +15,6 @@ CD_PATH_ONLY=0
 export CDE_SOURCE=$(basename $BASH_SOURCE)
 
 # x
-
-c () {
-    local __doc__="""https://old.reddit.com/r/linux/comments/2k1qz5/post_something_that_makes_your_linux_life_easier/clhjky9/?context=1"""
-    cde "$@"
-}
-
 # _
 # xx
 # _x
