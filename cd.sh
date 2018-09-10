@@ -97,7 +97,7 @@ py_cd () {
     local _cd_script=$_cd_dir/cd.py
     local _cd_result=1
     local _cd_options=
-    [[ $CD_PATH_ONLY == 1 ]] && _cd_options=--one
+    [[ $CD_PATH_ONLY == 1 ]] && _cd_options=--first
     local _python=$(which python 2>/dev/null)
     [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
     # set +x
