@@ -75,7 +75,7 @@ cdup () {
         shift
     fi
     while true; do
-        _level=$( $level - 1 )
+        _level=$(( $_level - 1 ))
         [[ $_level -le 0 ]] && break
         cd ..
     done
@@ -159,7 +159,7 @@ cduppp () {
 # _xxxxxx
 
 _active () {
-    local __doc__"""Whether the $ACTIVATE script is in same dir as current python or virtualenv"""
+    local __doc__="""Whether the $ACTIVATE script is in same dir as current python or virtualenv"""
     local _activate_dir=$(_dirnames $ACTIVATE)
     local _python_dir=$(_dirnames $(readlink -f $(command -v python)))
     same_path $_activate_dir $_python_dir && return 0
