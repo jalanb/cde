@@ -308,6 +308,7 @@ _here_python () {
     local _dir=$(realpath .)
     local _dir_name=$(basename_ $_dir)
     python_project_here $_dir_name || return 0
+    prune_python_here
     activate_python_here
     local egg_info=${_dir_name}.egg-info
     if [[ -d $egg_info ]]; then
@@ -359,9 +360,17 @@ activate_python_here () {
     PYTHON_VERSION=$(python --version 2>&1 | head -n 1 | cut -d' ' -f 2)
 }
 
+prune_python_here () {
+    local _here=$(rlf .)
+    local _home=$(rlf $HOME)
+    [[ ${_here:0:${#_home}} == $_home ]] || return 1
+    [[ ${#_here} == ${#_home} ]] && return 1
+    rf -qpr
+    return 0
+}
+
 any_python_scripts_here () {
-    local _found=$(find . -type f -name "*.py" -exec echo 1 \; -quit)
-    [[ $_found == 1 ]] && rf -qpr
+    [[ $(find . -type f -name "*.py" -exec echo 1 \; -quit) == 1 ]]
 }
 
 find_activate_script () {
