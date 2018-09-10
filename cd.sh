@@ -64,9 +64,9 @@ cls () {
 cpp () {
     local __doc__="""Show where any args would cde to"""
     if [[ -n "$1" ]]; then
-        py_pp "$@"
+        py_cp "$@"
     else
-        py_pp .
+        py_cp .
     fi | grep -v -- '->'
 }
 
@@ -148,7 +148,7 @@ py_cg () {
     PUDB_CD=1 py_cd "$@"
 }
 
-py_pp () {
+py_cp () {
     local __doc__="Show the path that py_cd would go to"
     CD_QUIET=1 CD_PATH_ONLY=1 py_cd "$@";
     local _result=$?
