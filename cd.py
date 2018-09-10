@@ -14,10 +14,7 @@ import csv
 import timings
 
 
-try:
-    from pysyte import paths
-except ImportError:
-    pass  # assuming this will only happen from setup.py
+from pysyte import paths
 
 __version__ = '0.4.6'
 
