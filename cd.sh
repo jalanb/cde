@@ -105,9 +105,7 @@ py_cd () {
     [[ $_headline =~ python ]] && _python=
     local _python_cd="$_python $_cd_script $_cd_options"
     if [[ -n $PUDB_CD ]]; then
-        set -x
         PYTHONPATH=$_cd_dir pudb $_cd_script $_cd_options "$@"
-        set +x
     elif ! destination=$(PYTHONPATH=$_cd_dir $_python_cd "$@" 2>&1)
     then
         echo "$destination"
@@ -191,8 +189,6 @@ _post_cd () {
     local _path=$(~/jab/bin/short_dir $PWD)
     [[ $_path == "~" ]] && _path=HOME
     [[ $_path =~ "wwts" ]] && _path="${_path/wwts/dub dub t s}"
-    # set -x
-    # echo $_path
     local _tildless=${_path/~/home} # ; echo t $_tildless
     local _homele=$(echo $_tildless | sed -e "s:$HOME:home:")
     local _homeles=${_homele/home\//} # ; echo 1 $_homeles
@@ -200,19 +196,13 @@ _post_cd () {
     local _rootless=$(echo $_homeless | sed -e "s:^/:root :" )
     local _said=$(echo $_rootless | sed -e "s:/: :g")
     sai $_said
-    # echo "said $_said"
-    # set +x
     _here_show_todo && echo
-    # set -x
     _here_bash
     _here_bin
     _here_git
-    # set -x
     _here_python && _here_venv
-    # set +x
     [[ -n $1 ]] &&
     _here_ls && _here_clean
-    # set +x
 }
 # xxxxxxxxx
 
