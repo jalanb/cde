@@ -146,12 +146,18 @@ py_cg () {
 
 py_cp () {
     local __doc__="Show the path that py_cd would go to"
-    CD_QUIET=1 CD_PATH_ONLY=1 py_cd "$@";
+    CD_QUIET=1 CD_PATH_ONLY=1 py_cd "$@"
     local _result=$?
     CD_PATH_ONLY=0
     return $_result
 }
 # xxxxxx
+
+cde_ok () {
+    local __doc__="""Whether cde would go to a directory"""
+    [[ -z "$@" ]] && return 1
+    [[ -d $(py_cp "$@") ]]
+}
 
 cduppp () {
     local """cd up ... etc, you get the idea"""
