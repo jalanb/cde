@@ -98,21 +98,25 @@ py_cd () {
     local _cd_result=1
     local _cd_options=
     [[ $CD_PATH_ONLY == 1 ]] && _cd_options=--one
-    local _python=$(head -n 1 $_cd_script | cut -d' ' -f3)
-    local _interpreter=$_python
+    local _python=$(which python 2>/dev/null)
+    [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
+    # set +x
+    local _headline=$(head -n 1 $_cd_script)
+    [[ $_headline =~ python ]] && _python=
+    local _python_cd="$_python $_cd_script $_cd_options"
     if [[ -n $PUDB_CD ]]; then
         set -x
         PYTHONPATH=$_cd_dir pudb $_cd_script $_cd_options "$@"
         set +x
-    elif ! destination=$(PYTHONPATH=$_cd_dir $_interpreter $_cd_script $_cd_options "$@" 2>&1)
+    elif ! destination=$(PYTHONPATH=$_cd_dir $_python_cd "$@" 2>&1)
     then
         echo "$destination"
     elif [[ "$@" =~ -[lp] ]]; then
         echo "$destination"
     elif [[ $destination =~ ^[uU]sage ]]; then
-        PYTHONPATH=$_cd_dir $_python $_cd_script "$@"
+        PYTHONPATH=$_cd_dir $_python_cd --help
     else
-        local real_destination=$(PYTHONPATH=$_cd_dir $_python -c "import os; print(os.path.realpath('$destination'))")
+        local real_destination=$(python -c "import os; print(os.path.realpath('$destination'))")
         if [[ "$destination" != "$real_destination" ]]
         then
             echo "cd ($destination ->) $real_destination"
