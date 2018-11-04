@@ -17,8 +17,8 @@ setup(
     version=kd.__version__,
     url='https://github.com/jalanb/kd',
     license='MIT License',
-    author='J Alan Brogan',
-    author_email='kd@al-got-rhythm.net',
+    author="jalanb",
+    author_email='github@al-got-rhythm.net',
     description=kd.__doc__.splitlines()[0],
     platforms='any',
     classifiers=[

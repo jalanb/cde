@@ -21,20 +21,20 @@ export CDE_SOURCE=$(basename $BASH_SOURCE)
 # xxx
 
 cdd () {
-    local __doc__"""call cde() here"""
+    local __doc__"""cde here"""
     cde .
 }
 
-# rule 1: Always leave system commands alone
-# So this is called "cde", not "cd"
+# rule 1: Leave system commands alone
+# So this uses the next key up from "cd"
 
 cde () {
-    local __doc__="""cd to a dir and react to it"""
+    local __doc__="""find a dir and handle it"""
     [[ $1 == "-h" ]] && cde_help && return 0
-    _pre_cd
-    CD_QUIET=1 py_cd "$@" || return 1
+    cdpy_pre_
+    CD_QUIET=1 cdpy "$@" || return 1
     [[ -d . ]] || return 1
-    _post_cd
+    cdpy_post_
 }
 
 cdl () {
@@ -43,55 +43,7 @@ cdl () {
     ls
 }
 
-cls () {
-    local __doc__="clean, clear, ls"
-    clean
-    clear
-    if [[ -n "$@" ]]; then
-        ls "$@"
-    else
-        ls .
-        echo
-    fi
-}
-
-cpp () {
-    local __doc__="""Show where any args would cde to"""
-    if [[ -n "$1" ]]; then
-        py_cp "$@"
-    else
-        py_cp .
-    fi | grep -v -- '->'
-}
-
-# _xx
-# xxxx
-
-cdup () {
-    local __doc__="""cde up a few levels, 'cdup' goes up 1 level, 'cdup 2' goes up 2"""
-    local _level=1
-    if [[ $1 =~ [1-9] ]]; then
-        _level=$1
-        shift
-    fi
-    while true; do
-        _level=$(( $_level - 1 ))
-        [[ $_level -le 0 ]] && break
-        cd ..
-    done
-    cde .. "$@"
-}
-alias ..=cdup
-alias ...="cdup 2"
-alias ....="cdup 3"
-# xxxxx
-
-cdupp () {
-    local """cd up 2 levels"""
-    cdup 2 "$@"
-}
-
-py_cd () {
+cdpy () {
     local __doc__="""Ask cd.py for a destination"""
     local _cd_dir=$(dirname $(readlink -f $BASH_SOURCE))
     local _cd_script=$_cd_dir/cd.py
@@ -139,14 +91,68 @@ py_cd () {
     return $_cd_result
 }
 
+cls () {
+    local __doc__="clean, clear, ls"
+    clean
+    clear
+    if [[ -n "$@" ]]; then
+        l "$@"
+    else
+        l .
+        echo
+    fi
+}
+
+cpp () {
+    local __doc__="""Show where any args would cde to"""
+    if [[ -n "$1" ]]; then
+        py_cp "$@"
+    else
+        py_cp .
+    fi | grep -v -- '->'
+}
+
+# _xx
+# xxxx
+
+cdup () {
+    local __doc__="""cde up a few levels, 'cdup' goes up 1 level, 'cdup 2' goes up 2"""
+    local _level=1
+    if [[ $1 =~ [1-9] ]]; then
+        _level=$1
+        shift
+    fi
+    local _dir=$(readlink -f ..)
+    pushd >/dev/null 2>&1
+    while true; do
+        _level=$(( $_level - 1 ))
+        [[ $_level -le 0 ]] && break
+        cd ..
+        _dir=$(readlink -f .)
+    done
+    popd >/dev/null 2>&1
+    cde $_dir "$@"
+    pushd >/dev/null 2>&1
+}
+alias ..=cdup
+alias ...="cdup 2"
+alias ....="cdup 3"
+alias .....="cdup 4"
+# xxxxx
+
+cdupp () {
+    local """cd up 2 levels"""
+    cdup 2 "$@"
+}
+
 py_cg () {
-    local __doc__="Debug the py_cd function and script"
-    PUDB_CD=1 py_cd "$@"
+    local __doc__="Debug the cdpy function and script"
+    PUDB_CD=1 cdpy "$@"
 }
 
 py_cp () {
-    local __doc__="Show the path that py_cd would go to"
-    CD_QUIET=1 CD_PATH_ONLY=1 py_cd "$@"
+    local __doc__="Show the path that cdpy would go to"
+    CD_QUIET=1 CD_PATH_ONLY=1 cdpy "$@"
     local _result=$?
     CD_PATH_ONLY=0
     return $_result
@@ -175,9 +181,8 @@ _active () {
     same_path $_activate_dir $_venv_dir
 }
 
-_pre_cd () {
-    [[ -z $CDE_header ]] && return
-    echo $CDE_header
+cdpy_pre_ () {
+    [[ -n $CDE_header ]] && echo $CDE_header
 }
 # xxxxxxxx
 
@@ -215,7 +220,7 @@ EOP
     sai "$_said"
 }
 
-_post_cd () {
+cdpy_post_ () {
     say_path $(short_dir "$PWD")
     _here_show_todo && echo
     _here_bash

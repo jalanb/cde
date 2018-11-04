@@ -1,4 +1,5 @@
-#! /usr/bin/env python3
+#! /usr/local/bin/python
+
 """cd.py knows where you are going because it knows where you've been"""
 
 
