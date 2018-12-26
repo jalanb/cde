@@ -30,11 +30,16 @@ cdd () {
 
 cde () {
     local __doc__="""find a dir and handle it"""
-    [[ $1 == "-h" ]] && cde_help && return 0
+    [[ $1 =~ -h ]] && cde_help && return 0
+    local _say_quiet=
+    if [[ $1 =~ -q ]]; then
+        _say_quiet=quiet
+        shift
+    fi
     cdpy_pre_
-    CD_QUIET=1 cdpy "$@" || return 1
+    cdpy quiet "$@" || return 1
     [[ -d . ]] || return 1
-    cdpy_post_
+    cdpy_post_ $_say_quiet
 }
 
 cdl () {
@@ -45,6 +50,11 @@ cdl () {
 
 cdpy () {
     local __doc__="""Ask cd.py for a destination"""
+    local _stdout=1
+    if [[ $1 =~ quiet ]]; then
+        _stdout=
+        shift
+    fi
     local _cd_dir=$(dirname $(readlink -f $BASH_SOURCE))
     local _cd_script=$_cd_dir/cd.py
     local _cd_result=1
@@ -76,7 +86,7 @@ cdpy () {
                 shift
             done
             if [[ "$destination" != $(readlink -f "$1") ]]; then
-                [[ -n $CD_QUIET ]] || echo "cd $destination"
+                [[ -n $_stdout ]] && echo "cd $destination"
             fi
         fi
         if [[ $CD_PATH_ONLY == 1 ]]; then
@@ -152,7 +162,7 @@ py_cg () {
 
 py_cp () {
     local __doc__="Show the path that cdpy would go to"
-    CD_QUIET=1 CD_PATH_ONLY=1 cdpy "$@"
+    CD_PATH_ONLY=1 cdpy quiet "$@"
     local _result=$?
     CD_PATH_ONLY=0
     return $_result
@@ -221,7 +231,7 @@ EOP
 }
 
 cdpy_post_ () {
-    say_path $(short_dir "$PWD")
+    [[ $1 =~ quiet ]] && shift || say_path $(short_dir "$PWD")
     _here_show_todo && echo
     _here_bash
     _here_bin
