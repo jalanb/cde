@@ -142,7 +142,6 @@ cdup () {
     done
     popd >/dev/null 2>&1
     cde $_dir "$@"
-    pushd >/dev/null 2>&1
 }
 alias ..=cdup
 alias ...="cdup 2"
@@ -153,6 +152,12 @@ alias .....="cdup 4"
 cdupp () {
     local """cd up 2 levels"""
     cdup 2 "$@"
+}
+
+pycd () {
+    # Adapted from https://news.ycombinator.com/item?id=18898898
+    local __doc__="""cde to directory of a iven Python module"""
+    cde $(python -c "import os.path, $1; print(os.path.dirname($1.__file__))");
 }
 
 py_cg () {
