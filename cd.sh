@@ -255,7 +255,7 @@ cdpy_post_ () {
     # echo "said $_said"
     # set +x
     _here_show_todo && echo
-    _here_bash
+    _here_bash && return 0
     _here_bin
     _here_git
     _here_python && _here_venv
@@ -304,11 +304,10 @@ _here_git () {
 # _xxxxxxxxx
 
 _here_bash () {
-    local __doc__="""LOok for __init__.sh here or below and source it if found"""
-    local _init=./__init__.sh
-    [[ -f $_init ]] || _init=bash/__init__.sh
-    [[ -f $_init ]] || _init=src/bash/__init__.sh
-    [[ -f $_init ]] && . $_init
+    local __doc__="""Look for .cde here and source it if found"""
+    local _cde_here=./.cde
+    [[ -f $_cde_here ]] || return 1
+    . $_cde_here
     return 0
 }
 
