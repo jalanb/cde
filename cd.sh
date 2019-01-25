@@ -17,6 +17,9 @@ export CDE_SOURCE=$(basename $BASH_SOURCE)
 # x
 # _
 # xx
+
+alias cq="cde -q"
+
 # _x
 # xxx
 
