@@ -207,7 +207,8 @@ cdpy_pre_ () {
 cde_help () {
     echo "cd to a dir and react to it"
     echo
-    echo "cde [dirname [subdirname ...]]"
+    cdpy -h
+    return 0
 }
 # _xxxxxxx
 _here_ls () {
@@ -304,8 +305,8 @@ _here_git () {
 # _xxxxxxxxx
 
 _here_bash () {
-    local __doc__="""Look for .cde here and source it if found"""
-    local _cde_here=./.cde
+    local __doc__="""Look for .cd here and source it if found"""
+    local _cde_here=./.cd
     [[ -f $_cde_here ]] || return 1
     . $_cde_here
     return 0
