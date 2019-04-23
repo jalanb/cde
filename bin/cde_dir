@@ -1,0 +1,74 @@
+#! /usr/bin/env python3
+"""Add a .cd file to a directory"""
+
+import os
+import re
+import sys
+import argparse
+
+
+def parse_args():
+    """Handle arguments from the command line"""
+    parser = argparse.ArgumentParser()
+    pa = parser.add_argument
+    pa('directory', help='The directory to touch')
+    pa('-p', '--python', action='store_true', help='Add Python commands')
+    args = parser.parse_args()
+    return args
+
+
+def templates():
+    dirname = os.path.dirname
+    project_dir = dirname(dirname(__file__))
+    return os.path.join(project_dir, 'directories')
+
+
+def template_names():
+    return os.listdir(templates())
+
+
+def template(name):
+    return os.path.join(templates, name)
+
+
+def read_old_args():
+    class Args(argparse.Namespace):
+        pass
+
+    args = Args()
+    if not os.path.isfile('.cd'):
+        return args
+    with open('.cd') as stream:
+        for line in stream.readlines():
+            match = re.match('^## ([a-z]+)$', line)
+            if match:
+                setattr(args, match.group(1), True)
+    return args
+
+
+def arg_templates(args):
+    texts = []
+    for name in template_names():
+        if getattr(args, name, False):
+            with open(template) as stream:
+                data = stream.read()
+                text = '\n## {name}\n\n{data}'
+                texts.append(text)
+    return '\n'.join(texts)
+
+
+def main():
+    new_args = parse_args()
+    old_args = read_old_args()
+    try:
+        os.chdir(new_args.directory)
+    except OSError:
+        sys.stderr.write('Could not cd to %r' % str(new_args.directory))
+        return 1
+    with open('.cd', 'w') as stream:
+        stream.write(arg_templates(new_args))
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
