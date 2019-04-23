@@ -1,6 +1,6 @@
 #! /usr/local/bin/python
 
-"""cd.py knows where you are going because it knows where you've been"""
+"""cde knows where you are going because it knows where you've been"""
 
 
 from __future__ import print_function
@@ -256,7 +256,9 @@ def find_path_to_item(item):
             return paths.makepath(parent)
     pattern = '%s*' % path_to_item.basename()
     if paths.contains_directory(parent, pattern):
-        return parent.dirs(pattern).pop()
+        found = parent.dirs(pattern)
+        ordered = sorted(found, key=lambda x: len(x), reverse=True)
+        return ordered.pop()
     elif paths.contains_glob(parent, pattern):
         return parent
     if parent.isdir():
