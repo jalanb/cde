@@ -244,17 +244,6 @@ cdpy_post_ () {
     [[ $_path == "~" ]] && _path=HOME
     [[ $_path =~ "wwts" ]] && _path="${_path/wwts/dub dub t s}"
     [[ $1 =~ quiet ]] && shift || say_path $_path
-    # set -x
-    # echo $_path
-    local _tildless=${_path/~/home} # ; echo t $_tildless
-    local _homele=$(echo $_tildless | sed -e "s:$HOME:home:")
-    local _homeles=${_homele/home\//} # ; echo 1 $_homeles
-    local _homeless=${_homeles/home/} # ; echo 2 $_homeless
-    local _rootless=$(echo $_homeless | sed -e "s:^/:root :" )
-    local _said=$(echo $_rootless | sed -e "s:/: :g")
-    sai $_said
-    # echo "said $_said"
-    # set +x
     _here_show_todo && echo
     _here_bash && return 0
     _here_bin
