@@ -74,7 +74,7 @@ cdpy () {
     elif ! destination=$(PYTHONPATH=$_cd_dir $_python_cd "$@" 2>&1)
     then
         echo "$destination"
-    elif [[ "$@" =~ -[lp] ]]; then
+    elif [[ "$@" =~ ' -[lp]' ]]; then
         echo "$destination"
     elif [[ $destination =~ ^[uU]sage ]]; then
         PYTHONPATH=$_cd_dir $_python_cd --help
