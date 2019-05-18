@@ -1,0 +1,177 @@
+Edge cases for cde
+=================
+
+    >>> import cde
+
+More modules for testing
+------------------------
+
+    >>> import os
+    >>> import sys
+
+Command lines
+-------------
+
+We allow more than two args on command line
+
+    >>> sys.argv = ['cde.py', 'start', 'here', 'or', 'there']
+    >>> args = cde.parse_args()
+    >>> args.dirname == 'start' and args.subdirnames == ['here', 'or', 'there']
+    True
+
+And no args at all (use home directory)
+
+    >>> sys.argv = ['cde.py']
+    >>> args = cde.parse_args()
+    >>> args.dirname == os.path.expanduser('~') and not args.subdirnames
+    True
+
+find_directory()
+----------------
+
+Directories sought must be real
+
+    >>> cde.find_directory('rubbish', [])
+    Traceback (most recent call last):
+    ...
+    cde.ToDo: ...
+
+    >>> a_known_directory = '/usr/local'
+
+Can use empty prefixes - gives path to the directory
+
+    >>> cde.find_directory(a_known_directory, []) == a_known_directory
+    True
+
+If sub-dir is not found, get only the directory
+    >>> cde.find_directory(a_known_directory, ['this_is_not_real']) == a_known_directory
+    True
+
+If the sub-dir matches too many directories then an exception is raised
+    >>> cde.find_directory('/usr', ['li'])
+    Traceback (most recent call last):
+    ...
+    cde.TryAgain: Too many possiblities
+         0: /usr/li...
+         1: /usr/li...
+
+Which can be suppressed by a numeric arg
+    >>> cde.find_directory('/usr', ['li', '1']).startswith('/usr/li')
+    True
+    >>> cde.find_directory('/usr', ['li', '99'])
+    Traceback (most recent call last):
+    ...
+    cde.ToDo: Your choice of "99" is not in range:
+         0: /usr/li...
+         1: /usr/li...
+
+A number out of context is ignored
+    >>> cde.find_directory('/usr', ['1']) == '/usr'
+    True
+
+find a file
+-----------
+
+    >>> directory, filename = os.path.split(cde.__file__)
+    >>> cde.find_directory(cde.__file__, []) == directory
+    True
+    >>> cde.find_directory(directory, [filename]) == directory
+    True
+
+
+Find in home directory
+----------------------
+
+    >>> my_bin = cde.find_at_home('bi', [])
+    >>> os.path.dirname(my_bin) == os.path.expanduser('~') and os.path.basename(my_bin) == 'bin'
+    True
+    >>> cde.find_at_home('.bashrc', []) == os.path.expanduser('~')
+    True
+    >>> cde.find_at_home('rubbush', []) is None
+    True
+
+main()
+------
+
+When main() fails it prints out an error
+    >>> sys.argv = [ 'cde', 'no_such_directory' ]
+    >>> cde.main()
+    Error: could not use 'no_such_directory' as a directory
+    1
+
+Finding in history
+------------------
+
+Assuming we have remembered some paths
+    >>> history = [
+    ...     '/usr/bin',
+    ...     '/usr/local/bin',
+    ...     '/usr/tin/local',
+    ...     '/usr/bin/vocal',
+    ...     '/usr/local/bib',
+    ... ]
+    >>> history_paths = [cde.paths.path(_) for _ in history]
+
+    >>> cde._find_in_paths('bin', [], history_paths)
+    Traceback (most recent call last):
+    ...
+    cde.TryAgain: Too many possiblities
+         0: /usr/bin
+         1: /usr/local/bin
+    >>> cde._find_in_paths('bin', ['0'], history_paths) == '/usr/bin'
+    True
+    >>> cde._find_in_paths('bin', ['1'], history_paths) == '/usr/local/bin'
+    True
+    >>> cde._find_in_paths('bi', ['0'], history_paths) == '/usr/bin'
+    True
+    >>> cde._find_in_paths('bi', ['1'], history_paths) == '/usr/local/bin'
+    True
+    >>> cde._find_in_paths('bi', ['2'], history_paths) == '/usr/local/bib'
+    True
+    >>> cde._find_in_paths('tin', [], history_paths) == '/usr/tin/local'
+    True
+    >>> cde._find_in_paths('ti', [], history_paths) == '/usr/tin/local'
+    True
+    >>> not cde._find_in_paths('sin', [], history_paths)
+    True
+    >>> cde._find_in_paths('in/', ['0'], history_paths) == '/usr/tin/local'
+    True
+    >>> cde._find_in_paths('in/v', [], history_paths) == '/usr/bin/vocal'
+    True
+    >>> cde._find_in_paths('usr', [], history_paths)
+    Traceback (most recent call last):
+    ...
+    cde.TryAgain: Too many possiblities
+         0: /usr/bin
+         1: /usr/local/bin
+    >>> cde._find_in_paths('usr', ['3'], history_paths) == '/usr/bin/vocal'
+    True
+
+
+    >>> path_to_item = '/i/was/here'
+    >>> history_items = [
+    ...  (0, path_to_item, 0),
+    ...  (0, '/so/were/you', 0),
+    ... ]
+    >>> new_items, changed = cde.exclude_path_from_items(history_items, path_to_item)
+    >>> changed is True and len(new_items) + 1 == len(history_items)
+    True
+    >>> newer_items, changed = cde.exclude_path_from_items(new_items, path_to_item)
+    >>> changed is False and len(new_items) == len(newer_items)
+    True
+
+
+Python dirs
+-----------
+
+cde has a setup.py
+
+    >>> project_dir = cde.paths.path(os.path.dirname(cde.__file__))
+    >>> code_dir = project_dir / 'cde'
+    >>> possibles = [code_dir, project_dir]
+    >>> assert cde.find_python_root_dir(possibles) == project_dir
+
+
+Cleanup
+=======
+    >>> sys.argv = []

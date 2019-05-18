@@ -1,1 +1,1 @@
-cd_py is a smarter cd command. It knows where you're going, because it knows where you've been.
+cde is a smarter cd command. It knows where you're going, because it knows where you've been.

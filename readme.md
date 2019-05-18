@@ -1,9 +1,9 @@
 cde
 ===
 
-`cde` is a shell function that needs a `cd.py` to find out how to get to a directory, but knows what to do once it gets there.
+`cde` is a shell function that needs a `cde.py` to find out how to get to a directory, but knows what to do once it gets there.
 
-`cd.py` knows where you are going because it knows where you've been, and what directory structures look like.
+`cde.py` knows where you are going because it knows where you've been, and what directory structures look like.
 
 Naming
 ------
@@ -21,8 +21,8 @@ We cool?
 
 OK, clone the repo, and source the bash functions:
 ```shell
-$ git clone https://github.com/jalanb/kd/kd.git
-$ . kd/cd.sh
+$ git clone https://github.com/jalanb/cde/cde.git
+$ . cde/cde.sh
 ```
 
 And add similar to your `bashrc` if needed.
@@ -51,13 +51,13 @@ $ cd /; cde /u loc bi; pwd
 /usr/local/bin
 ```
 
-`cde` can be [abbreviated](https://github.com/jalanb/kd/blob/v0.7.1/cd.sh#L19) to just `c`, e.g.
+`cde` can be [abbreviated](https://github.com/jalanb/cde/blob/v0.7.1/cde.sh#L19) to just `c`, e.g.
 ```shell
 $ c ..; pwd
 /usr/local
 ```
 
-And sometimes can be [abbreviated](https://github.com/jalanb/kd/blob/v0.7.1/cd.sh#L90) away entirely, e.g.
+And sometimes can be [abbreviated](https://github.com/jalanb/cde/blob/v0.7.1/cde.sh#L90) away entirely, e.g.
 ```shell
 $ c /u l b; pwd
 /usr/local/bin
@@ -122,7 +122,7 @@ History
 $ c b
 ```
 
-If nothing matches then `c` [tries directories in $PATH which have matching executables](https://github.com/jalanb/kd/blob/v0.7.1/cd.py#L261). For example, this will give `/bin`:
+If nothing matches then `c` [tries directories in $PATH which have matching executables](https://github.com/jalanb/cde/blob/v0.7.1/cde.py#L261). For example, this will give `/bin`:
 
 ```shell
 $ c python; pwd
@@ -132,7 +132,7 @@ $ c python; pwd
 Biases
 ------
 
-When looking for partial names `c` will [look for each of these in turn](https://github.com/jalanb/kd/blob/v0.7.1/cd.py#L649), stopping as soon as it gets some match
+When looking for partial names `c` will [look for each of these in turn](https://github.com/jalanb/cde/blob/v0.7.1/cde.py#L649), stopping as soon as it gets some match
 
 1. directories with the same name
 2. directories that start with the given part
@@ -140,5 +140,3 @@ When looking for partial names `c` will [look for each of these in turn](https:/
 4. directories with the part in their name
 4. files with the part in their name
 
-
-[![Stories in Ready](https://badge.waffle.io/jalanb/kd.png?label=ready)](http://waffle.io/jalanb/kd)

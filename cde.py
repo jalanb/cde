@@ -1,6 +1,6 @@
 #! /usr/local/bin/python
 
-"""cd.py knows where you are going because it knows where you've been"""
+"""cde.py knows where you are going because it knows where you've been"""
 
 
 from __future__ import print_function
@@ -332,7 +332,7 @@ def run_args(args, methods):
 
 def version(_args):
     """Show version of the script"""
-    print('cd.py %s' % __version__)
+    print(f'{sys.argv[0]} {__version__})
     raise SystemExit(os.EX_OK)
 
 
@@ -399,8 +399,7 @@ def test(_args):
 
     Tell any bash-runners not to use any output by saying "Error" first
 
-    >>> 'cd.py' in __file__
-    True
+    >>> assert 'cde.py' in __file__
     """
     stem = paths.path(__file__).namebase
     from doctest import testfile, testmod, ELLIPSIS, NORMALIZE_WHITESPACE

@@ -1,8 +1,8 @@
-cd is a cd replacer
+cde is a cd replacer
 ===================
 
-    >>> import cd
-    >>> assert cd.__doc__.startswith('cd.py knows where you are going')
+    >>> import cde
+    >>> assert cde.__doc__.startswith('cde.py knows where you are going')
 
 More modules for testing
 ------------------------
@@ -13,54 +13,54 @@ More modules for testing
 Command Line
 ------------
 
-cd is intended to be used from the command line
+cde is intended to be used from the command line
 
 On the command line we expect two arguments:
     The first is a possible directory
     The rest are prefixes of possible sub-directories
 
-    >>> sys.argv = ['cd.py', 'start', 'here']
-    >>> args = cd.parse_args()
+    >>> sys.argv = ['cde.py', 'start', 'here']
+    >>> args = cde.parse_args()
     >>> assert args.dirname == 'start' and args.subdirnames == ['here']
 
 No prefixes is fine too
 
-    >>> sys.argv = ['cd.py', 'start']
-    >>> args = cd.parse_args()
+    >>> sys.argv = ['cde.py', 'start']
+    >>> args = cde.parse_args()
     >>> assert args.dirname == 'start' and args.subdirnames == []
 
 
 Finding sub-directories
 -----------------------
 
-The parsed arguments are sent on to the cd.find_directory method
+The parsed arguments are sent on to the cde.find_directory method
     Give it a directory to start on
-    >>> assert cd.find_directory('/usr/lib', []) == '/usr/lib'
+    >>> assert cde.find_directory('/usr/lib', []) == '/usr/lib'
 
 Or a file
-    >>> assert cd.find_directory('/bin/ls', []) == '/bin'
+    >>> assert cde.find_directory('/bin/ls', []) == '/bin'
 
 Give it the name of a (possible) sub directory
     and it will combine them to one path
-    >>> assert cd.find_directory('/usr/local', ['sbin']) == '/usr/local/sbin'
+    >>> assert cde.find_directory('/usr/local', ['sbin']) == '/usr/local/sbin'
 
 The sub-dir can be a prefix
-    >>> assert cd.find_directory('/usr/local', ['sbi']) == '/usr/local/sbin'
+    >>> assert cde.find_directory('/usr/local', ['sbi']) == '/usr/local/sbin'
 
 It can handle many prefixes (albeit more slowly)
-    >>> assert cd.find_directory('/', ['us', 'loc', 'sbi']) == '/usr/local/sbin'
+    >>> assert cde.find_directory('/', ['us', 'loc', 'sbi']) == '/usr/local/sbin'
 
 In case of ambiguous sub-directories a number can choose one
-    >>> assert cd.find_directory('/usr', ['li', '0']).startswith('/usr/li')
+    >>> assert cde.find_directory('/usr', ['li', '0']).startswith('/usr/li')
 
 Fallbacks
 ---------
 
 If directory is not found directly then try in PATH
-    >>> assert cd.find_directory('grep', []) in { '/bin', '/usr/bin' }
+    >>> assert cde.find_directory('grep', []) in { '/bin', '/usr/bin' }
 
 If that fails, then try in home directory
-    >>> assert cd.find_directory('.bashrc', []) == os.path.expanduser('~')
+    >>> assert cde.find_directory('.bashrc', []) == os.path.expanduser('~')
 
 Running from bash
 -----------------
@@ -71,27 +71,27 @@ If run from the command line the python process cannot change dir for calling pr
 
 Hence the main method will print the found directory
     and then return 0 for success, 1 for fail
-    >>> sys.argv = ['cd', '/usr', 'local', 'lib']
-    >>> cd.main()
+    >>> sys.argv = ['cde', '/usr', 'local', 'lib']
+    >>> cde.main()
     /usr/local/lib
     0
 
 Remembering history
 -------------------
 
-cd can also remember a list of paths
+cde can also remember a list of paths
 
-    >>> assert cd._path_to_history().endswith('cd/history')
+    >>> assert cde._path_to_history().endswith('cde/history')
     >>> class Args:
-    ...     dirname = cd.__file__
-    >>> cd.add(Args())
+    ...     dirname = cde.__file__
+    >>> cde.add(Args())
     >>> stored = False
-    >>> for _rank, path, _time in cd.read_history():
-    ...     if path == os.path.dirname(cd.__file__):
+    >>> for _rank, path, _time in cde.read_history():
+    ...     if path == os.path.dirname(cde.__file__):
     ...          stored = True
     ...          break
     >>> assert stored
-    >>> assert os.path.isfile(cd._path_to_history())
+    >>> assert os.path.isfile(cde._path_to_history())
 
 
 Finding in history
@@ -109,16 +109,16 @@ Assuming we have remembered some paths
 Then we should be able to search that history for a remembered item
     which should be found first is exact same as a history item
     >>> expected = sought = history[2]
-    >>> assert expected == cd._find_in_paths(sought, [], history)
+    >>> assert expected == cde._find_in_paths(sought, [], history)
 
 Or even if it is just the name of one
     >>> sought = os.path.basename(sought)
-    >>> history_paths = [cd.paths.path(_) for _ in history]
-    >>> assert expected == cd._find_in_paths(sought, [], history_paths)
+    >>> history_paths = [cde.paths.path(_) for _ in history]
+    >>> assert expected == cde._find_in_paths(sought, [], history_paths)
 
 Or even just the stem of the name
     >>> sought = sought[:3]
-    >>> assert expected == cd._find_in_paths(sought, [], history_paths)
+    >>> assert expected == cde._find_in_paths(sought, [], history_paths)
 
 
 Cleanup

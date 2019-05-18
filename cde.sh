@@ -52,14 +52,14 @@ cdl () {
 }
 
 cdpy () {
-    local __doc__="""Ask cd.py for a destination"""
+    local __doc__="""Ask cde.py for a destination"""
     local _stdout=1
     if [[ $1 =~ quiet ]]; then
         _stdout=
         shift
     fi
     local _cd_dir=$(dirname $(readlink -f $BASH_SOURCE))
-    local _cd_script=$_cd_dir/cd.py
+    local _cd_script=$_cd_dir/cde.py
     local _cd_result=1
     local _cd_options=
     [[ $CD_PATH_ONLY == 1 ]] && _cd_options=--first
