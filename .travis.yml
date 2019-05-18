@@ -2,6 +2,6 @@ language: python
 python:
 - '3.6'
 install: "pip install -r requirements.txt"
-script: nosetests
+script: py.test --doctest-modules --doctest-glob=*.test --doctest-glob=*.tests
 notifications:
   email: false
