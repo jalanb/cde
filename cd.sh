@@ -48,7 +48,7 @@ cde () {
 cdl () {
     local __doc__="""cde and ls"""
     cde "$@"
-    ls
+    ls -1 --color
 }
 
 cdpy () {
