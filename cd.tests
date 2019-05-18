@@ -36,7 +36,7 @@ Directories sought must be real
     ...
     cd.ToDo: ...
 
-    >>> a_known_directory = os.environ['HOME']
+    >>> a_known_directory = '/usr/local'
 
 Can use empty prefixes - gives path to the directory
 
@@ -167,7 +167,7 @@ Python dirs
 cd has a setup.py
 
     >>> project_dir = cd.paths.path(os.path.dirname(cd.__file__))
-    >>> code_dir = project_dir / 'kd'
+    >>> code_dir = project_dir / 'cde'
     >>> possibles = [code_dir, project_dir]
     >>> assert cd.find_python_root_dir(possibles) == project_dir
 

@@ -1,6 +1,6 @@
 #! /usr/local/bin/python
 
-"""cde knows where you are going because it knows where you've been"""
+"""cd.py knows where you are going because it knows where you've been"""
 
 
 from __future__ import print_function
