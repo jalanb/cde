@@ -32,9 +32,10 @@ class TryAgain(ValueError):
 
 class RangeError(ToDo):
     def __init__(self, i, matched):
-        template = 'Your choice of "%s" is out of range:\n\t%s'
-        message = template % (i, as_menu_string(matched))
-        ToDo.__init__(self, message)
+        ToDo.__init__(
+            self,
+            f'Your choice of {i} is out of range:\n\t%s' %
+            as_menu_string(matched))
 
 
 class FoundParent(ValueError):
@@ -50,7 +51,7 @@ def matching_sub_directories(path_to_directory, prefix):
     Otherwise look for "prefix*"
         If that gives one exact match, prefer that
     """
-    prefix_glob = prefix.endswith('/') and prefix.rstrip('/') or '%s*' % prefix
+    prefix_glob = prefix.endswith('/') and prefix.rstrip('/') or f'{prefix}*'
     sub_directories = paths.list_sub_directories(
         path_to_directory, prefix_glob)
 
@@ -63,7 +64,7 @@ def matching_sub_directories(path_to_directory, prefix):
 
 
 def as_menu_items(strings):
-    return [str('%2d: %s' % (i, p)) for i, p in enumerate(strings)]
+    return [f'{i:2} {p}' for i, p in enumerate(strings)]
 
 
 def as_menu_string(strings):
@@ -117,7 +118,7 @@ def look_under_directory(path_to_directory, subdirnames):
         path_to_directory, prefix)
     path_to_sub_directory = path_to_directory / prefix
     if not matched_sub_directories:
-        if paths.contains_file(path_to_directory, '%s*' % prefix):
+        if paths.contains_file(path_to_directory, f'{prefix}*'):
             return [path_to_directory]
         if path_to_sub_directory.isdir():
             return [path_to_sub_directory]
@@ -131,9 +132,9 @@ def look_under_directory(path_to_directory, subdirnames):
             try:
                 return [matched_sub_directories[i]]
             except IndexError:
-                raise ToDo('Your choice of "%s" is not in range:\n\t%s' % (
-                    i, as_menu_string(matched_sub_directories)))
-        if paths.contains_file(path_to_directory, '%s*' % prefix):
+                raise ToDo(f'Your choice of {i} is not in range:\n\t%s' % (
+                    as_menu_string(matched_sub_directories)))
+        if paths.contains_file(path_to_directory, f'{prefix}*'):
             result = [path_to_directory]
     return result
 
@@ -254,7 +255,7 @@ def find_path_to_item(item):
         parent = os.path.dirname(item)
         if os.path.isdir(parent):
             return paths.makepath(parent)
-    pattern = '%s*' % path_to_item.basename()
+    pattern = f'{path_to_item.basename()}*'
     if paths.contains_directory(parent, pattern):
         found = parent.dirs(pattern)
         ordered = sorted(found, key=lambda x: len(x), reverse=True)
@@ -332,7 +333,7 @@ def run_args(args, methods):
 
 def version(_args):
     """Show version of the script"""
-    print(f'{sys.argv[0]} {__version__})
+    print(f'{sys.argv[0]} {__version__}')
     raise SystemExit(os.EX_OK)
 
 
@@ -404,10 +405,10 @@ def test(_args):
     stem = paths.path(__file__).namebase
     from doctest import testfile, testmod, ELLIPSIS, NORMALIZE_WHITESPACE
     options = ELLIPSIS | NORMALIZE_WHITESPACE
-    failed, _ = testfile('%s.tests' % stem, optionflags=options)
+    failed, _ = testfile(f'{stem}.tests', optionflags=options)
     if failed:
         return
-    failed, _ = testfile('%s.test' % stem, optionflags=options)
+    failed, _ = testfile(f'{stem}.test', optionflags=options)
     if failed:
         return
     failed, _ = testmod(optionflags=options)
@@ -419,7 +420,7 @@ def test(_args):
 def _path_to_config():
     """Path where our config files are kept"""
     stem = paths.path(__file__).namebase
-    config = paths.home() / str('.config/%s' % stem)
+    config = paths.home() / f'.config/{stem}'
     if not config.isdir():
         os.makedirs(config)
     return config
@@ -602,10 +603,10 @@ def _find_in_paths(item, subdirnames, frecent_paths):
     """
     # pylint: disable=too-many-branches
     def double_globbed(p):
-        return fnmatch(p, '*%s*' % item)
+        return fnmatch(p, f'*{item}*')
 
     def globbed(p):
-        return fnmatch(p, '%s*' % item)
+        return fnmatch(p, f'{item}*')
 
     def glob_match(path):
         for p in path.split(os.path.sep):

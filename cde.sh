@@ -371,16 +371,16 @@ _here_show_todo () {
 # xxxxxxxxxxxxxxxxx
 
 show_version_here () {
-    local config=./.bumpversion.cfg
-    if [[ -f $config ]]; then
+    local _config=./.bumpversion.cfg
+    if [[ -f $_config ]]; then
         bump show
         return
     fi
-    echo "[bumpversion]" > $config
-    echo "commit = True" >> $config
-    echo "tag = True" >> $config
-    echo "current_version = 0.0.0" >> $config
-    git add $config
+    echo "[bumpversion]" > $_config
+    echo "commit = True" >> $_config
+    echo "tag = True" >> $_config
+    echo "current_version = 0.0.0" >> $_config
+    git add $_config
     echo "git commit -m\"v0.0.0\""
     echo bump
 }
