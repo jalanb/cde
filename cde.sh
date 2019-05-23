@@ -236,7 +236,7 @@ for old, new in replacements:
 sys.stdout.write(out.replace('/', ' '))
 EOP
 )
-    sai "$_said"
+    type sai >/dev/null 2>&1 && sai "$_said"
 }
 
 cdpy_post_ () {
@@ -315,12 +315,12 @@ _here_venv () {
     [[ -d $_venvs ]] || return 0
     local _here=$(realpath $(pwd))
     local _name="not_a_name"
-    [[ -e $_here ]] && _name=$(basename_ $_here)
+    [[ -e $_here ]] && _name=$(basename $_here)
     local _venv_path=
     for _venv_path in $_venvs/*; do
         local _venv_dir="$_venv_path"
         [[ -d "$_venv_dir" ]] || continue
-        local _venv_name=$(basename_ $_venv_dir)
+        local _venv_name=$(basename $_venv_dir)
         if [[ $_venv_name == $_name ]]; then
             local _venv_activate="$_venv_dir/bin/activate"
             [[ -f $_venv_activate ]] || return 1
@@ -347,7 +347,7 @@ _here_clean () {
 _here_python () {
     any_python_scripts_here || return 0
     local _dir=$(realpath .)
-    local _dir_name=$(basename_ $_dir)
+    local _dir_name=$(basename $_dir)
     python_project_here $_dir_name || return 0
     prune_python_here
     activate_python_here
@@ -376,13 +376,6 @@ show_version_here () {
         bump show
         return
     fi
-    echo "[bumpversion]" > $_config
-    echo "commit = True" >> $_config
-    echo "tag = True" >> $_config
-    echo "current_version = 0.0.0" >> $_config
-    git add $_config
-    echo "git commit -m\"v0.0.0\""
-    echo bump
 }
 
 # xxxxxxxxxxxxxxxxxxx
@@ -402,8 +395,8 @@ activate_python_here () {
 }
 
 prune_python_here () {
-    local _here=$(rlf .)
-    local _home=$(rlf $HOME)
+    local _here=$(readlink -f .)
+    local _home=$(readlink -f $HOME)
     [[ ${_here:0:${#_home}} == $_home ]] || return 1
     [[ ${#_here} == ${#_home} ]] && return 1
     rf -qpr
