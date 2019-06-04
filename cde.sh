@@ -46,9 +46,15 @@ cde () {
 }
 
 cdl () {
-    local __doc__="""cde and ls"""
-    cde "$@"
-    ls -1 --color
+    local __doc__="""cde $1; ls -1"""
+    local _dir="$@"
+    [[ $_dir ]] || _dir=.
+    cde $_dir
+    shift
+    local _ls_options="$@"
+    [[ $_ls_options ]] || _ls_options=" -1 "
+    green_line $PWD
+    ls --color $_ls_options
 }
 
 cdpy () {
@@ -123,6 +129,13 @@ cpp () {
     else
         py_cp .
     fi | grep -v -- '->'
+}
+
+cdll () {
+    local __doc__="""cde $1; ls -l"""
+    local _dir="$@"
+    [[ $_dir ]] || _dir=.
+    cdl $_dir -lhtra 
 }
 
 # _xx
@@ -282,7 +295,7 @@ _here_bin () {
 
 _here_git () {
     [[ -d ./.git ]] || return 0
-    show_git_time . | head -n $LOG_LINES_ON_CD_GIT_DIR
+    show_git_time . | head -n ${LOG_LINES_ON_CD_GIT_DIR:-7}
     local _branch=$(git rev-parse --abbrev-ref HEAD)
     echo $_branch
     git_simple_status .
