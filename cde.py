@@ -15,7 +15,7 @@ import csv
 import timings
 
 
-from pysyte import paths
+from pysyte.types import paths
 
 __version__ = '0.7.1'
 
