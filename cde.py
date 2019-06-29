@@ -627,6 +627,7 @@ def _find_in_paths(item, subdirnames, frecent_paths):
     if os.path.sep in item:
         matchers.insert(0, lambda p: item in p)
     i = take_first_integer(subdirnames)
+    matches = set()
     for match in matchers:
         matched = [_ for _ in frecent_paths if match(_)]
         if not matched:
@@ -634,20 +635,20 @@ def _find_in_paths(item, subdirnames, frecent_paths):
         if len(matched) == 1:
             if i:
                 raise RangeError(i, matched)
-            return find_under_directory(matched[0], subdirnames)
+            matches |= {find_under_directory(matched[0], subdirnames)}
         if i is not None:
             try:
                 result = matched[i]
             except IndexError:
                 raise RangeError(i, matched)
-            return find_under_directory(result, subdirnames)
+            matches |= {find_under_directory(result, subdirnames)}
         elif len(matched) > 1:
-            found = [find_under_directory(_, subdirnames) for _ in matched]
-            found = [_ for _ in found if _]
-            unique = set(found)
-            if len(unique) == 1:
-                return unique.pop()
-            return too_many_possibles(found)
+            found = {find_under_directory(_, subdirnames) for _ in matched}
+            unique = {_ for _ in found if _}
+            matches |= unique
+    if not matches:
+        return
+    if len(matches) > 1:
         raise TryAgain('Too many possiblities\n\t%s' % as_menu_string(matched))
 
 
