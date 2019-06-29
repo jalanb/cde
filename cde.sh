@@ -23,9 +23,19 @@ alias cq="cde -q"
 # _x
 # xxx
 
+
 cdd () {
     local __doc__"""cde here"""
     cde .
+}
+
+ind () {
+    [[ -d "$1" ]] || return 1
+    (
+        cd "$1"
+        shift 
+        "$@"
+    )
 }
 
 # rule 1: Leave system commands alone
