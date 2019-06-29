@@ -1,7 +1,9 @@
 language: python
 python:
 - '3.6'
-install: "pip install -r requirements.txt"
+install: pip install -r requirements.txt
 script: py.test --doctest-modules --doctest-glob=*.test --doctest-glob=*.tests
 notifications:
   email: false
+  slack:
+    secure: bspblSgG9+zjTl4+jBYedw88RZV9TESLPpWjz+5U/6IrsPVIlDa1lUvwiD7SzXBFAaUeq8LwYEmTLbIoluuyllvA3fTeqYXoJKYReKx9p/34STJY29qknoUlL7nC7gcyX0FnJ41fFtee7hDiqFAc2J0z86JZBD+Zjj3pUPBZ5IU=
