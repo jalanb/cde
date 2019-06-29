@@ -18,6 +18,7 @@ export CDE_SOURCE=$(basename $BASH_SOURCE)
 # _
 # xx
 
+alias cc='c .'
 alias cq="cde -q"
 
 # _x
@@ -65,6 +66,22 @@ cdl () {
     [[ $_ls_options ]] || _ls_options=" -1 "
     green_line $PWD
     ls --color $_ls_options
+}
+
+cdr () {
+    cde "$@"
+    green_line $PWD
+}
+
+cdv () {
+    cde "$@"
+    local _dir=
+    [[ "$@" ]] || _dir=$PWD
+    local _files=
+    _files=$(basename "$@")
+    [[ $_files ]] || _files=$_dir
+    [[ $_files ]] || _files=$(ls -1a)
+    $EDITOR $_files
 }
 
 cdpy () {
@@ -223,6 +240,7 @@ _active () {
 }
 
 cdpy_pre_ () {
+    deactivate 2>/dev/null
     [[ -n $CDE_header ]] && echo $CDE_header
 }
 # xxxxxxxx
