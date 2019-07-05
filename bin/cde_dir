@@ -20,7 +20,7 @@ def parse_args():
 def templates():
     dirname = os.path.dirname
     project_dir = dirname(dirname(__file__))
-    return os.path.join(project_dir, 'directories')
+    return os.path.join(project_dir, 'templates')
 
 
 def template_names():
