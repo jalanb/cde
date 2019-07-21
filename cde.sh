@@ -31,9 +31,10 @@ cdd () {
 }
 
 ind () {
-    [[ -d "$1" ]] || return 1
+    local _destination=$(py_cp "$1")
+    [[ -d "$_destination" ]] || return 1
     (
-        cd "$1"
+        cde "$_destination"
         shift 
         "$@"
     )
