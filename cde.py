@@ -662,6 +662,7 @@ def _find_in_paths(item, subdirnames, frecent_paths):
         return
     if len(matches) > 1:
         raise TryAgain('Too many possiblities\n\t%s' % as_menu_string(matched))
+    return matches.pop()
 
 
 def show_path_to_historical_item(item, subdirnames):
@@ -756,7 +757,7 @@ def main():
             raise
     except TryAgain as e:
         if args.index is not None:
-            separator = '%d:' % args.index
+            separator = '%d ' % args.index
             seperable = [l for l in str(e).splitlines() if separator in l]
             lines = [s.split(separator)[-1].strip() for s in seperable]
             if lines:
