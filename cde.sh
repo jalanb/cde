@@ -166,6 +166,12 @@ cdll () {
     cdl $_dir -lhtra 
 }
 
+mkc () {
+    local _destination=$(py_cp "$1")
+    [[ -d "$_destination" ]] || mkdir -p "$_destination"
+    cde "$_destination"
+}
+
 # _xx
 # xxxx
 
