@@ -92,26 +92,26 @@ cdpy () {
         _stdout=
         shift
     fi
-    local _cd_dir=$(dirname $(readlink -f $BASH_SOURCE))
-    local _cd_script=$_cd_dir/cde.py
-    local _cd_result=1
-    local _cd_options=
-    [[ $CD_PATH_ONLY == 1 ]] && _cd_options=--first
+    local _cde_dir=$(dirname $(readlink -f $BASH_SOURCE))
+    local _cde_python=$_cde_dir/cde.py
+    local _cde_options=
+    [[ $CD_PATH_ONLY == 1 ]] && _cde_options=--first
     local _python=$(which python 2>/dev/null)
     [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
     # set +x
-    local _headline=$(head -n 1 $_cd_script)
+    local _headline=$(head -n 1 $_cde_python)
     [[ $_headline =~ python ]] && _python=
-    local _python_cd="$_python $_cd_script $_cd_options"
+    local _python_command="$_python $_cde_python $_cde_options"
+    local _cde_result=1
     if [[ -n $PUDB_CD ]]; then
-        PYTHONPATH=$_cd_dir pudb $_cd_script $_cd_options "$@"
-    elif ! destination=$(PYTHONPATH=$_cd_dir $_python_cd "$@" 2>&1)
+        PYTHONPATH=$_cde_dir pudb $_cde_python $_cde_options "$@"
+    elif ! destination=$(PYTHONPATH=$_cde_dir $_python_command "$@" 2>&1)
     then
         echo "$destination"
     elif [[ "$@" =~ ' -[lp]' ]]; then
         echo "$destination"
     elif [[ $destination =~ ^[uU]sage ]]; then
-        PYTHONPATH=$_cd_dir $_python_cd --help
+        PYTHONPATH=$_cde_dir $_python_command --help
     else
         local real_destination=$(python -c "import os; print(os.path.realpath('$destination'))")
         if [[ "$destination" != "$real_destination" ]]
@@ -131,11 +131,11 @@ cdpy () {
         else
             same_path . "$destination" || pushd "$destination" >/dev/null 2>&1
         fi
-        _cd_result=0
+        _cde_result=0
     fi
     unset destination
     PUDB_CD=
-    return $_cd_result
+    return $_cde_result
 }
 
 cls () {
