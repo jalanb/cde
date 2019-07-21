@@ -380,12 +380,16 @@ def parse_my_args(methods):
     args = parser.parse_args()
     args.index = None
     args.index = None
-    if args.first:
-        args.index = 0
-    if args.second:
-        args.index = 1
+    sub_numbers = [int(a) for a in args.subdirnames if a.isdigit()]
+    if sub_numbers:
+        args.subdirnames = [a for a in args.subdirnames if not a.isdigit()]
+        args.index = min(sub_numbers)
     if args.third:
         args.index = 2
+    if args.second:
+        args.index = 1
+    if args.first:
+        args.index = 0
     run_args(args, methods)
     args.dirname = set_args_directory(args)
     return args
