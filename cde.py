@@ -257,8 +257,16 @@ def find_path_to_item(item):
             return paths.makepath(parent)
     pattern = f'{path_to_item.basename()}*'
     if paths.contains_directory(parent, pattern):
-        found = parent.dirs(pattern)
-        ordered = sorted(found, key=lambda x: len(x), reverse=True)
+        patterned_sub_dir = parent.dirs(pattern)
+        if find_python_root_dir(patterned_sub_dir):
+            def sources_dir(x):
+                if '.egg' in x:
+                    return False
+                return x not in ('htmlcov', 'build')
+        else:
+            sources_dir = lambda x: True
+        wanted = [f for f in patterned_sub_dir if sources_dir(f)]
+        ordered = sorted(wanted, key=lambda x: len(x), reverse=True)
         return ordered.pop()
     elif paths.contains_glob(parent, pattern):
         return parent
