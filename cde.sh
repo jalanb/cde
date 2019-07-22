@@ -34,7 +34,7 @@ ind () {
     local _destination=$(py_cp "$1")
     [[ -d "$_destination" ]] || return 1
     (
-        cde "$_destination"
+        cde -q "$_destination"
         shift 
         "$@"
     )
@@ -259,6 +259,16 @@ cde_help () {
     return 0
 }
 # _xxxxxxx
+
+_here_cd () {
+    local __doc__="""Look for .cd here and source it if found"""
+    local _cde_here=./.cd
+    [[ -f $_cde_here ]] || return 1
+    grep -q activate $_cde_here && unhash_python
+    . $_cde_here
+    return 0
+}
+
 _here_ls () {
     ls 2> ~/bash/null
 }
@@ -307,9 +317,13 @@ same_path () {
 }
 # _xxxxxxxx
 
+unhash_python () {
+    hash -d python ipython pip pudb >/dev/null 2>&1
+}
+
 _activate () {
     # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
-    hash -d python ipython pip pudb >/dev/null 2>&1
+    unhash_python
     [[ -f $ACTIVATE ]] && . $ACTIVATE
 }
 
@@ -340,14 +354,6 @@ _here_git () {
 }
 
 # _xxxxxxxxx
-
-_here_bash () {
-    local __doc__="""Look for .cd here and source it if found"""
-    local _cde_here=./.cd
-    [[ -f $_cde_here ]] || return 1
-    . $_cde_here
-    return 0
-}
 
 _here_venv () {
     local _active_venv="$VIRTUAL_ENV"

@@ -27,7 +27,26 @@ class ToDo(NotImplementedError):
 
 class TryAgain(ValueError):
     """Warnings raised by this script"""
-    pass
+    def __init__(self, possibles):
+        self.possibles = sorted(possibles)
+        super().__init__(
+            'Too many possiblities\n\t%s' % as_menu_string(possibles))
+
+    def trimmed(self):
+        return trim(self.possibles)
+
+
+def trim(possibles):
+    shortest_first = sorted(possibles)
+    stop = len(possibles)
+    previous = shortest_first[0]
+    result = [previous]
+    for possible in shortest_first[1:]:
+        if possible in previous:
+            continue
+        result.append(possible)
+        previous = possible
+    return result
 
 
 class RangeError(ToDo):
@@ -192,7 +211,7 @@ def too_many_possibles(possibles):
         python_path = find_python_root_dir(possibles)
         if python_path:
             return python_path
-    raise TryAgain('Too many possiblities\n\t%s' % as_menu_string(possibles))
+    raise TryAgain(possibles)
 
 
 def find_under_here(subdirnames):
@@ -233,6 +252,21 @@ def find_at_home(item, subdirnames):
     return find_under_directory(paths.home(), [item] + subdirnames)
 
 
+def hidden(path_name):
+    return path_name[0] == '.'
+
+
+def build_dir(directory):
+    return '.egg' in directory or directory in (
+        'htmlcov',
+        'build',
+    )
+
+
+def ignorable_dir(directory):
+    return hidden(directory) or build_dir(directory)
+
+
 def find_path_to_item(item):
     """Find the path to the given item
 
@@ -257,17 +291,15 @@ def find_path_to_item(item):
             return paths.makepath(parent)
     pattern = f'{path_to_item.basename()}*'
     if paths.contains_directory(parent, pattern):
-        patterned_sub_dir = parent.dirs(pattern)
-        if find_python_root_dir(patterned_sub_dir):
-            def sources_dir(x):
-                if '.egg' in x:
-                    return False
-                return x not in ('htmlcov', 'build')
-        else:
-            sources_dir = lambda x: True
-        wanted = [f for f in patterned_sub_dir if sources_dir(f)]
-        ordered = sorted(wanted, key=lambda x: len(x), reverse=True)
-        return ordered.pop()
+        patterned_sub_dirs = parent.dirs(pattern)
+        python_dir = (lambda x: not ignorable_dir(x)
+            if find_python_root_dir(patterned_sub_dirs)
+            else lambda x: True
+        )
+        python_dirs = [f for f in patterned_sub_dirs if python_dir(f)]
+        longest_first = sorted(python_dirs, key=lambda x: len(x), reverse=True)
+        longest_named_python_sub_dir = longest_first.pop()
+        return longest_named_python_sub_dir
     elif paths.contains_glob(parent, pattern):
         return parent
     if parent.isdir():
@@ -639,7 +671,7 @@ def _find_in_paths(item, subdirnames, frecent_paths):
     if os.path.sep in item:
         matchers.insert(0, lambda p: item in p)
     i = take_first_integer(subdirnames)
-    matches = set()
+    possibles = set()
     for match in matchers:
         matched = [_ for _ in frecent_paths if match(_)]
         if not matched:
@@ -647,21 +679,30 @@ def _find_in_paths(item, subdirnames, frecent_paths):
         if len(matched) == 1:
             if i:
                 raise RangeError(i, matched)
-            matches |= {find_under_directory(matched[0], subdirnames)}
+            possibles |= {find_under_directory(matched[0], subdirnames)}
         if i is not None:
             try:
                 result = matched[i]
             except IndexError:
                 raise RangeError(i, matched)
-            matches |= {find_under_directory(result, subdirnames)}
+            possibles |= {find_under_directory(result, subdirnames)}
         elif len(matched) > 1:
             found = {find_under_directory(_, subdirnames) for _ in matched}
             unique = {_ for _ in found if _}
-            matches |= unique
-    if not matches:
+            possibles |= unique
+    if not possibles:
         return
-    if len(matches) > 1:
-        raise TryAgain('Too many possiblities\n\t%s' % as_menu_string(matched))
+    if len(possibles) > 1:
+        if not subdirnames:
+            named = [p for p in possibles if item == p.name]
+            if len(named) == 1:
+                return named.pop()
+            if not named:
+                globbed = [p for p in possibles if item in p.name]
+                if len(globbed) == 1:
+                    return globbed.pop()
+                possibles = globbed
+        raise TryAgain(possibles)
     return matches.pop()
 
 
@@ -757,12 +798,16 @@ def main():
             raise
     except TryAgain as e:
         if args.index is not None:
-            separator = '%d ' % args.index
-            seperable = [l for l in str(e).splitlines() if separator in l]
-            lines = [s.split(separator)[-1].strip() for s in seperable]
-            if lines:
-                print(lines[0])
+            try:
+                one = e.possibles[args.index]
+                print(one)
                 return os.EX_OK
+            except IndexError:
+                pass
+#            trim = e.trimmed()
+#            if len(trim) == 1:
+#                print(trim.pop())
+#                return os.EX_OK
         print('Try again:', e)
         return not_EX_OK
     except ToDo as e:
