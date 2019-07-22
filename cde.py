@@ -17,7 +17,7 @@ import timings
 
 from pysyte.types import paths
 
-__version__ = '0.7.1'
+__version__ = '0.7.2'
 
 
 class ToDo(NotImplementedError):
