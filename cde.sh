@@ -303,7 +303,7 @@ cdpy_post_ () {
     [[ $_path =~ "wwts" ]] && _path="${_path/wwts/dub dub t s}"
     [[ $1 =~ quiet ]] && shift || say_path $_path
     _here_show_todo && echo
-    _here_bash && return 0
+    +_here_cd && return 0
     _here_bin
     _here_git
     _here_python && _here_venv
