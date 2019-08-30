@@ -14,6 +14,8 @@ import timings
 
 from boltons.iterutils import unique
 
+from pysyte.cli import main as main_module
+from pysyte.cli.main import run
 from pysyte.types import paths
 
 __version__ = '0.7.2'
@@ -360,16 +362,6 @@ def find_directory(item, subdirnames):
     raise ToDo('could not use %r as a directory' % ' '.join([item] + subdirnames))
 
 
-def run_args(args, methods):
-    """Run any methods eponymous with args"""
-    if not args:
-        return False
-    valuable_args = {k for k, v in args.__dict__.items() if v}
-    arg_methods = {methods[_] for _ in valuable_args if _ in methods}
-    for method in arg_methods:
-        method(args)
-
-
 def version(_args):
     """Show version of the script"""
     print(f'{sys.argv[0]} {__version__}')
@@ -381,61 +373,6 @@ def unused(args):
     unused_args = [_ for _ in sys.argv[1:] if _ not in used]
     print(' '.join(unused_args))
     raise SystemExit(os.EX_OK)
-
-
-def parse_args():
-    return parse_my_args(globals())
-
-
-def parse_my_args(methods):
-    """Get the arguments from the command line.
-
-    Insist on at least one empty string"""
-    usage = '%(prog)s [dirname [subdirname ...]'
-    parser = argparse.ArgumentParser(description=__doc__, usage=usage)
-    pa = parser.add_argument
-    pa('-0', '--first', action='store_true', help='Only show first path')
-    pa('-1', '--second', action='store_true', help='Only show second path')
-    pa('-2', '--third', action='store_true', help='Only show third path')
-    pa('-a', '--add', action='store_true', help='add a path to history')
-    pa('-d', '--delete', action='store_true', help='delete a path from history')  # noqa
-    pa('-l', '--lost', action='store_true', help='show all non-existent paths in history')  # noqa
-    pa('-m', '--makedir', action='store_true', help='Make sure the given directory exists')  # noqa
-    pa('-o', '--old', action='store_true', help='look for paths in history')
-    pa('-p', '--purge', action='store_true', help='remove all non-existent paths from history')  # noqa
-    pa('-t', '--test', action='store_true', help='test the script')
-    pa('-u', '--unused', action='store_true', help='show unused args')  # noqa
-    pa('-v', '--version', action='store_true', help='show version of the script')  # noqa
-    pa('dirname', metavar='item', nargs='?', default='', help='(partial) directory name')  # noqa
-    pa('subdirnames', nargs='*', help='(partial) sub directory names')
-    args = parser.parse_args()
-    args.index = None
-    args.index = None
-    sub_numbers = [int(a) for a in args.subdirnames if a.isdigit()]
-    if sub_numbers:
-        args.subdirnames = [a for a in args.subdirnames if not a.isdigit()]
-        args.index = min(sub_numbers)
-    if args.third:
-        args.index = 2
-    if args.second:
-        args.index = 1
-    if args.first:
-        args.index = 0
-    run_args(args, methods)
-    args.dirname = set_args_directory(args)
-    return args
-
-
-def set_args_directory(args):
-    if not args.dirname:
-        args.subdirnames = []
-        if args.add:
-            return '.'
-        if not args.old:
-            return paths.home()
-    if args.dirname == '-':
-        return previous_directory()
-    return args.dirname
 
 
 def test(_args):
@@ -458,6 +395,110 @@ def test(_args):
     if failed:
         return
     print('All tests passed')
+
+
+def makedir(args):
+    """Make the directory in the args unless it exists"""
+    path_to_dirname = paths.path(args.dirname)
+    if path_to_dirname.isdir():
+        return True
+    return path_to_dirname.make_directory_exist()
+
+
+def old(args):
+    if args.dirname:
+        show_path_to_historical_item(args.dirname, args.subdirnames)
+    else:
+        show_paths()
+    raise SystemExit(os.EX_OK)
+
+
+def lost(_args=None):
+    history_items = read_history()
+    for _rank, path, _time in history_items:
+        if not os.path.exists(path):
+            print(path)
+    raise SystemExit(os.EX_OK)
+
+
+def delete(args):
+    if args.dirname:
+        delete_path_to_historical_item(args.dirname, args.subdirnames)
+    else:
+        show_paths()
+
+
+def add(args):
+    """Remember the given path for later use"""
+    try:
+        path_to_dirname = paths.path(args.dirname)
+    except OSError as e:
+        raise SystemExit(str(e))
+    add_path(path_to_dirname)
+
+
+def run_args(args):
+    """Run any methods eponymous with args"""
+    if not args:
+        return False
+    g = globals()
+    true_args = {k for k, v in args.items() if v}
+    args_in_globals = {g[k] for k in g if k in true_args}
+    methods = {a for a in args_in_globals if callable(a)}
+    for method in methods:
+        method(args)
+
+
+def add_args(parser):
+    """Get the arguments from the command line.
+
+    Insist on at least one empty string"""
+    parser.boolean('-0', '--first', help='Only show first path')
+    parser.boolean('-1', '--second', help='Only show second path')
+    parser.boolean('-2', '--third', help='Only show third path')
+    parser.optional(
+        'dirname', metavar='item', default='', help='(partial) directory name')
+    parser.positional('subdirnames', help='(partial) sub directory names')
+
+# From here argument names correspend to methods above
+    parser.boolean('-a', '--add', help='add a path to history')
+    parser.boolean('-d', '--delete', help='delete a path from history')
+    parser.boolean('-l', '--lost', help='show all unreal paths in history')
+    parser.boolean('-m', '--makedir', help='Ensure the given directory exists')
+    parser.boolean('-o', '--old', help='look for paths in history')
+    parser.boolean(
+        '-p', '--purge', help='remove all non-existent paths from history')
+    parser.boolean('-t', '--test', help='test the script')
+    parser.boolean('-u', '--unused', help='show unused args')
+    parser.boolean('-v', '--version', help='show version of the script')
+
+def post_parse_args(args):
+    args._result.index = None
+    sub_numbers = [int(a) for a in args._result.subdirnames if a.isdigit()]
+    if sub_numbers:
+        args._result.subdirnames = [a for a in args._result.subdirnames if not a.isdigit()]
+        args._result.index = min(sub_numbers)
+    if args.third:
+        args._result.index = 2
+    if args.second:
+        args._result.index = 1
+    if args.first:
+        args._result.index = 0
+    run_args(args.get_args())
+    args._result.dirname = set_args_directory(args)
+    return args
+
+
+def set_args_directory(args):
+    if not args.dirname:
+        args.subdirnames = []
+        if args.add:
+            return '.'
+        if not args.old:
+            return paths.home()
+    if args.dirname == '-':
+        return previous_directory()
+    return args.dirname
 
 
 def _path_to_config():
@@ -542,15 +583,6 @@ def include_new_path_in_items(history_items, new_path):
         yield 1, paths.path(new_path), new_time
 
 
-def add(args):
-    """Remember the given path for later use"""
-    try:
-        path_to_dirname = paths.path(args.dirname)
-    except OSError as e:
-        raise SystemExit(str(e))
-    add_path(path_to_dirname)
-
-
 def add_path(path_to_add):
     path_to_add = find_path_to_item(path_to_add)
     history_items = read_history()
@@ -564,22 +596,6 @@ def write_paths(paths_to_remember):
         writer = csv.writer(stream, delimiter=',', quotechar='"',
                             quoting=csv.QUOTE_MINIMAL)
         writer.writerows(paths_to_remember)
-
-
-def makedir(args):
-    """Make the directory in the args unless it exists"""
-    path_to_dirname = paths.path(args.dirname)
-    if path_to_dirname.isdir():
-        return True
-    return path_to_dirname.make_directory_exist()
-
-
-def lost(_args=None):
-    history_items = read_history()
-    for _rank, path, _time in history_items:
-        if not os.path.exists(path):
-            print(path)
-    raise SystemExit(os.EX_OK)
 
 
 def purge(_args=None):
@@ -762,34 +778,16 @@ def show_paths():
         print('%3d: %s, %s ago' % (order + 1, p, timings.time_since(atime)))
 
 
-def old(args):
-    if args.dirname:
-        show_path_to_historical_item(args.dirname, args.subdirnames)
-    else:
-        show_paths()
-    raise SystemExit(os.EX_OK)
-
-
-def delete(args):
-    if args.dirname:
-        delete_path_to_historical_item(args.dirname, args.subdirnames)
-    else:
-        show_paths()
-
-
-def main():
+def main(args):
     """Show a directory from the command line arguments (or some derivative)"""
     # pylint: disable=too-many-branches
     # Of course there are too many branches - it's an event dispatcher
-    not_EX_OK = 1
     try:
-        args = parse_args()
         if args.unused:
             pass
-        status = show_path_to_item(args.dirname, args.subdirnames)
-        return os.EX_OK if status else not_EX_OK
+        return show_path_to_item(args.dirname, args.subdirnames)
     except (bdb.BdbQuit, SystemExit):
-        return os.EX_OK
+        return True
     except AttributeError as e:
         go_away = 'attribute \'path\'" in <function _remove'
         if go_away not in str(e):
@@ -799,19 +797,19 @@ def main():
             try:
                 one = e.possibles[args.index]
                 print(one)
-                return os.EX_OK
+                return True
             except IndexError:
                 pass
 #            trim = e.trimmed()
 #            if len(trim) == 1:
 #                print(trim.pop())
-#                return os.EX_OK
+#                return True
         print('Try again:', e)
-        return not_EX_OK
+        return False
     except ToDo as e:
         print('Error:', e)
-        return not_EX_OK
+        return False
 
 
-if __name__ == '__main__':
-    sys.exit(main())
+run(main, add_args, post_parse_args,
+    usage = '%(prog)s [dirname [subdirname ...]')
