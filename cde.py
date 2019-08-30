@@ -10,10 +10,9 @@ import sys
 from fnmatch import fnmatch
 import argparse
 import csv
-
-
 import timings
 
+from boltons.iterutils import unique
 
 from pysyte.types import paths
 
@@ -626,7 +625,7 @@ def find_in_history(item, subdirnames):
 
     Otherwise None
     """
-    frecent_paths = frecent_history_paths()
+    frecent_paths = unique(frecent_history_paths())
     try:
         return frecent_paths[int(item) - 1]
     except ValueError:
@@ -682,14 +681,13 @@ def _find_in_paths(item, subdirnames, frecent_paths):
             possibles |= {find_under_directory(matched[0], subdirnames)}
         if i is not None:
             try:
-                result = matched[i]
+                match_ = matched[i]
             except IndexError:
                 raise RangeError(i, matched)
-            possibles |= {find_under_directory(result, subdirnames)}
+            possibles |= {find_under_directory(match_, subdirnames)}
         elif len(matched) > 1:
-            found = {find_under_directory(_, subdirnames) for _ in matched}
-            unique = {_ for _ in found if _}
-            possibles |= unique
+            found = {find_under_directory(_, subdirnames) for _ in set(matched)}
+            possibles |= {_ for _ in found if _}
     if not possibles:
         return
     if len(possibles) > 1:
