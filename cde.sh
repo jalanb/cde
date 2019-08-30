@@ -35,7 +35,7 @@ ind () {
     [[ -d "$_destination" ]] || return 1
     (
         cde -q "$_destination"
-        shift 
+        shift
         "$@"
     )
 }
@@ -163,7 +163,7 @@ cdll () {
     local __doc__="""cde $1; ls -l"""
     local _dir="$@"
     [[ $_dir ]] || _dir=.
-    cdl $_dir -lhtra 
+    cdl $_dir -lhtra
 }
 
 mkc () {
