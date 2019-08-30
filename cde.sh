@@ -302,13 +302,12 @@ cdpy_post_ () {
     [[ $_path == "~" ]] && _path=HOME
     [[ $_path =~ "wwts" ]] && _path="${_path/wwts/dub dub t s}"
     [[ $1 =~ quiet ]] && shift || say_path $_path
-    _here_show_todo && echo
-    +_here_cd && return 0
+    _here_cd && return 0
     _here_bin
-    _here_git
+    here_git
     _here_python && _here_venv
     [[ -n $1 ]] &&
-    _here_ls && _here_clean
+    _here_ls && here_clean
 }
 # xxxxxxxxx
 
@@ -342,7 +341,7 @@ _here_bin () {
     [[ -d ./bin ]] && add_to_a_path PATH ./bin
 }
 
-_here_git () {
+here_git () {
     [[ -d ./.git ]] || return 0
     show_git_time . | head -n ${LOG_LINES_ON_CD_GIT_DIR:-7}
     local _branch=$(git rev-parse --abbrev-ref HEAD)
@@ -388,11 +387,11 @@ _here_venv () {
 
 # _xxxxxxxxxx
 
-_here_clean () {
+here_clean () {
     for path in $(find . -type f -name '*.sw*'); do
         ls -l $path 2> ~/bash/fd/2
-        rri $path && continue
-        [[ $? == 1 ]] && break
+        rm -i $path && continue
+        [[ $? == 0 ]] || break
     done
 }
 
@@ -413,14 +412,6 @@ _here_python () {
 }
 
 # _xxxxxxxxxxxxxx
-
-_here_show_todo () {
-    if [[ -f todo.txt ]]; then
-        todo_show
-        return 0
-    fi
-    return 1
-}
 
 # xxxxxxxxxxxxxxxxx
 
