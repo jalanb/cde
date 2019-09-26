@@ -1,5 +1,4 @@
 #! /usr/local/bin/python
-
 """cde.py knows where you are going because it knows where you've been"""
 
 
@@ -14,7 +13,6 @@ import timings
 
 from boltons.iterutils import unique
 
-from pysyte.cli import main as main_module
 from pysyte.cli.main import run
 from pysyte.types import paths
 
@@ -152,8 +150,7 @@ def look_under_directory(path_to_directory, subdirnames):
             try:
                 return [matched_sub_directories[i]]
             except IndexError:
-                raise ToDo(f'Your choice of {i} is not in range:\n\t%s' % (
-                    as_menu_string(matched_sub_directories)))
+                raise RangeError(i, matched_sub_directories)
         if paths.contains_file(path_to_directory, f'{prefix}*'):
             result = [path_to_directory]
     return result
@@ -717,7 +714,7 @@ def _find_in_paths(item, subdirnames, frecent_paths):
                     return globbed.pop()
                 possibles = globbed
         raise TryAgain(possibles)
-    return matches.pop()
+    return possibles.pop()
 
 
 def show_path_to_historical_item(item, subdirnames):
