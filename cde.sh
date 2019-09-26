@@ -14,14 +14,23 @@ fi
 CD_PATH_ONLY=0
 export CDE_SOURCE=$(basename $BASH_SOURCE)
 
-# x
 # _
+# x
+
+# _x
 # xx
 
+., () {
+    local _destination=$HOME
+    local _top_level=$(git rev-parse --show-toplevel 2>/dev/null)
+    [[ $_top_level ]] && _destination=$_top_level
+}
+
+alias ..=cdup
 alias cc='c .'
 alias cq="cde -q"
 
-# _x
+# _xx
 # xxx
 
 
@@ -31,14 +40,21 @@ cdd () {
 }
 
 ind () {
+    local _cd=cd
+    if [[ $1 == -e ]]; then
+        _cd="cde -q"
+        shift
+    fi
     local _destination=$(py_cp "$1")
     [[ -d "$_destination" ]] || return 1
     (
-        cde -q "$_destination"
+        $_cd "$_destination"
         shift
         "$@"
     )
 }
+
+alias indd="ind -e"
 
 # rule 1: Leave system commands alone
 # So this uses the next key up from "cd"
@@ -87,9 +103,9 @@ cdv () {
 
 cdpy () {
     local __doc__="""Ask cde.py for a destination"""
-    local _stdout=1
+    local _quiet=
     if [[ $1 =~ quiet ]]; then
-        _stdout=
+        _quiet=1
         shift
     fi
     local _cde_dir=$(dirname $(readlink -f $BASH_SOURCE))
@@ -103,15 +119,21 @@ cdpy () {
     [[ $_headline =~ python ]] && _python=
     local _python_command="$_python $_cde_python $_cde_options"
     local _cde_result=1
-    if [[ -n $PUDB_CD ]]; then
-        PYTHONPATH=$_cde_dir pudb $_cde_python $_cde_options "$@"
-    elif ! destination=$(PYTHONPATH=$_cde_dir $_python_command "$@" 2>&1)
+    local _pythonpath=$PYTHONPATH
+    export PYTHONPATH=$_cde_dir:$PYTHONPATH
+    if [[ $PUDB || $PUDB_CD ]]; then
+        set -x
+        local _pudb=$(which pudb3)
+        python -V | grep  -q ' 2' && _pudb=$(which pudb)
+        $_pudb $_cde_python $_cde_options "$@"
+        set +x
+    elif ! destination=$($_python_command "$@" 2>&1)
     then
         echo "$destination"
     elif [[ "$@" =~ ' -[lp]' ]]; then
         echo "$destination"
     elif [[ $destination =~ ^[uU]sage ]]; then
-        PYTHONPATH=$_cde_dir $_python_command --help
+        $_python_command --help
     else
         local real_destination=$(python -c "import os; print(os.path.realpath('$destination'))")
         if [[ "$destination" != "$real_destination" ]]
@@ -123,7 +145,7 @@ cdpy () {
                 shift
             done
             if [[ "$destination" != $(readlink -f "$1") ]]; then
-                [[ -n $_stdout ]] && echo "cd $destination"
+                [[ $_quiet ]] || echo "cd $destination"
             fi
         fi
         if [[ $CD_PATH_ONLY == 1 ]]; then
@@ -133,6 +155,7 @@ cdpy () {
         fi
         _cde_result=0
     fi
+    export PYTHONPATH=$_pythonpath
     unset destination
     PUDB_CD=
     return $_cde_result
@@ -172,7 +195,9 @@ mkc () {
     cde "$_destination"
 }
 
-# _xx
+alias ...="cdup 2"
+
+# _xxx
 # xxxx
 
 cdup () {
@@ -193,10 +218,13 @@ cdup () {
     popd >/dev/null 2>&1
     cde $_dir "$@"
 }
-alias ..=cdup
-alias ...="cdup 2"
+
+inde () {
+    ind -e "$@"
+}
+
 alias ....="cdup 3"
-alias .....="cdup 4"
+
 # xxxxx
 
 cdupp () {
@@ -222,6 +250,9 @@ py_cp () {
     CD_PATH_ONLY=0
     return $_result
 }
+
+alias .....="cdup 4"
+
 # xxxxxx
 
 cde_ok () {

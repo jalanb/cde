@@ -2,33 +2,13 @@ cde is a cd replacer
 ===================
 
     >>> import cde
-    >>> assert cde.__doc__.startswith('cde.py knows where you are going')
+    >>> assert "it knows where you've been" in cde.__doc__
 
 More modules for testing
 ------------------------
 
     >>> import os
     >>> import sys
-
-Command Line
-------------
-
-cde is intended to be used from the command line
-
-On the command line we expect two arguments:
-    The first is a possible directory
-    The rest are prefixes of possible sub-directories
-
-    >>> sys.argv = ['cde.py', 'start', 'here']
-    >>> args = cde.parse_args()
-    >>> assert args.dirname == 'start' and args.subdirnames == ['here']
-
-No prefixes is fine too
-
-    >>> sys.argv = ['cde.py', 'start']
-    >>> args = cde.parse_args()
-    >>> assert args.dirname == 'start' and args.subdirnames == []
-
 
 Finding sub-directories
 -----------------------
@@ -62,20 +42,6 @@ If directory is not found directly then try in PATH
 If that fails, then try in home directory
     >>> assert cde.find_directory('.bashrc', []) == os.path.expanduser('~')
 
-Running from bash
------------------
-
-If run from the command line the python process cannot change dir for calling process (bash)
-    Hence the script just prints out the result
-    bash can then capture that and do the actual cd
-
-Hence the main method will print the found directory
-    and then return 0 for success, 1 for fail
-    >>> sys.argv = ['cde', '/usr', 'local', 'lib']
-    >>> cde.main()
-    /usr/local/lib
-    0
-
 Remembering history
 -------------------
 
@@ -99,11 +65,11 @@ Finding in history
 
 Assuming we have remembered some paths
     >>> history = [
-    ...     '/usr/bin',
-    ...     '/usr/local/bin',
-    ...     '/usr/tin/local',
-    ...     '/usr/bin/vocal',
-    ...     '/usr/local/bib',
+    ...     cde.paths.path('/usr/bin'),
+    ...     cde.paths.path('/usr/local/bin'),
+    ...     cde.paths.path('/usr/tin/local'),
+    ...     cde.paths.path('/usr/bin/vocal'),
+    ...     cde.paths.path('/usr/local/bib'),
     ... ]
 
 Then we should be able to search that history for a remembered item
