@@ -2,7 +2,7 @@ cde is a cd replacer
 ===================
 
     >>> import cde
-    >>> assert "it knows where you've been" in cde.__doc__
+    >>> assert "find where you are" in cde.__doc__
 
 More modules for testing
 ------------------------

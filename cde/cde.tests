@@ -2,6 +2,7 @@ Edge cases for cde
 =================
 
     >>> import cde
+    >>> assert "remembers where you've been" in cde.__doc__
 
 More modules for testing
 ------------------------

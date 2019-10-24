@@ -1,20 +1,18 @@
-#! /usr/local/bin/python
-"""cde.py knows where you are going because it knows where you've been"""
+"""cde.py remembers where you've been to find where you are going"""
 
 
 from __future__ import print_function
 import os
-import bdb
 import sys
 from fnmatch import fnmatch
 import argparse
 import csv
-import timings
+
 
 from boltons.iterutils import unique
-
-from pysyte.cli.main import run
 from pysyte.types import paths
+
+from cde import timings
 
 __version__ = '0.7.2'
 
@@ -446,46 +444,6 @@ def run_args(args):
         method(args)
 
 
-def add_args(parser):
-    """Get the arguments from the command line.
-
-    Insist on at least one empty string"""
-    parser.boolean('-0', '--first', help='Only show first path')
-    parser.boolean('-1', '--second', help='Only show second path')
-    parser.boolean('-2', '--third', help='Only show third path')
-    parser.optional(
-        'dirname', metavar='item', default='', help='(partial) directory name')
-    parser.positional('subdirnames', help='(partial) sub directory names')
-
-# From here argument names correspend to methods above
-    parser.boolean('-a', '--add', help='add a path to history')
-    parser.boolean('-d', '--delete', help='delete a path from history')
-    parser.boolean('-l', '--lost', help='show all unreal paths in history')
-    parser.boolean('-m', '--makedir', help='Ensure the given directory exists')
-    parser.boolean('-o', '--old', help='look for paths in history')
-    parser.boolean(
-        '-p', '--purge', help='remove all non-existent paths from history')
-    parser.boolean('-t', '--test', help='test the script')
-    parser.boolean('-u', '--unused', help='show unused args')
-    parser.boolean('-v', '--version', help='show version of the script')
-
-def post_parse_args(args):
-    args._result.index = None
-    sub_numbers = [int(a) for a in args._result.subdirnames if a.isdigit()]
-    if sub_numbers:
-        args._result.subdirnames = [a for a in args._result.subdirnames if not a.isdigit()]
-        args._result.index = min(sub_numbers)
-    if args.third:
-        args._result.index = 2
-    if args.second:
-        args._result.index = 1
-    if args.first:
-        args._result.index = 0
-    run_args(args.get_args())
-    args._result.dirname = set_args_directory(args)
-    return args
-
-
 def set_args_directory(args):
     if not args.dirname:
         args.subdirnames = []
@@ -773,40 +731,3 @@ def show_paths():
             print('      %s time%s:' % (rank, int(rank) > 1 and 's' or ''))
             old_rank = rank
         print('%3d: %s, %s ago' % (order + 1, p, timings.time_since(atime)))
-
-
-def main(args):
-    """Show a directory from the command line arguments (or some derivative)"""
-    # pylint: disable=too-many-branches
-    # Of course there are too many branches - it's an event dispatcher
-    try:
-        if args.unused:
-            pass
-        return show_path_to_item(args.dirname, args.subdirnames)
-    except (bdb.BdbQuit, SystemExit):
-        return True
-    except AttributeError as e:
-        go_away = 'attribute \'path\'" in <function _remove'
-        if go_away not in str(e):
-            raise
-    except TryAgain as e:
-        if args.index is not None:
-            try:
-                one = e.possibles[args.index]
-                print(one)
-                return True
-            except IndexError:
-                pass
-#            trim = e.trimmed()
-#            if len(trim) == 1:
-#                print(trim.pop())
-#                return True
-        print('Try again:', e)
-        return False
-    except ToDo as e:
-        print('Error:', e)
-        return False
-
-
-run(main, add_args, post_parse_args,
-    usage = '%(prog)s [dirname [subdirname ...]')
