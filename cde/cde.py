@@ -1,19 +1,18 @@
-"""cde.py knows where you've been"""
+"""cde.py remembers where you've been to find where you are going"""
 
 
 from __future__ import print_function
 import os
-import bdb
 import sys
 from fnmatch import fnmatch
 import argparse
 import csv
 
-from cde import timings
 
 from boltons.iterutils import unique
-
 from pysyte.types import paths
+
+from cde import timings
 
 __version__ = '0.7.2'
 
@@ -431,6 +430,30 @@ def add(args):
     add_path(path_to_dirname)
 
 
+def run_args(args):
+    """Run any methods eponymous with args"""
+    if not args:
+        return False
+    g = globals()
+    true_args = {k for k, v in args.items() if v}
+    args_in_globals = {g[k] for k in g if k in true_args}
+    methods = {a for a in args_in_globals if callable(a)}
+    for method in methods:
+        method(args)
+
+
+def set_args_directory(args):
+    if not args.dirname:
+        args.subdirnames = []
+        if args.add:
+            return '.'
+        if not args.old:
+            return paths.home()
+    if args.dirname == '-':
+        return previous_directory()
+    return args.dirname
+
+
 def _path_to_config():
     """Path where our config files are kept"""
     stem = paths.path(__file__).namebase
@@ -696,13 +719,3 @@ def show_paths():
             print('      %s time%s:' % (rank, int(rank) > 1 and 's' or ''))
             old_rank = rank
         print('%3d: %s, %s ago' % (order + 1, p, timings.time_since(atime)))
-
-
-def cde(item, subdirnames):
-    """Don't blink!  This is where the cde's code gets run.
-
-    >>> _ = cde('/', ['us', 'lo'])
-    /usr/local
-    """
-    path_to_item = find_directory(item, subdirnames)
-    return show_found_item(path_to_item)

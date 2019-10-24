@@ -33,31 +33,13 @@ alias cq="cde -q"
 # _xx
 # xxx
 
+# rule 1: Leave system commands alone
+# So this uses the next key up from "cd"
 
 cdd () {
     local __doc__"""cde here"""
     cde .
 }
-
-ind () {
-    local _cd=cd
-    if [[ $1 == -e ]]; then
-        _cd="cde -q"
-        shift
-    fi
-    local _destination=$(py_cp "$1")
-    [[ -d "$_destination" ]] || return 1
-    (
-        $_cd "$_destination"
-        shift
-        "$@"
-    )
-}
-
-alias indd="ind -e"
-
-# rule 1: Leave system commands alone
-# So this uses the next key up from "cd"
 
 cde () {
     local __doc__="""find a dir and handle it"""
@@ -148,13 +130,30 @@ cdpy () {
         _quiet=1
         shift
     fi
+    local _project_dir=$(dirname $(readlink -f $BASH_SOURCE))
+    echo "_project_dir $_project_dir"
+    local _python_dir="$_project_dir/cde"
+    # local _python_cde=$_python_dir/cde.py
+    # echo "_python_cde $_python_cde"
+    _bin_cde=$_project_dir/bin/cde
+    # echo "_bin_cde $_bin_cde"
+
+    local _cde_options=
+    [[ $CD_PATH_ONLY == 1 ]] && _cde_options=--first
+    local _python=$(which python 2>/dev/null)
+    [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
     # set +x
+    local _headline=$(head -n 1 $_bin_cde)
+    [[ $_headline =~ python ]] && _python=
+    local _python_command="$_python $_bin_cde $_cde_options"
     local _cde_result=1
-    local _save_pythonpath=$PYTHONPATH
-    local _python_command=$(python_command "$@")
+    local _pythonpath=$PYTHONPATH
+    export PYTHONPATH=$_project_dir:$PYTHONPATH
     if [[ $PUDB || $PUDB_CD ]]; then
         set -x
-        $(pudb_command "$@")
+        local _pudb=$(which pudb3)
+        python -V | grep  -q ' 2' && _pudb=$(which pudb)
+        $_pudb $_bin_cde $_cde_options "$@"
         set +x
     elif ! destination=$($_python_command 2>&1)
     then
@@ -216,12 +215,23 @@ cpp () {
     fi | grep -v -- '->'
 }
 
-cdll () {
-    local __doc__="""cde $1; ls -l"""
-    local _dir="$@"
-    [[ $_dir ]] || _dir=.
-    cdl $_dir -lhtra
+
+ind () {
+    local _cd=cd
+    if [[ $1 == -e ]]; then
+        _cd="cde -q"
+        shift
+    fi
+    local _destination=$(py_cp "$1")
+    [[ -d "$_destination" ]] || return 1
+    (
+        $_cd "$_destination"
+        shift
+        "$@"
+    )
 }
+
+alias indd="ind -e"
 
 mkc () {
     local _destination=$(py_cp "$1")
@@ -233,6 +243,13 @@ alias ...="cdup 2"
 
 # _xxx
 # xxxx
+
+cdll () {
+    local __doc__="""cde $1; ls -l"""
+    local _dir="$@"
+    [[ $_dir ]] || _dir=.
+    cdl $_dir -lhtra
+}
 
 cdup () {
     local __doc__="""cde up a few levels, 'cdup' goes up 1 level, 'cdup 2' goes up 2"""
@@ -325,12 +342,20 @@ cde_help () {
 }
 # _xxxxxxx
 
+default__cd () {
+    echo "ls -1 --color"
+    echo "ls -ld ."
+    echo "$(du -sh .)"
+    [[ -d .git ]] && echo "git status --short"
+    [[ -d .git ]] && echo "glg $(wc -l $(git status --short))"
+}
+
 _here_cd () {
     local __doc__="""Look for .cd here and source it if found"""
-    local _cde_here=./.cd
-    [[ -f $_cde_here ]] || return 1
-    grep -q activate $_cde_here && unhash_python
-    . $_cde_here
+    local _cd_here=./.cd
+    [[ -f $_cd_here ]] || default__cd > $_cd_here
+    grep -q activate $_cd_here && unhash_python
+    . $_cd_here
     return 0
 }
 
