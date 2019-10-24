@@ -158,6 +158,69 @@ venv_or_shebang () {
     return 0
 }
 
+cdpy () {
+    local __doc__="""Ask cde.py for a destination"""
+    local _quiet=
+    if [[ $1 =~ quiet ]]; then
+        _quiet=1
+        shift
+    fi
+    local _project_dir=$(dirname $(readlink -f $BASH_SOURCE))
+    echo "_project_dir $_project_dir"
+    local _python_dir="$_project_dir/cde"
+    # local _python_cde=$_python_dir/cde.py
+    # echo "_python_cde $_python_cde"
+    _bin_cde=$_project_dir/bin/cde
+    # echo "_bin_cde $_bin_cde"
+
+    local _cde_options=
+    [[ $CD_PATH_ONLY == 1 ]] && _cde_options=--first
+    local _python=$(which python 2>/dev/null)
+    [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
+    # set +x
+    local _headline=$(head -n 1 $_bin_cde)
+    [[ $_headline =~ python ]] && _python=
+    local _python_command="$_python $_bin_cde $_cde_options"
+    local _cde_result=1
+    local _pythonpath=$PYTHONPATH
+    export PYTHONPATH=$_project_dir:$PYTHONPATH
+    if [[ $PUDB || $PUDB_CD ]]; then
+        set -x
+        local _pudb=$(which pudb3)
+        python -V | grep  -q ' 2' && _pudb=$(which pudb)
+        $_pudb $_bin_cde $_cde_options "$@"
+        set +x
+    elif ! destination=$($_python_command "$@" 2>&1)
+    then
+        echo "$destination"
+    elif [[ "$@" =~ ' -[lp]' ]]; then
+        echo "$destination"
+    elif [[ $destination =~ ^[uU]sage ]]; then
+        $_python_command --help
+    else
+        local real_destination=$(python -c "import os; print(os.path.realpath('$destination'))")
+        if [[ "$destination" != "$real_destination" ]]
+        then
+            echo "cd ($destination ->) $real_destination"
+            destination="$real_destination"
+        else
+            while [[ $1 =~ ^- ]]; do
+                shift
+            done
+            if [[ "$destination" != $(readlink -f "$1") ]]; then
+                [[ $_quiet ]] || echo "cd $destination"
+            fi
+        fi
+    fi
+    local _interpreter=$(venv_or_which $_app)
+    if [[ ! -e $_interpreter ]]; then
+        echo "Could not find $_app" >&2
+        return 1
+    fi
+    echo $_interpreter
+    return 0
+}
+
 interpret_cde () {
     local __doc__="""Interpret the cde script, setting PYTHONPATH"""
     local _interpreter="$1"; shift
@@ -234,6 +297,29 @@ cdpu () {
     PUDB_CD=1 cdpy "$@"
 }
 
+ind () {
+    local _cd=cd
+    if [[ $1 == -e ]]; then
+        _cd="cde -q"
+        shift
+    fi
+    local _destination=$(py_cp "$1")
+    [[ -d "$_destination" ]] || return 1
+    (
+        $_cd "$_destination"
+        shift
+        "$@"
+    )
+}
+
+alias indd="ind -e"
+
+mkc () {
+    local _destination=$(py_cp "$1")
+    [[ -d "$_destination" ]] || mkdir -p "$_destination"
+    cde "$_destination"
+}
+
 cdpy () {
     local __doc__="""pushd to cde.py's destination"""
     local _quiet= _Quiet=
@@ -281,6 +367,13 @@ cdpy () {
     [[ $_quiet ]] || echo $_cdpy_output
     pushd "$_cde_directory" >/dev/null 2>&1
     return 0
+}
+
+cdll () {
+    local __doc__="""cde $1; ls -l"""
+    local _dir="$@"
+    [[ $_dir ]] || _dir=.
+    cdl $_dir -lhtra
 }
 
 cdll () {

@@ -1,8 +1,8 @@
 Edge cases for cde
 =================
 
-    >>> from cde import cde
-    >>> assert "knows where you've been" in cde.__doc__
+    >>> import cde
+    >>> assert "remembers where you've been" in cde.__doc__
 
 More modules for testing
 ------------------------
