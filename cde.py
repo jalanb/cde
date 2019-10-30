@@ -359,6 +359,12 @@ def find_directory(item, subdirnames):
     raise ToDo('could not use %r as a directory' % ' '.join([item] + subdirnames))
 
 
+def filename(_args):
+    """Show filename of the script"""
+    print(f'{__file__}'.replace('.pyc','py'))
+    raise SystemExit(os.EX_OK)
+
+
 def version(_args):
     """Show version of the script"""
     print(f'{sys.argv[0]} {__version__}')
@@ -460,6 +466,7 @@ def add_args(parser):
 # From here argument names correspend to methods above
     parser.boolean('-a', '--add', help='add a path to history')
     parser.boolean('-d', '--delete', help='delete a path from history')
+    parser.boolean('-f', '--filename', help='show filename of the script')
     parser.boolean('-l', '--lost', help='show all unreal paths in history')
     parser.boolean('-m', '--makedir', help='Ensure the given directory exists')
     parser.boolean('-o', '--old', help='look for paths in history')
@@ -729,16 +736,6 @@ def delete_path_to_historical_item(item, subdirnames):
     delete_found_item(path_to_item)
 
 
-def show_path_to_item(item, subdirnames):
-    """Get a path for the given item and show it
-
-    >>> _ = show_path_to_item('/', ['us', 'lo'])
-    /usr/local
-    """
-    path_to_item = find_directory(item, subdirnames)
-    return show_found_item(path_to_item)
-
-
 def show_found_item(path_to_item):
     """Show the path to the user, and the history"""
     if not path_to_item:
@@ -775,6 +772,16 @@ def show_paths():
         print('%3d: %s, %s ago' % (order + 1, p, timings.time_since(atime)))
 
 
+def cde(item, subdirnames):
+    """Don't blink!  This is where the cde's code gets run.
+
+    >>> _ = cde('/', ['us', 'lo'])
+    /usr/local
+    """
+    path_to_item = find_directory(item, subdirnames)
+    return show_found_item(path_to_item)
+
+
 def main(args):
     """Show a directory from the command line arguments (or some derivative)"""
     # pylint: disable=too-many-branches
@@ -782,7 +789,7 @@ def main(args):
     try:
         if args.unused:
             pass
-        return show_path_to_item(args.dirname, args.subdirnames)
+        return cde(args.dirname, args.subdirnames)
     except (bdb.BdbQuit, SystemExit):
         return True
     except AttributeError as e:
@@ -797,10 +804,6 @@ def main(args):
                 return True
             except IndexError:
                 pass
-#            trim = e.trimmed()
-#            if len(trim) == 1:
-#                print(trim.pop())
-#                return True
         print('Try again:', e)
         return False
     except ToDo as e:

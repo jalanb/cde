@@ -161,6 +161,11 @@ cdpy () {
     return $_cde_result
 }
 
+cdpudb () {
+    local __doc__="""See cde.py look for a destination"""
+    PUDB_CD=1 cdpy "$@"
+}
+
 cls () {
     local __doc__="clean, clear, ls"
     clean
