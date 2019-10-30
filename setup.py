@@ -7,7 +7,7 @@ from setuptools import setup
 import cde
 
 
-p = os.path.join(os.path.dirname(__file__), 'requirements.txt')
+p = os.path.join(os.path.dirname(__file__), 'requirements/requirements.txt')
 with open(p) as stream:
     required = stream.read().splitlines()
 
