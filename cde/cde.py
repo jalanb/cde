@@ -1,5 +1,4 @@
-#! /usr/local/bin/python
-"""cde.py knows where you are going because it knows where you've been"""
+"""cde.py knows where you've been"""
 
 
 from __future__ import print_function
@@ -9,11 +8,11 @@ import sys
 from fnmatch import fnmatch
 import argparse
 import csv
-import timings
+
+from cde import timings
 
 from boltons.iterutils import unique
 
-from pysyte.cli.main import run
 from pysyte.types import paths
 
 __version__ = '0.7.2'
@@ -305,14 +304,6 @@ def find_path_to_item(item):
     return None
 
 
-def previous_directory():
-    """Where we were (in bash) before this directory"""
-    try:
-        return os.environ['OLDPWD']
-    except KeyError:
-        return '~'
-
-
 def find_directory(item, subdirnames):
     """Find a relevant directory relative to the item, and using subdirnames
 
@@ -359,15 +350,15 @@ def find_directory(item, subdirnames):
     raise ToDo('could not use %r as a directory' % ' '.join([item] + subdirnames))
 
 
-def filename(_args):
-    """Show filename of the script"""
-    print(f'{__file__}'.replace('.pyc','py'))
-    raise SystemExit(os.EX_OK)
-
-
 def version(_args):
     """Show version of the script"""
     print(f'{sys.argv[0]} {__version__}')
+    raise SystemExit(os.EX_OK)
+
+
+def filename(_args):
+    """Show filename of the script"""
+    print(f'{__file__}'.replace('.pyc','py'))
     raise SystemExit(os.EX_OK)
 
 
@@ -438,71 +429,6 @@ def add(args):
     except OSError as e:
         raise SystemExit(str(e))
     add_path(path_to_dirname)
-
-
-def run_args(args):
-    """Run any methods eponymous with args"""
-    if not args:
-        return False
-    g = globals()
-    true_args = {k for k, v in args.items() if v}
-    args_in_globals = {g[k] for k in g if k in true_args}
-    methods = {a for a in args_in_globals if callable(a)}
-    for method in methods:
-        method(args)
-
-
-def add_args(parser):
-    """Get the arguments from the command line.
-
-    Insist on at least one empty string"""
-    parser.boolean('-0', '--first', help='Only show first path')
-    parser.boolean('-1', '--second', help='Only show second path')
-    parser.boolean('-2', '--third', help='Only show third path')
-    parser.optional(
-        'dirname', metavar='item', default='', help='(partial) directory name')
-    parser.positional('subdirnames', help='(partial) sub directory names')
-
-# From here argument names correspend to methods above
-    parser.boolean('-a', '--add', help='add a path to history')
-    parser.boolean('-d', '--delete', help='delete a path from history')
-    parser.boolean('-f', '--filename', help='show filename of the script')
-    parser.boolean('-l', '--lost', help='show all unreal paths in history')
-    parser.boolean('-m', '--makedir', help='Ensure the given directory exists')
-    parser.boolean('-o', '--old', help='look for paths in history')
-    parser.boolean(
-        '-p', '--purge', help='remove all non-existent paths from history')
-    parser.boolean('-t', '--test', help='test the script')
-    parser.boolean('-u', '--unused', help='show unused args')
-    parser.boolean('-v', '--version', help='show version of the script')
-
-def post_parse_args(args):
-    args._result.index = None
-    sub_numbers = [int(a) for a in args._result.subdirnames if a.isdigit()]
-    if sub_numbers:
-        args._result.subdirnames = [a for a in args._result.subdirnames if not a.isdigit()]
-        args._result.index = min(sub_numbers)
-    if args.third:
-        args._result.index = 2
-    if args.second:
-        args._result.index = 1
-    if args.first:
-        args._result.index = 0
-    run_args(args.get_args())
-    args._result.dirname = set_args_directory(args)
-    return args
-
-
-def set_args_directory(args):
-    if not args.dirname:
-        args.subdirnames = []
-        if args.add:
-            return '.'
-        if not args.old:
-            return paths.home()
-    if args.dirname == '-':
-        return previous_directory()
-    return args.dirname
 
 
 def _path_to_config():
@@ -780,36 +706,3 @@ def cde(item, subdirnames):
     """
     path_to_item = find_directory(item, subdirnames)
     return show_found_item(path_to_item)
-
-
-def main(args):
-    """Show a directory from the command line arguments (or some derivative)"""
-    # pylint: disable=too-many-branches
-    # Of course there are too many branches - it's an event dispatcher
-    try:
-        if args.unused:
-            pass
-        return cde(args.dirname, args.subdirnames)
-    except (bdb.BdbQuit, SystemExit):
-        return True
-    except AttributeError as e:
-        go_away = 'attribute \'path\'" in <function _remove'
-        if go_away not in str(e):
-            raise
-    except TryAgain as e:
-        if args.index is not None:
-            try:
-                one = e.possibles[args.index]
-                print(one)
-                return True
-            except IndexError:
-                pass
-        print('Try again:', e)
-        return False
-    except ToDo as e:
-        print('Error:', e)
-        return False
-
-
-run(main, add_args, post_parse_args,
-    usage = '%(prog)s [dirname [subdirname ...]')

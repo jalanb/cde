@@ -1,7 +1,7 @@
 Edge cases for cde
 =================
 
-    >>> import cde
+    >>> from cde import cde
 
 More modules for testing
 ------------------------

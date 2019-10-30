@@ -1,8 +1,8 @@
 cde is a cd replacer
 ===================
 
-    >>> import cde
-    >>> assert "it knows where you've been" in cde.__doc__
+    >>> from cde import cde
+    >>> assert "knows where you've been" in cde.__doc__
 
 More modules for testing
 ------------------------

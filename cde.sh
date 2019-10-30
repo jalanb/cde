@@ -101,6 +101,22 @@ cdv () {
     $EDITOR $_files
 }
 
+cde_dir () {
+    echo $(dirname $(readlink -f $BASH_SOURCE)) 
+}
+
+cde_path () {
+    echo "$(cde_dir)/""$@"
+}
+
+cde_bin () {
+    echo "$(cde_path bin/)""$@"
+}
+
+cde_python () {
+    echo "$(cde_path cde/)""$@"
+}
+
 cdpy () {
     local __doc__="""Ask cde.py for a destination"""
     local _quiet=
@@ -108,19 +124,18 @@ cdpy () {
         _quiet=1
         shift
     fi
-    local _cde_dir=$(dirname $(readlink -f $BASH_SOURCE))
-    local _cde_python=$_cde_dir/cde.py
     local _cde_options=
     [[ $CD_PATH_ONLY == 1 ]] && _cde_options=--first
     local _python=$(which python 2>/dev/null)
     [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
     # set +x
+    local _cde_python=$(cde_bin cde)
     local _headline=$(head -n 1 $_cde_python)
     [[ $_headline =~ python ]] && _python=
     local _python_command="$_python $_cde_python $_cde_options"
     local _cde_result=1
-    local _pythonpath=$PYTHONPATH
-    export PYTHONPATH=$_cde_dir:$PYTHONPATH
+    local _save_pythonpath=$PYTHONPATH
+    export PYTHONPATH=$(cde_python):$PYTHONPATH
     if [[ $PUDB || $PUDB_CD ]]; then
         set -x
         local _pudb=$(which pudb3)
@@ -155,7 +170,7 @@ cdpy () {
         fi
         _cde_result=0
     fi
-    export PYTHONPATH=$_pythonpath
+    export PYTHONPATH=$_save_pythonpath
     unset destination
     PUDB_CD=
     return $_cde_result

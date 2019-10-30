@@ -37,5 +37,8 @@ setup(
     extras_require={
         'docs': ['Sphinx'],
         'testing': ['pytest'],
-    }
+    },
+    scripts=[
+        'bin/cde',
+    ],
 )
