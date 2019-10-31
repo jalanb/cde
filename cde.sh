@@ -102,7 +102,7 @@ cdv () {
 }
 
 cde_dir () {
-    echo $(dirname $(readlink -f $BASH_SOURCE)) 
+    echo $(dirname $(readlink -f $BASH_SOURCE))
 }
 
 cde_path () {
@@ -113,8 +113,32 @@ cde_bin () {
     echo "$(cde_path bin/)""$@"
 }
 
+cde_program () {
+    cde_bin cde
+}
+
 cde_python () {
     echo "$(cde_path cde/)""$@"
+}
+
+pudb_command () {
+    echo $(python_command pudb "$@")
+}
+
+python_command () {
+    local _cde_program=$(cde_program)
+    local _python=$(which python 2>/dev/null)
+    [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
+    local _headline=$(head -n 1 $_cde_program)
+    [[ $_headline =~ python ]] && _python=
+    local _pudb=$(which pudb3)
+    python -V | grep  -q ' 2' && _pudb=$(which pudb)
+    [[ $1 == pudb ]] && _python=$_pudb
+    [[ $1 == pudb ]] && shift
+    local _cde_options=
+    [[ $CD_PATH_ONLY == 1 ]] && _cde_options=--first
+    echo "$_python $_cde_program $_cde_options" "$@"
+    export PYTHONPATH=$(cde_python):$PYTHONPATH
 }
 
 cdpy () {
@@ -124,25 +148,15 @@ cdpy () {
         _quiet=1
         shift
     fi
-    local _cde_options=
-    [[ $CD_PATH_ONLY == 1 ]] && _cde_options=--first
-    local _python=$(which python 2>/dev/null)
-    [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
     # set +x
-    local _cde_python=$(cde_bin cde)
-    local _headline=$(head -n 1 $_cde_python)
-    [[ $_headline =~ python ]] && _python=
-    local _python_command="$_python $_cde_python $_cde_options"
     local _cde_result=1
     local _save_pythonpath=$PYTHONPATH
-    export PYTHONPATH=$(cde_python):$PYTHONPATH
+    local _python_command=$(python_command "$@")
     if [[ $PUDB || $PUDB_CD ]]; then
         set -x
-        local _pudb=$(which pudb3)
-        python -V | grep  -q ' 2' && _pudb=$(which pudb)
-        $_pudb $_cde_python $_cde_options "$@"
+        $(pudb_command "$@")
         set +x
-    elif ! destination=$($_python_command "$@" 2>&1)
+    elif ! destination=$($_python_command 2>&1)
     then
         echo "$destination"
     elif [[ "$@" =~ ' -[lp]' ]]; then
