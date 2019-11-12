@@ -12,13 +12,14 @@ then
 fi
 
 CD_PATH_ONLY=0
-export CDE_SOURCE=$(basename $BASH_SOURCE)
+export CDE_SOURCE=$BASH_SOURCE
+export CDE_NAME=$(basename $CDE_SOURCE)
+export CDE_DIR=$(dirname $(readlink -f $CDE_SOURCE))
 
 # _
 # x
 
 # _x
-# xx
 
 ., () {
     local _destination=$HOME
@@ -26,11 +27,12 @@ export CDE_SOURCE=$(basename $BASH_SOURCE)
     [[ $_top_level ]] && _destination=$_top_level
 }
 
+# xx
+
 alias ..=cdup
 alias cc='c .'
 alias cq="cde -q"
 
-# _xx
 # xxx
 
 # rule 1: Leave system commands alone
@@ -53,6 +55,15 @@ cde () {
     cdpy quiet "$@" || return 1
     [[ -d . ]] || return 1
     cdpy_post_ $_say_quiet
+}
+
+cdi () {
+    local _index=0
+    if [[ $1 =~ [0-2] ]]; then
+        _index=$1
+        shift
+    fi
+    cde -$_index "$@"
 }
 
 cdl () {
@@ -123,6 +134,60 @@ python_command () {
     export PYTHONPATH=$(cde_python):$PYTHONPATH
 }
 
+cls () {
+    local __doc__="clean, clear, ls"
+    clean
+    clear
+    if [[ -n "$@" ]]; then
+        l "$@"
+    else
+        l .
+        echo
+    fi
+}
+
+cpp () {
+    local __doc__="""Show where any args would cde to"""
+    if [[ -n "$1" ]]; then
+        py_cp "$@"
+    else
+        py_cp .
+    fi | grep -v -- '->'
+}
+
+
+ind () {
+    local _cd=cd
+    if [[ $1 == -e ]]; then
+        _cd="cde -q"
+        shift
+    fi
+    local _destination=$(py_cp "$1")
+    [[ -d "$_destination" ]] || return 1
+    (
+        $_cd "$_destination"
+        shift
+        "$@"
+    )
+}
+
+mkc () {
+    local _destination=$(py_cp "$1")
+    [[ -d "$_destination" ]] || mkdir -p "$_destination"
+    cde "$_destination"
+}
+
+alias ...="cdup 2"
+
+# xxxx
+
+cdll () {
+    local __doc__="""cde $1; ls -l"""
+    local _dir="$@"
+    [[ $_dir ]] || _dir=.
+    cdl $_dir -lhtra
+}
+
 cdpy () {
     local __doc__="""Ask cde.py for a destination"""
     local _quiet=
@@ -130,8 +195,7 @@ cdpy () {
         _quiet=1
         shift
     fi
-    local _project_dir=$(dirname $(readlink -f $BASH_SOURCE))
-    echo "_project_dir $_project_dir"
+    local _project_dir=$CDE_DIR
     local _python_dir="$_project_dir/cde"
     # local _python_cde=$_python_dir/cde.py
     # echo "_python_cde $_python_cde"
@@ -189,68 +253,6 @@ cdpy () {
     return $_cde_result
 }
 
-cdpudb () {
-    local __doc__="""See cde.py look for a destination"""
-    PUDB_CD=1 cdpy "$@"
-}
-
-cls () {
-    local __doc__="clean, clear, ls"
-    clean
-    clear
-    if [[ -n "$@" ]]; then
-        l "$@"
-    else
-        l .
-        echo
-    fi
-}
-
-cpp () {
-    local __doc__="""Show where any args would cde to"""
-    if [[ -n "$1" ]]; then
-        py_cp "$@"
-    else
-        py_cp .
-    fi | grep -v -- '->'
-}
-
-
-ind () {
-    local _cd=cd
-    if [[ $1 == -e ]]; then
-        _cd="cde -q"
-        shift
-    fi
-    local _destination=$(py_cp "$1")
-    [[ -d "$_destination" ]] || return 1
-    (
-        $_cd "$_destination"
-        shift
-        "$@"
-    )
-}
-
-alias indd="ind -e"
-
-mkc () {
-    local _destination=$(py_cp "$1")
-    [[ -d "$_destination" ]] || mkdir -p "$_destination"
-    cde "$_destination"
-}
-
-alias ...="cdup 2"
-
-# _xxx
-# xxxx
-
-cdll () {
-    local __doc__="""cde $1; ls -l"""
-    local _dir="$@"
-    [[ $_dir ]] || _dir=.
-    cdl $_dir -lhtra
-}
-
 cdup () {
     local __doc__="""cde up a few levels, 'cdup' goes up 1 level, 'cdup 2' goes up 2"""
     local _level=1
@@ -270,8 +272,16 @@ cdup () {
     cde $_dir "$@"
 }
 
+alias indd="ind -e"
+
 inde () {
     ind -e "$@"
+}
+
+pycd () {
+    # Adapted from https://news.ycombinator.com/item?id=18898898
+    local __doc__="""cde to directory of a iven Python module"""
+    cde $(python -c "import os.path, $1; print(os.path.dirname($1.__file__))");
 }
 
 alias ....="cdup 3"
@@ -281,12 +291,6 @@ alias ....="cdup 3"
 cdupp () {
     local """cd up 2 levels"""
     cdup 2 "$@"
-}
-
-pycd () {
-    # Adapted from https://news.ycombinator.com/item?id=18898898
-    local __doc__="""cde to directory of a iven Python module"""
-    cde $(python -c "import os.path, $1; print(os.path.dirname($1.__file__))");
 }
 
 py_cg () {
@@ -317,6 +321,15 @@ cduppp () {
     cdup 3 "$@"
 }
 # xxxxxxx
+
+vim_cde () {
+    local _files=
+    [[ -f .cd ]] && _files=.cd
+    v $_files $CDE_SOURCE $CDE_DIR "$@"
+    . $CDE.sh
+    [[ $_files ]] && . $_files
+}
+
 # _xxxxxx
 
 _active () {
@@ -328,10 +341,15 @@ _active () {
     same_path $_activate_dir $_venv_dir
 }
 
-cdpy_pre_ () {
-    deactivate 2>/dev/null
-    [[ -n $CDE_header ]] && echo $CDE_header
+_dot_cd () {
+    local __doc__="""Look for .cd here and source it if found"""
+    local _cd_here=./.cd
+    [[ -f $_cd_here ]] || cat_cd_templates > $_cd_here
+    grep -q activate $_cd_here && unhash_python_handlers
+    . $_cd_here
+    true
 }
+
 # xxxxxxxx
 
 cde_help () {
@@ -342,26 +360,11 @@ cde_help () {
 }
 # _xxxxxxx
 
-default__cd () {
-    echo "ls -1 --color"
-    echo "ls -ld ."
-    echo "$(du -sh .)"
-    [[ -d .git ]] && echo "git status --short"
-    [[ -d .git ]] && echo "glg $(wc -l $(git status --short))"
-}
-
-_here_cd () {
-    local __doc__="""Look for .cd here and source it if found"""
-    local _cd_here=./.cd
-    [[ -f $_cd_here ]] || default__cd > $_cd_here
-    grep -q activate $_cd_here && unhash_python
-    . $_cd_here
-    return 0
-}
-
 _here_ls () {
     ls 2> ~/bash/null
 }
+
+# xxxxxxxx
 
 say_path () {
     local _said=$(python << EOP
@@ -387,32 +390,34 @@ EOP
     type sai >/dev/null 2>&1 && sai "$_said"
 }
 
-cdpy_post_ () {
-    local _path=$(short_dir $PWD)
-    [[ $_path == "~" ]] && _path=HOME
-    [[ $_path =~ "wwts" ]] && _path="${_path/wwts/dub dub t s}"
-    [[ $1 =~ quiet ]] && shift || say_path $_path
-    _here_cd && return 0
-    _here_bin
-    here_git
-    _here_python && _here_venv
-    [[ -n $1 ]] &&
-    _here_ls && here_clean
-}
 # xxxxxxxxx
+
+cdpy_pre_ () {
+    cde_deactivate
+    [[ -n $CDE_header ]] && echo $CDE_header
+}
+
+echo_dirs () {
+    local _echoed=
+    for dir in "$@"; do
+        [[ -d $dir ]] || continue
+        echo -n $dir
+        _echoed=1
+    done
+    [[ $_echoed ]] || return 1
+    echo
+    true
+}
 
 same_path () {
     [[ $(readlink -f "$1") == $(readlink -f "$2") ]]
 }
-# _xxxxxxxx
 
-unhash_python () {
-    hash -d python ipython pip pudb >/dev/null 2>&1
-}
+# _xxxxxxxx
 
 _activate () {
     # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
-    unhash_python
+    unhash_python_handlers
     [[ -f $ACTIVATE ]] && . $ACTIVATE
 }
 
@@ -427,19 +432,8 @@ _dirnames () {
     return $_result
 }
 
-_here_bin () {
-    [[ -d ./bin ]] && add_to_a_path PATH ./bin
-}
-
-here_git () {
-    [[ -d ./.git ]] || return 0
-    show_git_time . | head -n ${LOG_LINES_ON_CD_GIT_DIR:-7}
-    local _branch=$(git rev-parse --abbrev-ref HEAD)
-    echo $_branch
-    git_simple_status .
-    show_version_here
-    gl11
-    return 0
+_add_source_bin_to_PATH() {
+    [[ -d ./bin ]] && add_to_PATH ./bin
 }
 
 # _xxxxxxxxx
@@ -447,12 +441,7 @@ here_git () {
 _here_venv () {
     local _active_venv="$VIRTUAL_ENV"
     local _active_bin="$_active_venv/bin"
-    if [[ -e $_active_bin/ipython ]]; then
-        alias ipy="$_active_bin/ipython"
-    else
-        unalias ipy >/dev/null
-    fi > /dev/null 2>&1
-    activate_python_here && return 0
+    cde_activate_here && return 0
     # set -x
     local _venvs=$HOME/.virtualenvs
     [[ -d $_venvs ]] || return 0
@@ -477,13 +466,10 @@ _here_venv () {
 
 # _xxxxxxxxxx
 
-here_clean () {
-    for path in $(find . -type f -name '*.sw*'); do
-        ls -l $path 2> ~/bash/fd/2
-        rm -i $path && continue
-        [[ $? == 0 ]] || break
-    done
+_reactivate () {
+    _activate
 }
+
 
 # _xxxxxxxxxxx
 
@@ -493,7 +479,7 @@ _here_python () {
     local _dir_name=$(basename $_dir)
     python_project_here $_dir_name || return 0
     prune_python_here
-    activate_python_here
+    cde_activate_here
     local egg_info=${_dir_name}.egg-info
     if [[ -d $egg_info ]]; then
         ri $egg_info
@@ -501,32 +487,130 @@ _here_python () {
     return 0
 }
 
-# _xxxxxxxxxxxxxx
+# xxxxxxxxxx
+
+cdpy_post_ () {
+    local _path=$(short_dir $PWD)
+    [[ $_path == "~" ]] && _path=HOME
+    [[ $_path =~ "wwts" ]] && _path="${_path/wwts/dub dub t s}"
+    [[ $1 =~ quiet ]] && shift || say_path $_path
+    _dot_cd && return 0
+    _add_source_bin_to_PATH
+    cde_show_git_was_here
+    _here_python && _here_venv
+    [[ -n $1 ]] &&
+    _here_ls && here_clean
+}
+
+here_clean () {
+    for path in $(find . -type f -name '*.sw*'); do
+        ls -l $path 2> ~/bash/fd/2
+        rm -i $path && continue
+        [[ $? == 0 ]] || break
+    done
+}
+
+# xxxxxxxxxxx
+
+cd_template () {
+    echo -n "$1/cd "
+    true
+}
+
+# xxxxxxxxxxxx
+
+bin_template () {
+    [[ -d bin ]] || return 1
+    echo -n "$1/bin "
+    true
+}
+
+git_template () {
+    [[ -d .git ]] || return 1
+    echo -n "$1/git "
+    true
+}
+
+# xxxxxxxxxxxxx
+# xxxxxxxxxxxxxx
+
+venv_dirs_here () {
+    echo_dirs .venv/bin venv/bin bin
+}
+
+venv_directory () {
+    local _one=
+    [[ "$1" ]] && _one="$1"
+    [[ $_one ]] && shift 
+    local _path_to_one=$_one
+    [[ $_one ]] && _path_to_one=$(readlink -f $_one)
+    local _path_at_home="~/$_one"
+    [[ $_one ]] && _path_at_home=$(readlink -f ~/$_one)
+    [[ -f "$_path_to_one" ]] && _path_to_one=$(dirname "$_path_to_one")
+    local _venv_dir=
+    if [[ -d "$_path_to_one" ]]; then
+        _venv_dir="$_path_to_one"
+    else
+        if [[ -d "$_path_at_home" ]]; then
+            _venv_dir="$_path_at_home"
+        else
+            echo "Not a directory: '$_path_to_one'"
+            echo "Not a directory: '$_path_at_home'"
+            _venv_dir="nopath"
+        fi
+    fi
+    [[ -d "$_venv_dir" ]] || return 1
+    echo_dirs "$_venv_dir"
+    true
+}
+
+# xxxxxxxxxxxxxxx
+
+# xxxxxxxxxxxxxxx
+
+python_template () {
+    local _python_template="$1/python"
+    local echo_template=
+    [[ $(find . -maxdepth 7 -name  __init__.py | wc -l) -gt 3 ]] && echo_template="$_python_template"
+    [[ $(find . -maxdepth 2 -name  activate | wc -l) -gt 1 ]] && echo_template="$_python_template"
+    [[ $echo_template ]] || return 1
+    echo -n "$echo_template "
+    true
+}
+
+unhash_handlers () {
+    local _dehash=
+    for arg in "$@"; do
+        if hash -l | grep " $arg[$]"; then
+            hash -d $arg
+            _dehash=1
+        fi
+    done
+    [[ $_dehash ]] || return 0
+    true
+}
+
+# xxxxxxxxxxxxxxxx
+
+cat_cd_templates () {
+    local _template_dir="$CDE_DIR/templates"
+    cat $(cd_template "$_template_dir")
+    local _template=
+    for method in bin git python ; do
+        _template=$(${method}_template "$_template_dir")
+        [[ $_template ]] || continue
+        local _cat=cat
+        head -n 1 $_template | grep -q '^#!' && _cat="tail -n +2 "
+        $_cat $_template | grep -v ^$
+    done
+}
 
 # xxxxxxxxxxxxxxxxx
-
-show_version_here () {
-    local _config=./.bumpversion.cfg
-    if [[ -f $_config ]]; then
-        bump show
-        return
-    fi
-}
-
-# xxxxxxxxxxxxxxxxxxx
-
-python_project_here () {
-    local __doc__="""Recognise python project dir by presence of known files/dirs"""
-    local _dirname="$1"
-    [[ -f setup.py || -f requirements.txt || -f bin/activate || -d ./$_dir_name || -d .venv || -d .idea ]]
-}
-
-# xxxxxxxxxxxxxxxxxxxxxxx
-
-activate_python_here () {
-    find_activate_script || return 1
-    _active || _activate
-    PYTHON_VERSION=$(python --version 2>&1 | head -n 1 | cut -d' ' -f 2)
+project_venv_dirs () {
+    local _top_dirs=
+    local _git_top=$(git rev-parse --show-toplevel . 2>/dev/null | head -n 1)
+    [[ -d $_git_top ]] && _top_dirs="$_git_top/venv/bin $_git_top/.venv/bin $_git_top/bin"
+    echo_dirs $_top_dirs
 }
 
 prune_python_here () {
@@ -538,26 +622,109 @@ prune_python_here () {
     return 0
 }
 
+show_version_here () {
+    local _config=./.bumpversion.cfg
+    if [[ -f $_config ]]; then
+        bump show
+        return
+    fi
+}
+
+# xxxxxxxxxxxxxxxxxx
+# xxxxxxxxxxxxxxxxxxx
+
+python_project_here () {
+    local __doc__="""Recognise python project dir by presence of known files/dirs"""
+    local _dirname="$1"
+    [[ -f setup.py || -f requirements.txt || -f bin/activate || -d ./$_dir_name || -d .venv || -d .idea ]]
+}
+
+# xxxxxxxxxxxxxxxxxxxx
+
+unhash_file_handlers () {
+    unhash_handlers  rm cp mv cat
+}
+
+# xxxxxxxxxxxxxxxxxxxxxx
+
+unhash_python_handlers () {
+    unhash_handlers '[ib]*python' 'pip[23]*' 'ipython[23]*' pdb ipdb pudb 
+}
+
+# xxxxxxxxxxxxxxxxxxxxxxx
+
 any_python_scripts_here () {
     [[ $(find . -type f -name "*.py" -exec echo 1 \; -quit) == 1 ]]
 }
 
-find_activate_script () {
-    local _activate_here=
-    local _dirs="venv/bin .venv/bin bin ."
-    local _top=$(git rev-parse --show-toplevel . 2>/dev/null | head -n 1)
-    [[ -d $_top ]] && _dirs="$_dirs $_top/venv/bin $_top/.venv/bin $_top/bin $top"
-    for _activate_bin in $_dirs; do
-        local _activate=$_activate_bin/activate
-        if [[ -f $_activate ]]; then
-            . $_activate
-            _activate_here="$(readlink -f $_activate)"
-            break
-        fi
+# 
+# cde_source_*() functions
+# 
+# These names should be used in /dir/.cd files
+# They rely on: $(dirname .cd) == $PWD
+# 
+
+cde_find_activate_script () {
+    local _here=$(pwd)
+    local _activate_dirs=$(venv_directory "$@")
+    [[ $_activate_dirs ]] || _activate_dirs="$_here $(venv_dirs_here) $(project_venv_dirs)"
+    [[ $? == 0 ]] || echo "No dirs available to find activate scripts" >&2
+    [[ $? == 0 ]] || return 1
+    local _activate_dir=
+    local _activate_script=
+    for _activate_dir in $_activate_dirs; do
+        [[ -f $_activate_dir/bin/activate ]] && _activate_script=$_activate_dir/bin/activate
+        [[ -f $_activate_dir/activate ]] && _activate_script=$_activate_dir/activate
+        [[ -f "$_activate_script" ]] && break
     done
-    [[ -f $_activate_here ]] && ACTIVATE="$_activate_here"
+    [[ -f $_activate_script ]] && ACTIVATE="$(readlink -f $_activate_script)"
     export ACTIVATE
-    [[ -f $ACTIVATE ]]
+    [[ -f $_activate_script ]] 
+}
+
+cde_activate_here () {
+    cde_find_activate_script || return 1
+    _active && cde_deactivate
+    _activate
+}
+
+cde_activate_home () {
+    cde_activate_there ~/.virtualenvs/$1
+}
+
+cde_activate_there () {
+    cde_find_activate_script "$@" || return 1
+    _active && cde_deactivate
+    _activate
+}
+
+cde_activate_venv () {
+    [[ "$@" ]] && cde_activate_there "$@" || cde_activate_here
+}
+
+cde_deactivate () {
+    deactivate >/dev/null 2>&1
+    unhash_python_handlers
+}
+
+cde_show_git_was_here () {
+    [[ -d ./.git ]] || return 0
+    show_git_time . | head -n ${LOG_LINES_ON_CD_GIT_DIR:-7}
+    local _branch=$(git rev-parse --abbrev-ref HEAD)
+    echo $_branch
+    git_simple_status .
+    show_version_here
+    gl11
+    return 0
+}
+
+cde_bin_PATH () {
+    local __doc__="""Adds /.cd/../bin to PATH"""
+    local _bin_path=$(readlink -f bin)
+    [[ -d "$1" ]] && _bin_path="$1"
+    [[ -d "$_bin_path" ]] || return 2
+    [[ $PATH =~ "$_bin_path" ]] && return 0
+    export PATH="$_bin_path:$PATH"
 }
 
 [[ -n $WELCOME_BYE ]] && echo Bye from $(basename "$BASH_SOURCE") in $(dirname $(readlink -f "$BASH_SOURCE")) on $(hostname -f)
