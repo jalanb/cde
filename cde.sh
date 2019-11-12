@@ -35,13 +35,13 @@ alias cq="cde -q"
 
 # xxx
 
-# rule 1: Leave system commands alone
-# So this uses the next key up from "cd"
-
 cdd () {
     local __doc__"""cde here"""
     cde .
 }
+
+# rule 1: Leave system commands alone
+# So this uses the next key up from "cd"
 
 cde () {
     local __doc__="""find a dir and handle it"""
@@ -441,6 +441,11 @@ _add_source_bin_to_PATH() {
 _here_venv () {
     local _active_venv="$VIRTUAL_ENV"
     local _active_bin="$_active_venv/bin"
+    if [[ -e $_active_bin/ipython ]]; then
+        alias ipy="$_active_bin/ipython"
+    else
+        unalias ipy >/dev/null
+    fi > /dev/null 2>&1
     cde_activate_here && return 0
     # set -x
     local _venvs=$HOME/.virtualenvs
