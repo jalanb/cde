@@ -23,6 +23,11 @@ then
     echo "  sh $0"
 fi
 
+CD_PATH_ONLY=0
+export CDE_SOURCE=$BASH_SOURCE
+export CDE_NAME=$(basename $CDE_SOURCE)
+export CDE_DIR=$(dirname $(readlink -f $CDE_SOURCE))
+
 # _
 # x
 
@@ -60,6 +65,15 @@ cde () {
     cdpy "$@" || return 1
     [[ -d . ]] || return 1
     post_cdpy $_say_quiet
+}
+
+cdi () {
+    local _index=0
+    if [[ $1 =~ [0-2] ]]; then
+        _index=$1
+        shift
+    fi
+    cde -$_index "$@"
 }
 
 cdi () {
@@ -123,6 +137,43 @@ inx () {
     )
 }
 
+cls () {
+    local __doc__="clean, clear, ls"
+    clean
+    clear
+    if [[ -n "$@" ]]; then
+        l "$@"
+    else
+        l .
+        echo
+    fi
+}
+
+cpp () {
+    local __doc__="""Show where any args would cde to"""
+    if [[ -n "$1" ]]; then
+        py_cp "$@"
+    else
+        py_cp .
+    fi | grep -v -- '->'
+}
+
+
+ind () {
+    local _cd=cd
+    if [[ $1 == -e ]]; then
+        _cd="cde -q"
+        shift
+    fi
+    local _destination=$(py_cp "$1")
+    [[ -d "$_destination" ]] || return 1
+    (
+        $_cd "$_destination"
+        shift
+        "$@"
+    )
+}
+
 venv_or_which () {
     local __doc__="""find an executable in cde's virtualenv, or which, or which with our PATH"""
     [[ "$1" ]] || return 1 
@@ -165,8 +216,7 @@ cdpy () {
         _quiet=1
         shift
     fi
-    local _project_dir=$(dirname $(readlink -f $BASH_SOURCE))
-    echo "_project_dir $_project_dir"
+    local _project_dir=$CDE_DIR
     local _python_dir="$_project_dir/cde"
     # local _python_cde=$_python_dir/cde.py
     # echo "_python_cde $_python_cde"
@@ -423,6 +473,18 @@ cdupp () {
     cdup 2 "$@"
 }
 
+py_cg () {
+    local __doc__="Debug the cdpy function and script"
+    PUDB_CD=1 cdpy "$@"
+}
+
+# xxxxx
+
+cdupp () {
+    local """cd up 2 levels"""
+    cdup 2 "$@"
+}
+
 alias .....="cdup 4"
 
 # xxxxxx
@@ -513,13 +575,8 @@ EOP
 
 # xxxxxxxxx
 
-cde_first () {
-    local __doc__="Show the first path that cdpy would go to"
-    cde -0 "$@"
-}
-
-pre_cdpy () {
-    # cde_deactivate
+cdpy_pre_ () {
+    cde_deactivate
     [[ -n $CDE_header ]] && echo $CDE_header
 }
 
@@ -577,11 +634,6 @@ _add_source_bin_to_PATH() {
 _here_venv () {
     local _active_venv="$VIRTUAL_ENV"
     local _active_bin="$_active_venv/bin"
-    if [[ -e $_active_bin/ipython ]]; then
-        alias ipy="$_active_bin/ipython"
-    else
-        unalias ipy >/dev/null
-    fi > /dev/null 2>&1
     cde_activate_here && return 0
     # set -x
     local _venvs=$HOME/.virtualenvs
@@ -682,12 +734,12 @@ venv_dirs_here () {
 venv_directory () {
     local _one=
     [[ "$1" ]] && _one="$1"
-    [[ $_one ]] && shift
-    local _path_to_one=
+    [[ $_one ]] && shift 
+    local _path_to_one=$_one
     [[ $_one ]] && _path_to_one=$(readlink -f $_one)
+    local _path_at_home="~/$_one"
+    [[ $_one ]] && _path_at_home=$(readlink -f ~/$_one)
     [[ -f "$_path_to_one" ]] && _path_to_one=$(dirname "$_path_to_one")
-    local _path_at_home=
-    [[ $_one ]] && _path_at_home=$(readlink -f ~/.virtualenvs/$_one)
     local _venv_dir=
     if [[ -d "$_path_to_one" ]]; then
         _venv_dir="$_path_to_one"
@@ -695,9 +747,9 @@ venv_directory () {
         if [[ -d "$_path_at_home" ]]; then
             _venv_dir="$_path_at_home"
         else
-            echo "Not a directory: '$_path_to_one'" >&2
-            echo "Not a directory: '$_path_at_home'" >&2
-            return 1
+            echo "Not a directory: '$_path_to_one'"
+            echo "Not a directory: '$_path_at_home'"
+            _venv_dir="nopath"
         fi
     fi
     [[ -d "$_venv_dir" ]] || return 1
@@ -734,7 +786,7 @@ unhash_handlers () {
 # xxxxxxxxxxxxxxxx
 
 cat_cd_templates () {
-    local _template_dir="${CDE_DIR}/templates"
+    local _template_dir="$CDE_DIR/templates"
     cat $(cd_template "$_template_dir")
     local _template=
     for method in bin git python ; do
@@ -798,13 +850,6 @@ any_python_scripts_here () {
     [[ $(find . -type f -name "*.py" -exec echo 1 \; -quit) == 1 ]]
 }
 
-#
-# cde_activate functions
-#
-# These names should be used in /dir/.cd files
-# They rely on: $(dirname .cd) == $PWD
-#
-
 cde_find_activate_script () {
     local _here=$(pwd)
     local _activate_dirs=$(venv_directory "$@")
@@ -820,7 +865,51 @@ cde_find_activate_script () {
     done
     [[ -f $_activate_script ]] && ACTIVATE="$(readlink -f $_activate_script)"
     export ACTIVATE
-    [[ -f $_activate_script ]]
+}
+
+cde_activate_here () {
+    cde_find_activate_script || return 1
+    _active && cde_deactivate
+    _activate
+}
+
+cde_activate_home () {
+    cde_activate_there ~/.virtualenvs/$1
+}
+
+cde_activate_there () {
+    cde_find_activate_script "$@" || return 1
+    _active && cde_deactivate
+    _activate
+}
+
+cde_activate_venv () {
+    [[ "$@" ]] && cde_activate_there "$@" || cde_activate_here
+}
+
+cde_deactivate () {
+    deactivate >/dev/null 2>&1
+    unhash_python_handlers
+}
+
+cde_show_git_was_here () {
+    [[ -d ./.git ]] || return 0
+    show_git_time . | head -n ${LOG_LINES_ON_CD_GIT_DIR:-7}
+    local _branch=$(git rev-parse --abbrev-ref HEAD)
+    echo $_branch
+    git_simple_status .
+    show_version_here
+    gl11
+    return 0
+}
+
+cde_bin_PATH () {
+    local __doc__="""Adds /.cd/../bin to PATH"""
+    local _bin_path=$(readlink -f bin)
+    [[ -d "$1" ]] && _bin_path="$1"
+    [[ -d "$_bin_path" ]] || return 2
+    [[ $PATH =~ "$_bin_path" ]] && return 0
+    export PATH="$_bin_path:$PATH"
 }
 
 cde_activate_here () {
