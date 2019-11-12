@@ -1,7 +1,3 @@
 #! /bin/bash
 
-[[ -f bin/activate ]] && source bin/activate
-_here_bin=$(dirname $(readlink -f $BASH_SOURCE))/bin
-if [[ -d $_here_bin ]]; then
-    [[ $PATH =~ $_here_bin ]] || export PATH="$_here_bin:$PATH"
-fi
+cde_activate_venv
