@@ -72,6 +72,15 @@ cdi () {
     cde -$_index "$@"
 }
 
+cdi () {
+    local _index=0
+    if [[ $1 =~ [0-2] ]]; then
+        _index=$1
+        shift
+    fi
+    cde -$_index "$@"
+}
+
 cdl () {
     local __doc__="""cde $1; ls -1"""
     local _dir="$@"
@@ -363,23 +372,6 @@ cde_help () {
 }
 # _xxxxxxx
 
-default__cd () {
-    echo "ls -1 --color"
-    echo "ls -ld ."
-    echo "$(du -sh .)"
-    [[ -d .git ]] && echo "git status --short"
-    [[ -d .git ]] && echo "glg $(wc -l $(git status --short))"
-}
-
-_here_cd () {
-    local __doc__="""Look for .cd here and source it if found"""
-    local _cd_here=./.cd
-    [[ -f $_cd_here ]] || default__cd > $_cd_here
-    grep -q activate $_cd_here && unhash_python
-    . $_cd_here
-    return 0
-}
-
 _here_ls () {
     ls 2> ~/bash/null
 }
@@ -554,6 +546,7 @@ here_clean () {
 
 cd_template () {
     echo -n "$1/cd "
+    true
 }
 
 # xxxxxxxxxxxx
@@ -593,6 +586,8 @@ venv_directory () {
         if [[ -d "$_path_at_home" ]]; then
             _venv_dir="$_path_at_home"
         else
+            echo "Not a directory: '$_path_to_one'"
+            echo "Not a directory: '$_path_at_home'"
             _venv_dir="nopath"
         fi
     fi
