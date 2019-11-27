@@ -125,7 +125,7 @@ python_command () {
     local _headline=$(head -n 1 $_cde_program)
     [[ $_headline =~ python ]] && _python=
     local _pudb=$(which pudb3)
-    python -V | grep  -q ' 2' && _pudb=$(which pudb)
+    $_python -V | grep  -q ' 2' && _pudb=$(which pudb)
     [[ $1 == pudb ]] && _python=$_pudb
     [[ $1 == pudb ]] && shift
     local _cde_options=

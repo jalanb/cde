@@ -1,10 +1,13 @@
 #! /usr/local/bin/python3
 """cde knows where you are going because it knows where you've been"""
+import bdb
 import os
 
 from pysyte.cli.main import run
+from pysyte.types import paths
 
 from cde import cde
+
 
 def add_args(parser):
     """Get the arguments from the command line.
@@ -65,7 +68,8 @@ def post_parse_args(args):
     args._result.index = None
     sub_numbers = [int(a) for a in args._result.subdirnames if a.isdigit()]
     if sub_numbers:
-        args._result.subdirnames = [a for a in args._result.subdirnames if not a.isdigit()]
+        args._result.subdirnames = [
+            a for a in args._result.subdirnames if not a.isdigit()]
         args._result.index = min(sub_numbers)
     if args.third:
         args._result.index = 2
@@ -92,7 +96,7 @@ def main(args):
         go_away = 'attribute \'path\'" in <function _remove'
         if go_away not in str(e):
             raise
-    except TryAgain as e:
+    except cde.TryAgain as e:
         if args.index is not None:
             try:
                 one = e.possibles[args.index]
@@ -102,11 +106,10 @@ def main(args):
                 pass
         print('Try again:', e)
         return False
-    except ToDo as e:
+    except cde.ToDo as e:
         print('Error:', e)
         return False
 
 
 run(main, add_args, post_parse_args,
-    usage = '%(prog)s [dirname [subdirname ...]')
-
+    usage='%(prog)s [dirname [subdirname ...]')
