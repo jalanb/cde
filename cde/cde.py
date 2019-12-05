@@ -1,4 +1,4 @@
-"""cde.py remembers where you've been to find where you are going"""
+"""cde.py knows where you are going because it knows where you've been"""
 
 
 from __future__ import print_function
