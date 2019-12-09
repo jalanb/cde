@@ -1,9 +1,22 @@
 #! /bin/cat
 
-[[ -n $WELCOME_BYE ]] && echo Welcome to $(basename "$BASH_SOURCE") in $(dirname $(readlink -f "$BASH_SOURCE")) on $(hostname -f)
+export CDE_SOURCE="$BASH_SOURCE"
+export CDE_NAME=$(basename "$CDE_SOURCE")
+export CDE_SOURCE_PATH=$(readlink -f "$CDE_SOURCE")
+export CDE_DIR=$(dirname "$CDE_SOURCE_PATH")
+
+announce () {
+    set -x
+    local _host=$(hostname -f)
+    echo "$@" $CDE_NAME in $CDE_DIR on $_host
+    set +x
+}
+
+[[ $WELCOME_BYE ]] && announce Welcome to
+
 
 # This script is intended to be sourced, not run
-if [[ $0 == $BASH_SOURCE ]]
+if [[ $0 == "$CDE_SOURCE" ]]
 then
     echo "This file should be run as"
     echo "  source $0"
@@ -11,10 +24,7 @@ then
     echo "  sh $0"
 fi
 
-CD_PATH_ONLY=0
-export CDE_SOURCE=$BASH_SOURCE
-export CDE_NAME=$(basename $CDE_SOURCE)
-export CDE_DIR=$(dirname $(readlink -f $CDE_SOURCE))
+CDE_ONLY_FIRST=0
 
 # _
 # x
@@ -95,7 +105,7 @@ cdv () {
 }
 
 cde_dir () {
-    echo $(dirname $(readlink -f $BASH_SOURCE))
+    echo $(dirname $(readlink -f "$CDE_SOURCE"))
 }
 
 cde_path () {
@@ -110,28 +120,28 @@ cde_program () {
     cde_bin cde
 }
 
+cde_pudb () {
+    local _pudb=$(which pudb3)
+    python -V | grep  -q ' 2' && _pudb=$(which pudb)
+    local _cde_options=
+    [[ $CDE_ONLY_FIRST == 1 ]] && _cde_options=--first
+    set -x
+    PYTHONPATH=$(cde_dir):$PYTHONPATH $_pudb $_cde_program $_cde_options "$@"
+    set +x
+}
+
 cde_python () {
-    echo "$(cde_path cde/)""$@"
-}
-
-pudb_command () {
-    echo $(python_command pudb "$@")
-}
-
-python_command () {
+    local __doc__="""Run the cde python program, with PATH/PYTHONPATH"""
     local _cde_program=$(cde_program)
     local _python=$(which python 2>/dev/null)
     [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
     local _headline=$(head -n 1 $_cde_program)
     [[ $_headline =~ python ]] && _python=
-    local _pudb=$(which pudb3)
-    $_python -V | grep  -q ' 2' && _pudb=$(which pudb)
-    [[ $1 == pudb ]] && _python=$_pudb
-    [[ $1 == pudb ]] && shift
+    [[ $1 =~ pudb ]] && _python=$1
+    [[ $1 =~ pudb ]] && shift
     local _cde_options=
-    [[ $CD_PATH_ONLY == 1 ]] && _cde_options=--first
-    echo "$_python $_cde_program $_cde_options" "$@"
-    export PYTHONPATH=$(cde_python):$PYTHONPATH
+    [[ $CDE_ONLY_FIRST == 1 ]] && _cde_options=--first
+    PYTHONPATH=$(cde_dir):$PYTHONPATH $_python $_cde_program $_cde_options "$@"
 }
 
 cls () {
@@ -195,60 +205,41 @@ cdpy () {
         _quiet=1
         shift
     fi
-    local _project_dir=$CDE_DIR
-    local _python_dir="$_project_dir/cde"
-    # local _python_cde=$_python_dir/cde.py
-    # echo "_python_cde $_python_cde"
-    _bin_cde=$_project_dir/bin/cde
-    # echo "_bin_cde $_bin_cde"
-
-    local _cde_options=
-    [[ $CD_PATH_ONLY == 1 ]] && _cde_options=--first
-    local _python=$(which python 2>/dev/null)
-    [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
     # set +x
-    local _headline=$(head -n 1 $_bin_cde)
-    [[ $_headline =~ python ]] && _python=
-    local _python_command="$_python $_bin_cde $_cde_options"
     local _cde_result=1
-    local _pythonpath=$PYTHONPATH
-    export PYTHONPATH=$_project_dir:$PYTHONPATH
     if [[ $PUDB || $PUDB_CD ]]; then
-        set -x
-        local _pudb=$(which pudb3)
-        python -V | grep  -q ' 2' && _pudb=$(which pudb)
-        $_pudb $_bin_cde $_cde_options "$@"
-        set +x
-    elif ! destination=$($_python_command 2>&1)
+        cde_pudb "$@"
+        return $?
+    fi
+    local _destination=$(cde_python "$@")
+    if [[ -z $_destination ]]
     then
-        echo "$destination"
+        echo "$_destination"
     elif [[ "$@" =~ ' -[lp]' ]]; then
-        echo "$destination"
-    elif [[ $destination =~ ^[uU]sage ]]; then
-        $_python_command --help
+        echo "$_destination"
+    elif [[ $_destination =~ ^[uU]sage ]]; then
+        cde_python --help
     else
-        local real_destination=$(python -c "import os; print(os.path.realpath('$destination'))")
-        if [[ "$destination" != "$real_destination" ]]
+        local _real_destination=$(readlink -f $_destination)
+        if [[ "$_destination" != "$_real_destination" ]]
         then
-            echo "cd ($destination ->) $real_destination"
-            destination="$real_destination"
+            echo "cd ($_destination ->) $_real_destination"
+            _destination="$_real_destination"
         else
             while [[ $1 =~ ^- ]]; do
                 shift
             done
-            if [[ "$destination" != $(readlink -f "$1") ]]; then
-                [[ $_quiet ]] || echo "cd $destination"
+            if [[ "$_destination" != $(readlink -f "$1") ]]; then
+                [[ $_quiet ]] || echo "cd $_destination"
             fi
         fi
-        if [[ $CD_PATH_ONLY == 1 ]]; then
-            echo "$destination"
+        if [[ $CDE_ONLY_FIRST == 1 ]]; then
+            echo "$_destination"
         else
-            same_path . "$destination" || pushd "$destination" >/dev/null 2>&1
+            same_path . "$_destination" || pushd "$_destination" >/dev/null 2>&1
         fi
         _cde_result=0
     fi
-    export PYTHONPATH=$_save_pythonpath
-    unset destination
     PUDB_CD=
     return $_cde_result
 }
@@ -300,9 +291,9 @@ py_cg () {
 
 py_cp () {
     local __doc__="Show the path that cdpy would go to"
-    CD_PATH_ONLY=1 cdpy quiet "$@"
+    CDE_ONLY_FIRST=1 cdpy quiet "$@"
     local _result=$?
-    CD_PATH_ONLY=0
+    CDE_ONLY_FIRST=0
     return $_result
 }
 
@@ -393,7 +384,7 @@ EOP
 # xxxxxxxxx
 
 cdpy_pre_ () {
-    cde_deactivate
+    # cde_deactivate
     [[ -n $CDE_header ]] && echo $CDE_header
 }
 
@@ -450,7 +441,7 @@ _here_venv () {
     # set -x
     local _venvs=$HOME/.virtualenvs
     [[ -d $_venvs ]] || return 0
-    local _here=$(realpath $(pwd))
+    local _here=$(readlink -f $(pwd))
     local _name="not_a_name"
     [[ -e $_here ]] && _name=$(basename $_here)
     local _venv_path=
@@ -480,7 +471,7 @@ _reactivate () {
 
 _here_python () {
     any_python_scripts_here || return 0
-    local _dir=$(realpath .)
+    local _dir=$(readlink -f .)
     local _dir_name=$(basename $_dir)
     python_project_here $_dir_name || return 0
     prune_python_here
@@ -546,11 +537,11 @@ venv_dirs_here () {
 venv_directory () {
     local _one=
     [[ "$1" ]] && _one="$1"
-    [[ $_one ]] && shift 
-    local _path_to_one=$_one
+    [[ $_one ]] && shift
+    local _path_to_one=
     [[ $_one ]] && _path_to_one=$(readlink -f $_one)
-    local _path_at_home="~/$_one"
-    [[ $_one ]] && _path_at_home=$(readlink -f ~/$_one)
+    local _path_at_home=
+    [[ $_one ]] && _path_at_home=$(readlink -f ~/.virtualenvs/$_one)
     [[ -f "$_path_to_one" ]] && _path_to_one=$(dirname "$_path_to_one")
     local _venv_dir=
     if [[ -d "$_path_to_one" ]]; then
@@ -653,7 +644,7 @@ unhash_file_handlers () {
 # xxxxxxxxxxxxxxxxxxxxxx
 
 unhash_python_handlers () {
-    unhash_handlers '[ib]*python' 'pip[23]*' 'ipython[23]*' pdb ipdb pudb 
+    unhash_handlers '[ib]*python' 'pip[23]*' 'ipython[23]*' pdb ipdb pudb
 }
 
 # xxxxxxxxxxxxxxxxxxxxxxx
@@ -662,12 +653,12 @@ any_python_scripts_here () {
     [[ $(find . -type f -name "*.py" -exec echo 1 \; -quit) == 1 ]]
 }
 
-# 
-# cde_source_*() functions
-# 
+#
+# cde_activate functions
+#
 # These names should be used in /dir/.cd files
 # They rely on: $(dirname .cd) == $PWD
-# 
+#
 
 cde_find_activate_script () {
     local _here=$(pwd)
@@ -684,7 +675,7 @@ cde_find_activate_script () {
     done
     [[ -f $_activate_script ]] && ACTIVATE="$(readlink -f $_activate_script)"
     export ACTIVATE
-    [[ -f $_activate_script ]] 
+    [[ -f $_activate_script ]]
 }
 
 cde_activate_here () {
@@ -732,5 +723,4 @@ cde_bin_PATH () {
     export PATH="$_bin_path:$PATH"
 }
 
-[[ -n $WELCOME_BYE ]] && echo Bye from $(basename "$BASH_SOURCE") in $(dirname $(readlink -f "$BASH_SOURCE")) on $(hostname -f)
-
+[[ $WELCOME_BYE ]] && announce Bye from

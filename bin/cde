@@ -2,6 +2,7 @@
 """cde knows where you are going because it knows where you've been"""
 import bdb
 import os
+import bdb
 
 from pysyte.cli.main import run
 from pysyte.types import paths
@@ -21,7 +22,9 @@ def add_args(parser):
     parser.positional('subdirnames', help='(partial) sub directory names')
     # From here argument names correspend to methods above
     parser.boolean('-a', '--add', help='add a path to history')
+    parser.boolean('-c', '--complete', help='show all paths in history')
     parser.boolean('-d', '--delete', help='delete a path from history')
+    parser.boolean('-e', '--existing', help='show all real paths in history')
     parser.boolean('-f', '--filename', help='show filename of the script')
     parser.boolean('-l', '--lost', help='show all unreal paths in history')
     parser.boolean('-m', '--makedir', help='Ensure the given directory exists')
@@ -84,12 +87,10 @@ def post_parse_args(args):
 
 def main(args):
     """Show a directory from the command line arguments (or some derivative)"""
-    # pylint: disable=too-many-branches
-    # Of course there are too many branches - it's an event dispatcher
     try:
         if args.unused:
             pass
-        return cde(args.dirname, args.subdirnames)
+        return cde.cde(args.dirname, args.subdirnames)
     except (bdb.BdbQuit, SystemExit):
         return True
     except AttributeError as e:

@@ -1,3 +1,2 @@
 boltons
 pysyte
-pytest

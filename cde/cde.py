@@ -406,6 +406,23 @@ def old(args):
     raise SystemExit(os.EX_OK)
 
 
+def complete(_args=None):
+    """Show all paths in history"""
+    history_items = read_history()
+    for _rank, path, _time in history_items:
+        print(path)
+    raise SystemExit(os.EX_OK)
+
+
+def existing(_args=None):
+    """Show all existing paths in history"""
+    history_items = read_history()
+    for _rank, path, _time in history_items:
+        if os.path.exists(path):
+            print(path)
+    raise SystemExit(os.EX_OK)
+
+
 def lost(_args=None):
     history_items = read_history()
     for _rank, path, _time in history_items:
@@ -668,7 +685,8 @@ def _find_in_paths(item, subdirnames, frecent_paths):
                 globbed = [p for p in possibles if item in p.name]
                 if len(globbed) == 1:
                     return globbed.pop()
-                possibles = globbed
+                if globbed:
+                    possibles = globbed
         raise TryAgain(possibles)
     return possibles.pop()
 
@@ -709,6 +727,16 @@ def cd(string):
     show_found_item = chdir_found_item
     sys.argv = [__file__] + string.split()
     main()
+
+
+def cde(item, subdirnames):
+    """Don't blink!  This is where the cde's code gets run.
+
+    >>> _ = cde('/', ['us', 'lo'])
+    /usr/local
+    """
+    path_to_item = find_directory(item, subdirnames)
+    return show_found_item(path_to_item)
 
 
 def show_paths():
