@@ -18,7 +18,7 @@ Directories sought must be real
     >>> cde.find_directory('rubbish', [])
     Traceback (most recent call last):
     ...
-    cde.ToDo: ...
+    cde.cde.ToDo: ...
 
     >>> a_known_directory = '/usr/local'
 
@@ -121,9 +121,9 @@ Python dirs
 
 cde has a setup.py
 
-    >>> project_dir = cde.paths.path(os.path.dirname(cde.__file__))
-    >>> code_dir = project_dir / 'cde'
-    >>> possibles = [code_dir, project_dir]
+    >>> package_dir = cde.paths.path(os.path.dirname(cde.__file__))
+    >>> project_dir = package_dir.parent
+    >>> possibles = [project_dir, package_dir]
     >>> assert cde.find_python_root_dir(possibles) == project_dir
 
 
