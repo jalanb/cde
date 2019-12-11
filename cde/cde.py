@@ -673,28 +673,29 @@ def _find_in_paths(item, subdirnames, frecent_paths):
             possibles |= {find_under_directory(match_, subdirnames)}
         elif len(matched) > 1:
             found = {find_under_directory(_, subdirnames) for _ in set(matched)}
-            possibles |= {_ for _ in found if _}
-    if not possibles:
-        return
-    if len(possibles) > 1:
+            possibles |= found
+    possibilities = {_ for _ in possibles if _}
+    if not possibilities:
+        return None
+    if len(possibilities) > 1:
         if not subdirnames:
-            named = [p for p in possibles if item == p.name]
+            named = [p for p in possibilities if item == p.name]
             if len(named) == 1:
                 return named.pop()
             if not named:
-                globbed = [p for p in possibles if item in p.name]
+                globbed = [p for p in possibilities if item in p.name]
                 if len(globbed) == 1:
                     return globbed.pop()
                 if globbed:
-                    possibles = globbed
-        raise TryAgain(possibles)
-    return possibles.pop()
+                    possibilities = globbed
+        raise TryAgain(possibilities)
+    return possibilities.pop()
 
 
 def show_path_to_historical_item(item, subdirnames):
     """Get a path for the given item from history and show it"""
     path_to_item = find_in_history(item, subdirnames)
-    show_found_item(path_to_item)
+    return show_found_item(path_to_item)
 
 
 def delete_path_to_historical_item(item, subdirnames):
