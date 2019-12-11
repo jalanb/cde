@@ -32,23 +32,26 @@ If sub-dir is not found, get only the directory
     True
 
 If the sub-dir matches too many directories then an exception is raised
+    Expecting a standard unix layout here, which contains at least
+        /usr/local
+        /usr/lib
     >>> try:
-    ...     cde.find_directory('/usr', ['li'])
+    ...     cde.find_directory('/usr', ['l'])
     ... except cde.TryAgain as e:
-    ...     assert not [_ for _ in e.possibles if not _.startswith('/usr/li')]
+    ...     assert not [_ for _ in e.possibles if not _.startswith('/usr/l')]
 
-Which can be suppressed by a numeric arg
-    >>> cde.find_directory('/usr', ['li', '1']).startswith('/usr/li')
+Th exception can be suppressed by a numeric arg
+    >>> cde.find_directory('/usr', ['l', '1']).startswith('/usr/l')
     True
 
 As long as that arg is in range
     >>> try:
-    ...     cde.find_directory('/usr', ['li', '99'])
+    ...     cde.find_directory('/usr', ['l', '99'])
     ...     assert False
     ... except cde.RangeError:
     ...     assert True
 
-A number out of context is ignored
+A numeric arg out of context is ignored
     >>> cde.find_directory('/usr', ['1']) == '/usr'
     True
 
