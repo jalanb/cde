@@ -126,7 +126,7 @@ cde_pudb () {
     local _cde_options=
     [[ $CDE_ONLY_FIRST == 1 ]] && _cde_options=--first
     set -x
-    PYTHONPATH=$(cde_dir):$PYTHONPATH $_pudb $_cde_program $_cde_options "$@"
+    PYTHONPATH=$(cde_dir):$PYTHONPATH $_pudb $(cde_program) $_cde_options "$@"
     set +x
 }
 
@@ -212,7 +212,7 @@ cdpy () {
         return $?
     fi
     local _destination=$(cde_python "$@")
-    if [[ -z $_destination ]]
+    if [[ -z $_destination || $? != 0 || $_destination =~ ^Error ]]
     then
         echo "$_destination"
     elif [[ "$@" =~ ' -[lp]' ]]; then
