@@ -2,34 +2,38 @@ Edge cases for cde
 =================
 
     >>> from cde import cde
-    >>> assert "remembers where you've been" in cde.__doc__
+    >>> assert "knows where you've been" in cde.__doc__
 
 More modules for testing
 ------------------------
 
     >>> import os
     >>> import sys
+    >>> import random
+    >>> from pysyte.types import paths
 
 find_directory()
 ----------------
 
 Directories sought must be real
 
-    >>> cde.find_directory('rubbish', [])
-    Traceback (most recent call last):
-    ...
-    cde.cde.ToDo: ...
+If directory is not real, an execption is raised
+    >>> try:
+    ...     cde.find_directory('rubbish', [])
+    ...     assert False
+    ... except cde.ToDo:
+    ...     assert True
 
-    >>> a_known_directory = '/usr/local'
+Assuming tests are run on a Unix system, so /usr/local should exist
+    >>> real_directory = '/usr/local'
+    >>> assert os.path.isdir(real_directory)
 
 Can use empty prefixes - gives path to the directory
 
-    >>> cde.find_directory(a_known_directory, []) == a_known_directory
-    True
+    >>> assert cde.find_directory(real_directory, []) == real_directory
 
 If sub-dir is not found, get only the directory
-    >>> cde.find_directory(a_known_directory, ['this_is_not_real']) == a_known_directory
-    True
+    >>> assert cde.find_directory(real_directory, ['this_is_not_real']) == real_directory
 
 If the sub-dir matches too many directories then an exception is raised
     Expecting a standard unix layout here, which contains at least
@@ -38,11 +42,11 @@ If the sub-dir matches too many directories then an exception is raised
     >>> try:
     ...     cde.find_directory('/usr', ['l'])
     ... except cde.TryAgain as e:
+    ...     assert e.possibles
     ...     assert not [_ for _ in e.possibles if not _.startswith('/usr/l')]
 
-Th exception can be suppressed by a numeric arg
-    >>> cde.find_directory('/usr', ['l', '1']).startswith('/usr/l')
-    True
+Which can be suppressed by a numeric arg
+    >>> assert cde.find_directory('/usr', ['l', '1']).startswith('/usr/l')
 
 As long as that arg is in range
     >>> try:
@@ -51,30 +55,27 @@ As long as that arg is in range
     ... except cde.RangeError:
     ...     assert True
 
-A numeric arg out of context is ignored
-    >>> cde.find_directory('/usr', ['1']) == '/usr'
-    True
+A number out of context is ignored
+    >>> assert cde.find_directory('/usr', ['1']) == '/usr'
 
 find a file
 -----------
 
     >>> directory, filename = os.path.split(cde.__file__)
-    >>> cde.find_directory(cde.__file__, []) == directory
-    True
-    >>> cde.find_directory(directory, [filename]) == directory
-    True
+    >>> assert cde.find_directory(cde.__file__, []) == directory
+    >>> assert cde.find_directory(directory, [filename]) == directory
 
 
 Find in home directory
 ----------------------
 
-    >>> my_bin = cde.find_at_home('bi', [])
-    >>> os.path.dirname(my_bin) == os.path.expanduser('~') and os.path.basename(my_bin) == 'bin'
-    True
-    >>> cde.find_at_home('.bashrc', []) == os.path.expanduser('~')
-    True
-    >>> cde.find_at_home('rubbush', []) is None
-    True
+    >>> home_dir = random.choice(paths.home().dirs())
+    >>> name = home_dir.name
+    >>> found = cde.find_at_home(name, [])
+    >>> assert os.path.dirname(found) == os.path.expanduser('~')
+    >>> assert os.path.basename(found) == name
+    >>> assert cde.find_at_home('.bashrc', []) == os.path.expanduser('~')
+    >>> assert cde.find_at_home('rubbush', []) is None
 
 Finding in history
 ------------------
@@ -114,9 +115,11 @@ Assuming we have remembered some paths
     ...  (0, '/so/were/you', 0),
     ... ]
     >>> new_items, changed = cde.exclude_path_from_items(history_items, path_to_item)
-    >>> assert changed is True and len(new_items) + 1 == len(history_items)
+    >>> assert changed is True
+    >>> assert len(new_items) + 1 == len(history_items)
     >>> newer_items, changed = cde.exclude_path_from_items(new_items, path_to_item)
-    >>> assert changed is False and len(new_items) == len(newer_items)
+    >>> assert changed is False
+    >>> assert len(new_items) == len(newer_items)
 
 
 Python dirs
@@ -124,9 +127,9 @@ Python dirs
 
 cde has a setup.py
 
-    >>> package_dir = cde.paths.path(os.path.dirname(cde.__file__))
-    >>> project_dir = package_dir.parent
-    >>> possibles = [project_dir, package_dir]
+    >>> code_dir = cde.paths.path(os.path.dirname(cde.__file__))
+    >>> project_dir = code_dir.parent
+    >>> possibles = [code_dir, project_dir]
     >>> assert cde.find_python_root_dir(possibles) == project_dir
 
 

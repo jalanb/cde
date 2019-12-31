@@ -1,4 +1,4 @@
-#! /usr/local/bin/python3
+#! /usr/bin/env python3
 """cde knows where you are going because it knows where you've been"""
 import bdb
 import os
