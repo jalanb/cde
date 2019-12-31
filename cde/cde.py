@@ -1,9 +1,9 @@
 """cde.py knows where you are going because it knows where you've been"""
 
 
-from __future__ import print_function
 import os
 import sys
+import random
 from fnmatch import fnmatch
 import argparse
 import csv
@@ -240,12 +240,15 @@ def find_at_home(item, subdirnames):
     Match on sub-directories first, then files
         Might return home directory itself
 
-    >>> print(find_at_home('bin', []))
-    /.../bin
+    >>> a_home_dir = random.choice(paths.home().dirs())
+    >>> name = a_home_dir.name
+    >>> assert find_at_home(name, []) == a_home_dir
     """
     if item in subdirnames:
-        return find_under_directory(paths.home(), subdirnames)
-    return find_under_directory(paths.home(), [item] + subdirnames)
+        subdirs = subdirnames
+    else:
+        subdirs = [item] + subdirnames
+    return find_under_directory(paths.home(), subdirs)
 
 
 def hidden(path_name):

@@ -18,7 +18,8 @@ The parsed arguments are sent on to the cde.find_directory method
     >>> assert cde.find_directory('/usr/lib', []) == '/usr/lib'
 
 Or a file
-    >>> assert cde.find_directory('/bin/ls', []) == '/bin'
+    ('/bin/ls' is actually a link to '/usr/bin/ls' on some systems)
+    >>> assert cde.find_directory('/bin/ls', []) in {'/bin', '/usr/bin'}
 
 Give it the name of a (possible) sub directory
     and it will combine them to one path
