@@ -5,7 +5,6 @@ import os
 import sys
 import random
 from fnmatch import fnmatch
-import argparse
 import csv
 
 

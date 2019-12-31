@@ -4,17 +4,15 @@
 import os
 import re
 import sys
-import argparse
+
+from pysyte.cli.arguments import ArgumentsNamespace
+from pysyte.cli.main import run
 
 
-def parse_args():
+def add_args(parser):
     """Handle arguments from the command line"""
-    parser = argparse.ArgumentParser()
-    pa = parser.add_argument
-    pa('directory', help='The directory to touch')
-    pa('-p', '--python', action='store_true', help='Add Python commands')
-    args = parser.parse_args()
-    return args
+    parser.positional('directory', help='The directory to touch')
+    parser.boolean('-p', '--python', help='Add Python commands')
 
 
 def templates():
@@ -32,10 +30,7 @@ def template(name):
 
 
 def read_old_args():
-    class Args(argparse.Namespace):
-        pass
-
-    args = Args()
+    args = ArgumentsNamespace()
     if not os.path.isfile('.cd'):
         return args
     with open('.cd') as stream:
@@ -57,8 +52,7 @@ def arg_templates(args):
     return '\n'.join(texts)
 
 
-def main():
-    new_args = parse_args()
+def main(new_args):
     old_args = read_old_args()
     try:
         os.chdir(new_args.directory)
@@ -70,5 +64,4 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
-    sys.exit(main())
+run(main, add_args)
