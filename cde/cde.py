@@ -48,10 +48,10 @@ def trim(possibles):
 
 class RangeError(ToDo):
     def __init__(self, i, matched):
+        string = as_menu_string(matched)
         ToDo.__init__(
             self,
-            f'Your choice of {i} is out of range:\n\t%s' %
-            as_menu_string(matched))
+            f'Your choice of {i} is out of range:\n\t{string}')
 
 
 class FoundParent(ValueError):
