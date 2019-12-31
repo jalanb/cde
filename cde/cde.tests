@@ -43,10 +43,10 @@ If the sub-dir matches too many directories then an exception is raised
     ...     cde.find_directory('/usr', ['l'])
     ... except cde.TryAgain as e:
     ...     assert e.possibles
-    ...     assert not [_ for _ in e.possibles if not _.startswith('/usr/li')]
+    ...     assert not [_ for _ in e.possibles if not _.startswith('/usr/l')]
 
 Which can be suppressed by a numeric arg
-    >>> assert cde.find_directory('/usr', ['li', '1']).startswith('/usr/li')
+    >>> assert cde.find_directory('/usr', ['l', '1']).startswith('/usr/l')
 
 As long as that arg is in range
     >>> try:
