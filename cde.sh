@@ -4,6 +4,7 @@ export CDE_SOURCE="$BASH_SOURCE"
 export CDE_NAME=$(basename "$CDE_SOURCE")
 export CDE_SOURCE_PATH=$(readlink -f "$CDE_SOURCE")
 export CDE_DIR=$(dirname "$CDE_SOURCE_PATH")
+export CDE_VENV=$CDE_DIR/.venv
 
 announce () {
     set -x
@@ -119,10 +120,10 @@ cde_program () {
 
 cde_pudb () {
     local _pudb=$(which pudb3)
+    [[ -e $CDE_VENV/bin/pudb3 ]] && _pudb=$CDE_VENV/bin/pudb3
     python -V | grep  -q ' 2' && _pudb=$(which pudb)
-    local _cde_options=
     set -x
-    PYTHONPATH=$(cde_dir):$PYTHONPATH $_pudb $(cde_program) $_cde_options "$@"
+    PYTHONPATH=$(cde_dir):$PYTHONPATH $_pudb $(cde_program) "$@"
     set +x
 }
 
@@ -133,10 +134,8 @@ cde_python () {
     [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
     local _headline=$(head -n 1 $_cde_program)
     [[ $_headline =~ python ]] && _python=
-    [[ $1 =~ pudb ]] && _python=$1
-    [[ $1 =~ pudb ]] && shift
-    local _cde_options=
-    PYTHONPATH=$(cde_dir):$PYTHONPATH $_python $_cde_program $_cde_options "$@"
+    [[ -e $CDE_VENV/bin/python ]] && _python=$CDE_VENV/bin/python
+    PYTHONPATH=$(cde_dir):$PYTHONPATH $_python $_cde_program "$@"
 }
 
 cls () {
@@ -157,13 +156,15 @@ ind () {
         _cd="cde -q"
         shift
     fi
-    local _destination=$(py_cp "$1")
-    [[ -d "$_destination" ]] || return 1
-    (
+    local _destination=$(cde_first "$@")
+    if [[ -d "$_destination" ]]; then
         $_cd "$_destination"
         shift
         "$@"
-    )
+    else
+        "$@"
+    fi
+    cd $_old
 }
 
 mkc () {
@@ -188,47 +189,45 @@ cdll () {
 cdpy () {
     local __doc__="""Ask cde.py for a destination"""
     local _quiet=
+    if [[ $1 == -h || $1 == --help ]]; then
+        cde_python --help
+        return 0
+    fi
     if [[ $1 =~ quiet ]]; then
         _quiet=1
         shift
     fi
     # set +x
-    local _cde_result=1
+    local _errors=
     if [[ $PUDB || $PUDB_CD ]]; then
-        cde_pudb "$@"
-        return $?
+        _errors=0
+        cde_pudb "$@" || _errors=1
+        export PUDB_CD=
+        return $_errors
     fi
-    local _destination=$(cde_python "$@")
-    if [[ -z $_destination || $? != 0 || $_destination =~ ^Error ]]
-    then
-        echo "$_destination"
-    elif [[ "$@" =~ ' -[lp]' ]]; then
-        echo "$_destination"
-    elif [[ $_destination =~ ^[uU]sage ]]; then
+    local _cde_output=$(cde_python "$@")
+    if [[ $? != 0 || $_cde_output =~ (^$|^Error|Try.again|^[uU]sage) ]]; then
+        [[ $_quiet ]] || echo "$_cde_output" &>2
+        return 1
+    elif [[ $_cde_output =~ ^[uU]sage ]]; then
         cde_python --help
-    else
-        local _real_destination=$(readlink -f $_destination)
-        if [[ "$_destination" != "$_real_destination" ]]
-        then
-            echo "cd ($_destination ->) $_real_destination"
-            _destination="$_real_destination"
-        else
-            while [[ $1 =~ ^- ]]; do
-                shift
-            done
-            if [[ "$_destination" != $(readlink -f "$1") ]]; then
-                [[ $_quiet ]] || echo "cd $_destination"
-            fi
-        fi
-        if [[ $CDE_ONLY_FIRST == 1 ]]; then
-            echo "$_destination"
-        else
-            same_path . "$_destination" || pushd "$_destination" >/dev/null 2>&1
-        fi
-        _cde_result=0
+        return 0
+    elif [[ "$@" =~  -[lp012] ]]; then
+        echo "$_cde_output"
+        return 0
     fi
-    PUDB_CD=
-    return $_cde_result
+    local _cde_directory="$_cde_output"
+    same_path . "$_cde_directory" && return 0
+    local _linked_directory=$(readlink -f $_cde_directory)
+    local _cdpy_output="cd $_cde_output"
+    if [[ "$_cde_directory" != "$_linked_directory" ]]
+    then
+        _cdpy_output="cd ($_cde_output ->) $_linked_directory"
+    fi
+    same_path . "$_linked_directory" && return 0
+    [[ $_quiet ]] || echo $_cdpy_output
+    pushd "$_cde_directory" >/dev/null 2>&1
+    return 0
 }
 
 cdup () {
