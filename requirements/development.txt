@@ -1,6 +1,8 @@
 -r testing.txt
 
+bumpversion
 ipython
+pprintpp
 pudb
 requests
 sh
