@@ -24,8 +24,6 @@ then
     echo "  sh $0"
 fi
 
-CDE_ONLY_FIRST=0
-
 # _
 # x
 
@@ -40,8 +38,7 @@ CDE_ONLY_FIRST=0
 # xx
 
 alias ..=cdup
-alias cc='c .'
-alias cq="cde -q"
+[[ $ALIAS_CC ]] && alias cc='c .' 
 
 # xxx
 
@@ -124,7 +121,6 @@ cde_pudb () {
     local _pudb=$(which pudb3)
     python -V | grep  -q ' 2' && _pudb=$(which pudb)
     local _cde_options=
-    [[ $CDE_ONLY_FIRST == 1 ]] && _cde_options=--first
     set -x
     PYTHONPATH=$(cde_dir):$PYTHONPATH $_pudb $(cde_program) $_cde_options "$@"
     set +x
@@ -140,7 +136,6 @@ cde_python () {
     [[ $1 =~ pudb ]] && _python=$1
     [[ $1 =~ pudb ]] && shift
     local _cde_options=
-    [[ $CDE_ONLY_FIRST == 1 ]] && _cde_options=--first
     PYTHONPATH=$(cde_dir):$PYTHONPATH $_python $_cde_program $_cde_options "$@"
 }
 
@@ -156,19 +151,9 @@ cls () {
     fi
 }
 
-cpp () {
-    local __doc__="""Show where any args would cde to"""
-    if [[ -n "$1" ]]; then
-        py_cp "$@"
-    else
-        py_cp .
-    fi | grep -v -- '->'
-}
-
-
 ind () {
-    local _cd=cd
-    if [[ $1 == -e ]]; then
+    local _old=$PWD _cd=cd
+    if [[ $1 == "ind" ]]; then
         _cd="cde -q"
         shift
     fi
@@ -182,7 +167,7 @@ ind () {
 }
 
 mkc () {
-    local _destination=$(py_cp "$1")
+    local _destination=$(cde_first "$@")
     [[ -d "$_destination" ]] || mkdir -p "$_destination"
     cde "$_destination"
 }
@@ -190,6 +175,8 @@ mkc () {
 alias ...="cdup 2"
 
 # xxxx
+
+alias cdee='c .'
 
 cdll () {
     local __doc__="""cde $1; ls -l"""
@@ -263,7 +250,7 @@ cdup () {
     cde $_dir "$@"
 }
 
-alias indd="ind -e"
+alias indd="ind ind"
 
 inde () {
     ind -e "$@"
@@ -289,14 +276,6 @@ py_cg () {
     PUDB_CD=1 cdpy "$@"
 }
 
-py_cp () {
-    local __doc__="Show the path that cdpy would go to"
-    CDE_ONLY_FIRST=1 cdpy quiet "$@"
-    local _result=$?
-    CDE_ONLY_FIRST=0
-    return $_result
-}
-
 alias .....="cdup 4"
 
 # xxxxxx
@@ -304,7 +283,7 @@ alias .....="cdup 4"
 cde_ok () {
     local __doc__="""Whether cde would go to a directory"""
     [[ -z "$@" ]] && return 1
-    [[ -d $(py_cp "$@") ]]
+    [[ -d $(cde_first "$@") ]]
 }
 
 cduppp () {
@@ -383,6 +362,11 @@ EOP
 
 # xxxxxxxxx
 
+cde_first () {
+    local __doc__="Show the first path that cdpy would go to"
+    cdpy quiet -0 "$@"
+}
+
 cdpy_pre_ () {
     # cde_deactivate
     [[ -n $CDE_header ]] && echo $CDE_header
@@ -392,7 +376,7 @@ echo_dirs () {
     local _echoed=
     for dir in "$@"; do
         [[ -d $dir ]] || continue
-        echo -n $dir
+        echo -n "$dir "
         _echoed=1
     done
     [[ $_echoed ]] || return 1
@@ -550,8 +534,6 @@ venv_directory () {
         if [[ -d "$_path_at_home" ]]; then
             _venv_dir="$_path_at_home"
         else
-            echo "Not a directory: '$_path_to_one'"
-            echo "Not a directory: '$_path_at_home'"
             _venv_dir="nopath"
         fi
     fi
@@ -664,8 +646,8 @@ cde_find_activate_script () {
     local _here=$(pwd)
     local _activate_dirs=$(venv_directory "$@")
     [[ $_activate_dirs ]] || _activate_dirs="$_here $(venv_dirs_here) $(project_venv_dirs)"
-    [[ $? == 0 ]] || echo "No dirs available to find activate scripts" >&2
-    [[ $? == 0 ]] || return 1
+    [[ $_activate_dirs ]] || echo "No dirs available to find activate scripts" >&2
+    [[ $_activate_dirs ]] || return 1
     local _activate_dir=
     local _activate_script=
     for _activate_dir in $_activate_dirs; do
