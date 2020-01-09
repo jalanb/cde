@@ -10,24 +10,12 @@ import csv
 
 from boltons.iterutils import unique
 from pysyte.types import paths
-try:
-    from pysyte.types.lists import UniquelyTrues
-except ImportError:
-    from pysyte.types import lists
-    raise ImportError(f'{lists.__file__} does not have UniquelyTrues')
+from pysyte.types.numbers import to_int
+from pysyte.iteration import first_that
 
 from cde import timings
-
+from cde.types import PossiblePaths
 from cde import __version__
-
-
-class PossiblePaths(UniquelyTrues):
-    """A unique list of possible paths"""
-    def predicate(self, item):
-        return bool(item) and os.path.exists(item)
-
-    def paths(self):
-        return [paths.path(_) for _ in self]
 
 
 class ToDo(NotImplementedError):
@@ -109,12 +97,15 @@ def take_first_integer(items):
     True
     >>> items = ['one', '2']
     >>> i = take_first_integer(items)
-    >>> i is None and items == ['one', '2']
+    >>> i == 2 and items == ['one']
     True
     """
     i = first_integer(items)
     if i is not None:
-        items.remove(i)
+        try:
+            items.remove(i)
+        except ValueError:
+            items.remove(str(i))
     return i
 
 
@@ -335,9 +326,9 @@ def find_directory(item, subdirnames):
     if path_to_item:
         if not subdirnames:
             return path_to_item
-        paths_to_prefix = find_under_directory(path_to_item, subdirnames)
-        if paths_to_prefix:
-            return paths_to_prefix[0]
+        path_to_prefix = find_under_directory(path_to_item, subdirnames)
+        if path_to_prefix:
+            return path_to_prefix
     else:
         if item:
             args = [item] + subdirnames
@@ -665,11 +656,14 @@ def _find_in_paths(item, subdirnames, frecent_paths):
     ]
     if os.path.sep in item:
         matchers.insert(0, lambda p: item in p)
-    i, subdirnames = take_first_integer(subdirnames)
+    i = take_first_integer(subdirnames)
     possibles = PossiblePaths([])
     for match in matchers:
         matched = [_ for _ in frecent_paths if match(_)]
         if not matched:
+            continue
+        if not subdirnames:
+            possibles.extend(matched)
             continue
         if len(matched) == 1:
             if i:
@@ -683,7 +677,7 @@ def _find_in_paths(item, subdirnames, frecent_paths):
             possibles.extend(find_under_directory(match_, subdirnames))
         elif len(matched) > 1:
             [possibles.extend(find_under_directory(_, subdirnames)) for _ in set(matched)]
-    possibilities = PossiblePaths(possibles, lambda x: bool(x))
+    possibilities = PossiblePaths(possibles)
     if not possibilities:
         return None
     if len(possibilities) > 1:

@@ -1,0 +1,31 @@
+The cde.types module
+====================
+
+    >>> from cde import types
+    >>> assert 'coding cde easier' in types.__doc__
+
+    >>> from pysyte.types.paths import path
+
+PossiblePaths
+-------------
+
+A class is provided to handle possible paths
+
+    >>> possibles = types.PossiblePaths(['', types.__file__])
+
+The empty item did not get added
+    >>> assert len(possibles) == 1
+
+Similarly, a non-path does not get added
+    >>> assert not possibles.append('/not/a/real/path')
+    >>> assert len(possibles) == 1
+
+And duplictaes also get ignored
+    >>> assert not possibles.append(types.__file__)
+    >>> assert len(possibles) == 1
+
+A new, real path does get added to the collection
+    >>> cde_dir = path(types.__file__).parent.parent
+    >>> assert possibles.append(cde_dir)
+    >>> assert len(possibles) == 2
+
