@@ -212,7 +212,7 @@ cdpy () {
     elif [[ $_cde_output =~ ^[uU]sage ]]; then
         cde_python --help
         return 0
-    elif [[ "$@" =~  -[lp012] ]]; then
+    elif [[ "$@" =~  -[lp] ]]; then
         echo "$_cde_output"
         return 0
     fi
