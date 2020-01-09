@@ -689,7 +689,7 @@ cde_show_git_was_here () {
     show_git_time . | head -n ${LOG_LINES_ON_CD_GIT_DIR:-7}
     local _branch=$(git rev-parse --abbrev-ref HEAD)
     echo $_branch
-    git_simple_status .
+    git status .
     show_version_here
     gl11
     return 0
