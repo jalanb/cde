@@ -67,7 +67,7 @@ Finding in history
 Assuming we have remembered some paths
     >>> history = [
     ...     cde.paths.path('/usr/bin'),
-    ...     cde.paths.path('/usr/local/bin'),
+    ...     cde.paths.path('/usr/local/lib'),
     ...     cde.paths.path('/usr/tin/local'),
     ...     cde.paths.path('/usr/bin/vocal'),
     ...     cde.paths.path('/usr/local/bib'),
@@ -75,16 +75,16 @@ Assuming we have remembered some paths
 
 Then we should be able to search that history for a remembered item
     which should be found first is exact same as a history item
-    >>> expected = sought = history[2]
+    >>> expected = sought = history[1]
     >>> assert expected == cde._find_in_paths(sought, [], history)
 
-Or even if it is just the name of one
+Or even if it is just the name of only one
     >>> sought = os.path.basename(sought)
     >>> history_paths = [cde.paths.path(_) for _ in history]
     >>> assert expected == cde._find_in_paths(sought, [], history_paths)
 
-Or even just the stem of the name
-    >>> sought = sought[:3]
+Or even just the stem of the name (if long enough to be unique)
+    >>> sought = sought[:1]
     >>> assert expected == cde._find_in_paths(sought, [], history_paths)
 
 

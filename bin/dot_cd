@@ -12,7 +12,7 @@ from pysyte.cli.main import run
 def add_args(parser):
     """Handle arguments from the command line"""
     parser.positional('directory', help='The directory to touch')
-    parser.boolean('-p', '--python', help='Add Python commands')
+    parser.boolean('', 'python', help='Add Python commands')
 
 
 def templates():
@@ -64,4 +64,4 @@ def main(new_args):
     return 0
 
 
-run(main, add_args)
+run(main, add_args=add_args)

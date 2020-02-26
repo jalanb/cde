@@ -4,7 +4,6 @@ export CDE_SOURCE="$BASH_SOURCE"
 export CDE_NAME=$(basename "$CDE_SOURCE")
 export CDE_SOURCE_PATH=$(readlink -f "$CDE_SOURCE")
 export CDE_DIR=$(dirname "$CDE_SOURCE_PATH")
-export CDE_VENV=$CDE_DIR/.venv
 
 announce () {
     set -x
@@ -39,7 +38,6 @@ fi
 # xx
 
 alias ..=cdup
-[[ $ALIAS_CC ]] && alias cc='c .' 
 
 # xxx
 
@@ -59,10 +57,10 @@ cde () {
         _say_quiet=quiet
         shift
     fi
-    cdpy_pre_
-    cdpy quiet "$@" || return 1
+    pre_cdpy
+    cdpy "$@" || return 1
     [[ -d . ]] || return 1
-    cdpy_post_ $_say_quiet
+    post_cdpy $_say_quiet
 }
 
 cdi () {
@@ -102,40 +100,60 @@ cdv () {
     $EDITOR $_files
 }
 
-cde_dir () {
-    echo $(dirname $(readlink -f "$CDE_SOURCE"))
+venv_or_which () {
+    local __doc__="""find an executable in cde's virtualenv, or which, or which with our PATH"""
+    [[ "$1" ]] || return 1 
+    local _name="$1"; shift
+    local _app="${CDE_DIR}/.venv/bin/$_name"
+    [[ -e "$_app" ]] || _app=$(which $_name 2>/dev/null)
+    [[ -e "$_app" ]] || _app=$(PATH=~/bin:/usr/local/bin:/bin which $_name 2>/dev/null)
+    [[ -e "$_app" ]] && echo $_app
+    [[ -e "$_app" ]]
 }
 
-cde_path () {
-    echo "$(cde_dir)/""$@"
+venv_or_shebang () {
+    local _app=$1 _file=$2 
+    [[ "$_app" ]] || return 1
+    _app="${_app/%2/3}"
+    if [[ -e $_file ]]; then
+        local _language=$(echo $_app | sed -e "s:[0-9]*$::" )
+        local _shebang=$(headline "$_file")
+        if [[ $_shebang =~ $_language ]]; then
+            if [[ $_shebang =~ usr.bin.env ]]; then
+                _interpreter=$_app
+            else
+                _interpreter=$_shebang
+            fi
+        fi
+    fi
+    local _interpreter=$(venv_or_which $_app)
+    if [[ ! -e $_interpreter ]]; then
+        echo "Could not find $_app" >&2
+        return 1
+    fi
+    echo $_interpreter
+    return 0
 }
 
-cde_bin () {
-    echo "$(cde_path bin/)""$@"
-}
-
-cde_program () {
-    cde_bin cde
+bin_cde () {
+    echo "${CDE_DIR}/bin/cde"
 }
 
 cde_pudb () {
-    local _pudb=$(which pudb3)
-    [[ -e $CDE_VENV/bin/pudb3 ]] && _pudb=$CDE_VENV/bin/pudb3
-    python -V | grep  -q ' 2' && _pudb=$(which pudb)
+    local __doc__="""Debug the cde program, with PATH/PYTHONPATH"""
+    local _cde_dir="$CDE_DIR" _interpreter=$(venv_or_shebang pudb)
+    [[ $? == 0 ]] || return 1
     set -x
-    PYTHONPATH=$(cde_dir):$PYTHONPATH $_pudb $(cde_program) "$@"
+    PYTHONPATH="$_cde_dir":$PYTHONPATH $_interpreter "$(bin_cde)" "$@"
     set +x
 }
 
 cde_python () {
     local __doc__="""Run the cde python program, with PATH/PYTHONPATH"""
-    local _cde_program=$(cde_program)
-    local _python=$(which python 2>/dev/null)
-    [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
-    local _headline=$(head -n 1 $_cde_program)
-    [[ $_headline =~ python ]] && _python=
-    [[ -e $CDE_VENV/bin/python ]] && _python=$CDE_VENV/bin/python
-    PYTHONPATH=$(cde_dir):$PYTHONPATH $_python $_cde_program "$@"
+    local _bin_cde="$(bin_cde)"
+    local _interpreter=$(venv_or_shebang python3 "$_bin_cde")
+    [[ $? == 0 ]] || return 1
+    PYTHONPATH=${CDE_DIR}:$PYTHONPATH $_interpreter "$_bin_cde" "$@"
 }
 
 cls () {
@@ -186,34 +204,44 @@ cdll () {
     cdl $_dir -lhtra
 }
 
+cdpu () {
+    local __doc__="Debug the cdpy function and script"
+    PUDB_CD=1 cdpy "$@"
+}
+
 cdpy () {
-    local __doc__="""Ask cde.py for a destination"""
-    local _quiet=
+    local __doc__="""pushd to cde.py's destination"""
+    local _quiet= _Quiet=
     if [[ $1 == -h || $1 == --help ]]; then
         cde_python --help
         return 0
     fi
-    if [[ $1 =~ quiet ]]; then
+    if [[ $1 =~ -q ]]; then
         _quiet=1
         shift
     fi
+    if [[ $1 =~ -Q ]]; then
+        _quiet=1
+        _Quiet=1
+        shift
+    fi
     # set +x
-    local _errors=
     if [[ $PUDB || $PUDB_CD ]]; then
-        _errors=0
+        local _errors=0
         cde_pudb "$@" || _errors=1
         export PUDB_CD=
         return $_errors
     fi
-    local _cde_output=$(cde_python "$@")
+    local _cde_error= _cde_output=$(cde_python "$@")
+    [[ $? == 0 ]] || _cde_error=1
     if [[ $? != 0 || $_cde_output =~ (^$|^Error|Try.again|^[uU]sage) ]]; then
-        [[ $_quiet ]] || echo "$_cde_output" &>2
+        [[ $_Quiet ]] || echo "$_cde_output" >&2
         return 1
     elif [[ $_cde_output =~ ^[uU]sage ]]; then
-        cde_python --help
+        [[ $_Quiet ]] || cde_python --help
         return 0
     elif [[ "$@" =~  -[lp] ]]; then
-        echo "$_cde_output"
+        [[ $_Quiet ]] || echo "$_cde_output"
         return 0
     fi
     local _cde_directory="$_cde_output"
@@ -270,17 +298,12 @@ cdupp () {
     cdup 2 "$@"
 }
 
-py_cg () {
-    local __doc__="Debug the cdpy function and script"
-    PUDB_CD=1 cdpy "$@"
-}
-
 alias .....="cdup 4"
 
 # xxxxxx
 
 cde_ok () {
-    local __doc__="""Whether cde would go to a directory"""
+    local __doc__="""Whether cde would go anywhere"""
     [[ -z "$@" ]] && return 1
     [[ -d $(cde_first "$@") ]]
 }
@@ -294,7 +317,7 @@ cduppp () {
 vim_cde () {
     local _files=
     [[ -f .cd ]] && _files=.cd
-    v $_files $CDE_SOURCE $CDE_DIR "$@"
+    v $_files $CDE_SOURCE_PATH ${CDE_DIR} "$@"
     . $CDE.sh
     [[ $_files ]] && . $_files
 }
@@ -320,6 +343,10 @@ _dot_cd () {
 }
 
 # xxxxxxxx
+
+headline () {
+    head -n 1 "$1"
+}
 
 cde_help () {
     echo "cd to a dir and react to it"
@@ -363,10 +390,10 @@ EOP
 
 cde_first () {
     local __doc__="Show the first path that cdpy would go to"
-    cdpy quiet -0 "$@"
+    cde -0 "$@"
 }
 
-cdpy_pre_ () {
+pre_cdpy () {
     # cde_deactivate
     [[ -n $CDE_header ]] && echo $CDE_header
 }
@@ -388,6 +415,16 @@ same_path () {
 }
 
 # _xxxxxxxx
+
+_deactivate () {
+    # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
+    unhash_python_handlers
+    deactivate
+    if [[ $ACTIVE_PYTHON ]]; then
+        ACTIVATE="${ACTIVE_PYTHON/%python/activate}"
+        _activate
+    fi
+}
 
 _activate () {
     # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
@@ -468,7 +505,7 @@ _here_python () {
 
 # xxxxxxxxxx
 
-cdpy_post_ () {
+post_cdpy () {
     local _path=$(short_dir $PWD)
     [[ $_path == "~" ]] && _path=HOME
     [[ $_path =~ "wwts" ]] && _path="${_path/wwts/dub dub t s}"
@@ -493,7 +530,6 @@ here_clean () {
 
 cd_template () {
     echo -n "$1/cd "
-    true
 }
 
 # xxxxxxxxxxxx
@@ -570,7 +606,7 @@ unhash_handlers () {
 # xxxxxxxxxxxxxxxx
 
 cat_cd_templates () {
-    local _template_dir="$CDE_DIR/templates"
+    local _template_dir="${CDE_DIR}/templates"
     cat $(cd_template "$_template_dir")
     local _template=
     for method in bin git python ; do
@@ -701,7 +737,17 @@ cde_bin_PATH () {
     [[ -d "$1" ]] && _bin_path="$1"
     [[ -d "$_bin_path" ]] || return 2
     [[ $PATH =~ "$_bin_path" ]] && return 0
-    export PATH="$_bin_path:$PATH"
+    PATH="$_bin_path:$PATH"
+    export PATH
 }
 
-[[ $WELCOME_BYE ]] && announce Bye from
+cde_PYTHONPATH () {
+    local __doc__="""Adds . to PATH"""
+    local _here_path=$(readlink -f .)
+    [[ -d "$1" ]] && _here_path="$1"
+    [[ -d "$_here_path" ]] || return 2
+    [[ $PYTHONPATH =~ "$_here_path" ]] && return 0
+    PYTHONPATH="$_here_path:$PYTHONPATH"
+    export PYTHONPATH
+}
+

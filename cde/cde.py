@@ -13,7 +13,7 @@ from pysyte.types import paths
 from pysyte.types.numbers import to_int
 from pysyte.iteration import first_that
 
-from cde import timings
+from . import timings
 from cde.types import PossiblePaths
 from cde import __version__
 
@@ -149,7 +149,8 @@ def possibles_under_directory(path_to_directory, subdirnames):
     if possibles:
         return possibles
     try:
-        possibles.append(paths_to_match[first_integer(subdirnames)])
+        i = first_integer(subdirnames)
+        possibles.append(paths_to_match[i])
     except TypeError:
         pass
     except IndexError:
@@ -208,10 +209,10 @@ def first_possible(possibles):
     raise TryAgain(possibles)
 
 
-def find_under_here(subdirnames):
+def find_under_here(*args):
     """Look for some other directories under current directory """
     try:
-        return find_under_directory(paths.here(), subdirnames)
+        return find_under_directory(paths.pwd(), *args)
     except OSError:
         return []
 
@@ -272,36 +273,42 @@ def find_path_to_item(item):
     def user_says_its_a_directory(p):
         return p[-1] == '/'
 
-    if user_says_its_a_directory(item):
-        if item[0] == '/':
-            return paths.path(item)
-        return item.rstrip('/')
-    path_to_item = paths.path(item)
-    if path_to_item.isdir():
-        return path_to_item
-    parent = path_to_item.dirname()
-    if path_to_item.isfile():
-        return parent
-    elif os.path.islink(item):
-        parent = os.path.dirname(item)
-        if os.path.isdir(parent):
-            return paths.makepath(parent)
-    pattern = f'{path_to_item.basename()}*'
-    if paths.contains_directory(parent, pattern):
-        patterned_sub_dirs = parent.dirs(pattern)
-        python_dir = (lambda x: not ignorable_dir(x)
-            if find_python_root_dir(patterned_sub_dirs)
-            else lambda x: True
-        )
-        python_dirs = [f for f in patterned_sub_dirs if python_dir(f)]
-        longest_first = sorted(python_dirs, key=lambda x: len(x), reverse=True)
-        longest_named_python_sub_dir = longest_first.pop()
-        return longest_named_python_sub_dir
-    elif paths.contains_glob(parent, pattern):
-        return parent
-    if parent.isdir():
-        raise FoundParent(parent)
-    return None
+    def find_path_to_item_():
+        if user_says_its_a_directory(item):
+            if item[0] == '/':
+                return paths.path(item)
+            return item.rstrip('/')
+        path_to_item = paths.path(item)
+        if path_to_item.isdir():
+            return path_to_item
+        parent = path_to_item.dirname()
+        if path_to_item.isfile():
+            return parent
+        elif os.path.islink(item):
+            parent = os.path.dirname(item)
+            if os.path.isdir(parent):
+                return paths.makepath(parent)
+        pattern = f'{path_to_item.basename()}*'
+        if paths.contains_directory(parent, pattern):
+            patterned_sub_dirs = parent.dirs(pattern)
+            python_dir = (lambda x: not ignorable_dir(x)
+                if find_python_root_dir(patterned_sub_dirs)
+                else lambda x: True
+            )
+            python_dirs = [f for f in patterned_sub_dirs if python_dir(f)]
+            longest_first = sorted(python_dirs, key=lambda x: len(x), reverse=True)
+            longest_named_python_sub_dir = longest_first.pop()
+            return longest_named_python_sub_dir
+        elif paths.contains_glob(parent, pattern):
+            return parent
+        if parent.isdir():
+            raise FoundParent(parent)
+        return None
+
+    try:
+        return find_path_to_item_()
+    except FoundParent:
+        return None
 
 
 def find_directory(item, subdirnames):
@@ -319,10 +326,7 @@ def find_directory(item, subdirnames):
         or a directory under $HOME
     Otherwise look for subdirnames as a partial match
     """
-    try:
-        path_to_item = find_path_to_item(item)
-    except FoundParent:
-        path_to_item = None
+    path_to_item = find_path_to_item(item)
     if path_to_item:
         if not subdirnames:
             return path_to_item
@@ -330,12 +334,8 @@ def find_directory(item, subdirnames):
         if path_to_prefix:
             return path_to_prefix
     else:
-        if item:
-            args = [item] + subdirnames
-        else:
-            args = subdirnames
-        if args:
-            path_to_item = find_under_here(args)
+        args = ([item] if item else []) + subdirnames
+        path_to_item = find_under_here(args)
     if path_to_item:
         return path_to_item
     path_to_item = find_in_history(item, subdirnames)
@@ -425,10 +425,9 @@ def existing(_args=None):
 
 
 def lost(_args=None):
-    history_items = read_history()
-    for _rank, path, _time in history_items:
-        if not os.path.exists(path):
-            print(path)
+    lost_paths = [p for r, p, t in read_history() if not os.path.isdir(p)]
+    for path in lost_paths:
+        print(path)
     raise SystemExit(os.EX_OK)
 
 
@@ -440,12 +439,14 @@ def delete(args):
 
 
 def add(args):
-    """Remember the given path for later use"""
+    """Add the dirname in args to the history"""
     try:
-        path_to_dirname = paths.path(args.dirname)
+        path_to_dirname = paths.path(args['dirname'])
+        add_path(path_to_dirname)
+        error = 0
     except OSError as e:
-        raise SystemExit(str(e))
-    add_path(path_to_dirname)
+        error = str(e)
+    raise SystemExit(error)
 
 
 def run_args(args):
