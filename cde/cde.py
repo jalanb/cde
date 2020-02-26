@@ -10,9 +10,11 @@ import csv
 
 from boltons.iterutils import unique
 from pysyte.types import paths
+from pysyte.types.numbers import to_int
+from pysyte.iteration import first_that
 
-from cde import timings
-
+from . import timings
+from cde.types import PossiblePaths
 from cde import __version__
 
 
@@ -95,30 +97,32 @@ def take_first_integer(items):
     True
     >>> items = ['one', '2']
     >>> i = take_first_integer(items)
-    >>> i is None and items == ['one', '2']
+    >>> i == 2 and items == ['one']
     True
     """
     i = first_integer(items)
     if i is not None:
-        del items[0]
+        try:
+            items.remove(i)
+        except ValueError:
+            items.remove(str(i))
     return i
 
 
 def first_integer(items):
     """Return the int value of the first item
 
-    >>> first_integer(['3', '2']) == 3
-    True
-    >>> first_integer(['three', '2']) is None
-    True
+    >>> assert first_integer(['3', '2']) == 3
+    >>> assert first_integer(['three', '2']) is 2
+    >>> assert first_integer(['three', 'two']) is None
     """
     try:
-        return int(items[0])
-    except (ValueError, IndexError):
+        return first_that(lambda x: x is not None, [to_int(i) for i in items])
+    except KeyError:
         return None
 
 
-def look_under_directory(path_to_directory, subdirnames):
+def possibles_under_directory(path_to_directory, subdirnames):
     """Look under the given directory for matching sub-directories
 
     Sub-directories match if they are prefixed with given subdirnames
@@ -126,31 +130,32 @@ def look_under_directory(path_to_directory, subdirnames):
         then use the directory
     """
     if not subdirnames:
-        return [path_to_directory]
+        return PossiblePaths([path_to_directory])
+    possibles = PossiblePaths()
     prefix, subdirnames = subdirnames[0], subdirnames[1:]
-    result = []
-    matched_sub_directories = matching_sub_directories(
-        path_to_directory, prefix)
-    path_to_sub_directory = path_to_directory / prefix
-    if not matched_sub_directories:
+    paths_to_match = matching_sub_directories(path_to_directory, prefix)
+    if not paths_to_match:
+        found = []
         if paths.contains_file(path_to_directory, f'{prefix}*'):
-            return [path_to_directory]
-        if path_to_sub_directory.isdir():
-            return [path_to_sub_directory]
-        return []
-    i = first_integer(subdirnames)
-    for path_to_sub_directory in matched_sub_directories:
-        paths_under = look_under_directory(path_to_sub_directory, subdirnames)
-        result.extend(paths_under)
-    if not result:
-        if i is not None:
-            try:
-                return [matched_sub_directories[i]]
-            except IndexError:
-                raise RangeError(i, matched_sub_directories)
-        if paths.contains_file(path_to_directory, f'{prefix}*'):
-            result = [path_to_directory]
-    return result
+            found = [path_to_directory]
+        else:
+            path_to_prefix = path_to_directory / prefix
+            if path_to_prefix.isdir():
+                found = [path_to_prefix]
+        possibles.extend(found)
+        return possibles
+    for path_to_match in paths_to_match:
+        possibles.extend(possibles_under_directory(path_to_match, subdirnames))
+    if possibles:
+        return possibles
+    try:
+        i = first_integer(subdirnames)
+        possibles.append(paths_to_match[i])
+    except TypeError:
+        pass
+    except IndexError:
+        raise RangeError(i, paths_to_match)
+    return possibles
 
 
 def find_under_directory(path_to_directory, subdirnames):
@@ -161,12 +166,8 @@ def find_under_directory(path_to_directory, subdirnames):
 
     Can give None (no matches), or the match, or an Exception
     """
-    possibles = look_under_directory(path_to_directory, subdirnames)
-    if not possibles:
-        return None
-    if len(possibles) == 1:
-        return possibles[0]
-    return too_many_possibles(possibles)
+    possibles = possibles_under_directory(path_to_directory, subdirnames)
+    return first_possible(possibles)
 
 
 def find_python_root_dir(possibles):
@@ -194,8 +195,7 @@ def find_python_root_dir(possibles):
     return None
 
 
-def too_many_possibles(possibles):
-    possibles = [_ for _ in possibles if _.exists()]
+def first_possible(possibles):
     if len(possibles) < 2:
         purge()
     if not possibles:
@@ -209,10 +209,10 @@ def too_many_possibles(possibles):
     raise TryAgain(possibles)
 
 
-def find_under_here(subdirnames):
+def find_under_here(*args):
     """Look for some other directories under current directory """
     try:
-        return find_under_directory(paths.here(), subdirnames)
+        return find_under_directory(paths.pwd(), *args)
     except OSError:
         return []
 
@@ -273,36 +273,42 @@ def find_path_to_item(item):
     def user_says_its_a_directory(p):
         return p[-1] == '/'
 
-    if user_says_its_a_directory(item):
-        if item[0] == '/':
-            return paths.path(item)
-        return item.rstrip('/')
-    path_to_item = paths.path(item)
-    if path_to_item.isdir():
-        return path_to_item
-    parent = path_to_item.dirname()
-    if path_to_item.isfile():
-        return parent
-    elif os.path.islink(item):
-        parent = os.path.dirname(item)
-        if os.path.isdir(parent):
-            return paths.makepath(parent)
-    pattern = f'{path_to_item.basename()}*'
-    if paths.contains_directory(parent, pattern):
-        patterned_sub_dirs = parent.dirs(pattern)
-        python_dir = (lambda x: not ignorable_dir(x)
-            if find_python_root_dir(patterned_sub_dirs)
-            else lambda x: True
-        )
-        python_dirs = [f for f in patterned_sub_dirs if python_dir(f)]
-        longest_first = sorted(python_dirs, key=lambda x: len(x), reverse=True)
-        longest_named_python_sub_dir = longest_first.pop()
-        return longest_named_python_sub_dir
-    elif paths.contains_glob(parent, pattern):
-        return parent
-    if parent.isdir():
-        raise FoundParent(parent)
-    return None
+    def find_path_to_item_():
+        if user_says_its_a_directory(item):
+            if item[0] == '/':
+                return paths.path(item)
+            return item.rstrip('/')
+        path_to_item = paths.path(item)
+        if path_to_item.isdir():
+            return path_to_item
+        parent = path_to_item.dirname()
+        if path_to_item.isfile():
+            return parent
+        elif os.path.islink(item):
+            parent = os.path.dirname(item)
+            if os.path.isdir(parent):
+                return paths.makepath(parent)
+        pattern = f'{path_to_item.basename()}*'
+        if paths.contains_directory(parent, pattern):
+            patterned_sub_dirs = parent.dirs(pattern)
+            python_dir = (lambda x: not ignorable_dir(x)
+                if find_python_root_dir(patterned_sub_dirs)
+                else lambda x: True
+            )
+            python_dirs = [f for f in patterned_sub_dirs if python_dir(f)]
+            longest_first = sorted(python_dirs, key=lambda x: len(x), reverse=True)
+            longest_named_python_sub_dir = longest_first.pop()
+            return longest_named_python_sub_dir
+        elif paths.contains_glob(parent, pattern):
+            return parent
+        if parent.isdir():
+            raise FoundParent(parent)
+        return None
+
+    try:
+        return find_path_to_item_()
+    except FoundParent:
+        return None
 
 
 def find_directory(item, subdirnames):
@@ -320,10 +326,7 @@ def find_directory(item, subdirnames):
         or a directory under $HOME
     Otherwise look for subdirnames as a partial match
     """
-    try:
-        path_to_item = find_path_to_item(item)
-    except FoundParent:
-        path_to_item = None
+    path_to_item = find_path_to_item(item)
     if path_to_item:
         if not subdirnames:
             return path_to_item
@@ -331,12 +334,8 @@ def find_directory(item, subdirnames):
         if path_to_prefix:
             return path_to_prefix
     else:
-        if item:
-            args = [item] + subdirnames
-        else:
-            args = subdirnames
-        if args:
-            path_to_item = find_under_here(args)
+        args = ([item] if item else []) + subdirnames
+        path_to_item = find_under_here(args)
     if path_to_item:
         return path_to_item
     path_to_item = find_in_history(item, subdirnames)
@@ -426,10 +425,9 @@ def existing(_args=None):
 
 
 def lost(_args=None):
-    history_items = read_history()
-    for _rank, path, _time in history_items:
-        if not os.path.exists(path):
-            print(path)
+    lost_paths = [p for r, p, t in read_history() if not os.path.isdir(p)]
+    for path in lost_paths:
+        print(path)
     raise SystemExit(os.EX_OK)
 
 
@@ -441,12 +439,14 @@ def delete(args):
 
 
 def add(args):
-    """Remember the given path for later use"""
+    """Add the dirname in args to the history"""
     try:
-        path_to_dirname = paths.path(args.dirname)
+        path_to_dirname = paths.path(args['dirname'])
+        add_path(path_to_dirname)
+        error = 0
     except OSError as e:
-        raise SystemExit(str(e))
-    add_path(path_to_dirname)
+        error = str(e)
+    raise SystemExit(error)
 
 
 def run_args(args):
@@ -658,25 +658,27 @@ def _find_in_paths(item, subdirnames, frecent_paths):
     if os.path.sep in item:
         matchers.insert(0, lambda p: item in p)
     i = take_first_integer(subdirnames)
-    possibles = set()
+    possibles = PossiblePaths([])
     for match in matchers:
         matched = [_ for _ in frecent_paths if match(_)]
         if not matched:
             continue
+        if not subdirnames:
+            possibles.extend(matched)
+            continue
         if len(matched) == 1:
             if i:
                 raise RangeError(i, matched)
-            possibles |= {find_under_directory(matched[0], subdirnames)}
+            possibles.extend(find_under_directory(matched[0], subdirnames))
         if i is not None:
             try:
                 match_ = matched[i]
             except IndexError:
                 raise RangeError(i, matched)
-            possibles |= {find_under_directory(match_, subdirnames)}
+            possibles.extend(find_under_directory(match_, subdirnames))
         elif len(matched) > 1:
-            found = {find_under_directory(_, subdirnames) for _ in set(matched)}
-            possibles |= found
-    possibilities = {_ for _ in possibles if _}
+            [possibles.extend(find_under_directory(_, subdirnames)) for _ in set(matched)]
+    possibilities = PossiblePaths(possibles)
     if not possibilities:
         return None
     if len(possibilities) > 1:
