@@ -355,7 +355,7 @@ _dot_cd () {
     [[ -f $_cd_here ]] || cat_cd_templates > $_cd_here
     grep -q activate $_cd_here && unhash_python_handlers
     . $_cd_here
-    true
+    return 0
 }
 
 # xxxxxxxx
@@ -423,7 +423,7 @@ echo_dirs () {
     done
     [[ $_echoed ]] || return 1
     echo
-    true
+    return 0
 }
 
 same_path () {
@@ -546,7 +546,7 @@ here_clean () {
 
 cd_template () {
     echo -n "$1/cd "
-    true
+    return 0
 }
 
 # xxxxxxxxxxxx
@@ -554,13 +554,13 @@ cd_template () {
 bin_template () {
     [[ -d bin ]] || return 1
     echo -n "$1/bin "
-    true
+    return 0
 }
 
 git_template () {
     [[ -d .git ]] || return 1
     echo -n "$1/git "
-    true
+    return 0
 }
 
 # xxxxxxxxxxxxx
@@ -576,9 +576,9 @@ venv_directory () {
     [[ $_one ]] && shift
     local _path_to_one=
     [[ $_one ]] && _path_to_one=$(readlink -f $_one)
+    [[ -f "$_path_to_one" ]] && _path_to_one=$(dirname "$_path_to_one")
     local _path_at_home=
     [[ $_one ]] && _path_at_home=$(readlink -f ~/.virtualenvs/$_one)
-    [[ -f "$_path_to_one" ]] && _path_to_one=$(dirname "$_path_to_one")
     local _venv_dir=
     if [[ -d "$_path_to_one" ]]; then
         _venv_dir="$_path_to_one"
@@ -588,12 +588,12 @@ venv_directory () {
         else
             echo "Not a directory: '$_path_to_one'" >&2
             echo "Not a directory: '$_path_at_home'" >&2
-            _venv_dir="nopath"
+            return 1
         fi
     fi
     [[ -d "$_venv_dir" ]] || return 1
     echo_dirs "$_venv_dir"
-    true
+    return 0
 }
 
 # xxxxxxxxxxxxxxx
@@ -607,7 +607,7 @@ python_template () {
     [[ $(find . -maxdepth 2 -name  activate | wc -l) -gt 1 ]] && echo_template="$_python_template"
     [[ $echo_template ]] || return 1
     echo -n "$echo_template "
-    true
+    return 0
 }
 
 unhash_handlers () {
@@ -619,7 +619,7 @@ unhash_handlers () {
         fi
     done
     [[ $_dehash ]] || return 0
-    true
+    return 0
 }
 
 # xxxxxxxxxxxxxxxx
@@ -751,7 +751,7 @@ cde_show_git_was_here () {
 }
 
 cde_bin_PATH () {
-    local __doc__="""Adds /.cd/../bin to PATH"""
+    local __doc__="""Adds .cd/../bin to PATH"""
     local _bin_path=$(readlink -f bin)
     [[ -d "$1" ]] && _bin_path="$1"
     [[ -d "$_bin_path" ]] || return 2
@@ -770,3 +770,12 @@ cde_PYTHONPATH () {
     export PYTHONPATH
 }
 
+cde_PYTHONPATH () {
+    local __doc__="""Adds .cd/.. to PYTHONPATH"""
+    local _here=$(pwd)
+    [[ $PYTHONPATH =~ ${_here//\//.} ]] && return 0
+    [[ PYTHONPATH ]] && PYTHONPATH="$PYTHONPATH:$_here" || PYTHONPATH="$_here"
+    export PYTHONPATH
+}
+
+[[ $WELCOME_BYE ]] && announce Bye from
