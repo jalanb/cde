@@ -72,6 +72,15 @@ cdi () {
     cde -$_index "$@"
 }
 
+cdi () {
+    local _index=0
+    if [[ $1 =~ [0-2] ]]; then
+        _index=$1
+        shift
+    fi
+    cde -$_index "$@"
+}
+
 cdl () {
     local __doc__="""cde $1; ls -1"""
     local _dir="$@"
@@ -256,6 +265,13 @@ cdpy () {
     [[ $_quiet ]] || echo $_cdpy_output
     pushd "$_cde_directory" >/dev/null 2>&1
     return 0
+}
+
+cdll () {
+    local __doc__="""cde $1; ls -l"""
+    local _dir="$@"
+    [[ $_dir ]] || _dir=.
+    cdl $_dir -lhtra
 }
 
 cdup () {
@@ -530,6 +546,7 @@ here_clean () {
 
 cd_template () {
     echo -n "$1/cd "
+    true
 }
 
 # xxxxxxxxxxxx
@@ -569,6 +586,8 @@ venv_directory () {
         if [[ -d "$_path_at_home" ]]; then
             _venv_dir="$_path_at_home"
         else
+            echo "Not a directory: '$_path_to_one'" >&2
+            echo "Not a directory: '$_path_at_home'" >&2
             _venv_dir="nopath"
         fi
     fi
