@@ -258,6 +258,13 @@ cdpy () {
     return 0
 }
 
+cdll () {
+    local __doc__="""cde $1; ls -l"""
+    local _dir="$@"
+    [[ $_dir ]] || _dir=.
+    cdl $_dir -lhtra
+}
+
 cdup () {
     local __doc__="""cde up a few levels, 'cdup' goes up 1 level, 'cdup 2' goes up 2"""
     local _level=1
@@ -355,6 +362,23 @@ cde_help () {
     return 0
 }
 # _xxxxxxx
+
+default__cd () {
+    echo "ls -1 --color"
+    echo "ls -ld ."
+    echo "$(du -sh .)"
+    [[ -d .git ]] && echo "git status --short"
+    [[ -d .git ]] && echo "glg $(wc -l $(git status --short))"
+}
+
+_here_cd () {
+    local __doc__="""Look for .cd here and source it if found"""
+    local _cd_here=./.cd
+    [[ -f $_cd_here ]] || default__cd > $_cd_here
+    grep -q activate $_cd_here && unhash_python
+    . $_cd_here
+    return 0
+}
 
 _here_ls () {
     ls 2> ~/bash/null

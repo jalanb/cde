@@ -1,19 +1,12 @@
 The timings module
 ==================
 
-    >>> from cde import timings
+    >>> import timings
     >>> assert 'handle times' in timings.__doc__
 
 Find the time since it happened
 -------------------------------
 
-Some quick functions for clarifying names
-    >>> years = lambda x: x * 365 * 24 * 60 * 60
-    >>> days = lambda x: x * 24 * 60 * 60
-    >>> hours = lambda x: x * 60 * 60
-    >>> minutes = lambda x: x * 60
-    >>> difference = years(5) + days(77) + hours(13) + minutes(2) + 5
-
 The time_since() method converts a number of seconds to English
     It gives only the two most significant numbers
-    >>> assert timings.time_since(timings.now() - difference) == '5 years, 77 days'
+    >>> assert timings.time_since(timings.now() - (5*365*24*60*60 + 77*24*60*60 + 13*60*60 + 2*60 + 5)) == '5 years, 77 days'
