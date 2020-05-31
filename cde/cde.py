@@ -10,7 +10,7 @@ import csv
 
 from boltons.iterutils import unique
 from pysyte.types import paths
-from pysyte.types.numbers import to_int
+from pysyte.types.numbers import as_int
 from pysyte.iteration import first_that
 
 from . import timings
@@ -117,7 +117,7 @@ def first_integer(items):
     >>> assert first_integer(['three', 'two']) is None
     """
     try:
-        return first_that(lambda x: x is not None, [to_int(i) for i in items])
+        return first_that(lambda x: x is not None, [as_int(i) for i in items])
     except KeyError:
         return None
 
@@ -279,6 +279,8 @@ def find_path_to_item(item):
                 return paths.path(item)
             return item.rstrip('/')
         path_to_item = paths.path(item)
+        if not path_to_item:
+            return None
         if path_to_item.isdir():
             return path_to_item
         parent = path_to_item.dirname()
@@ -396,7 +398,7 @@ def makedir(args):
     path_to_dirname = paths.path(args.dirname)
     if path_to_dirname.isdir():
         return True
-    return path_to_dirname.make_directory_exist()
+    return path_to_dirname.makedirs()
 
 
 def old(args):
@@ -669,15 +671,15 @@ def _find_in_paths(item, subdirnames, frecent_paths):
         if len(matched) == 1:
             if i:
                 raise RangeError(i, matched)
-            possibles.extend(find_under_directory(matched[0], subdirnames))
+            possibles.extend(possibles_under_directory(matched[0], subdirnames))
         if i is not None:
             try:
                 match_ = matched[i]
             except IndexError:
                 raise RangeError(i, matched)
-            possibles.extend(find_under_directory(match_, subdirnames))
+            possibles.extend(possibles_under_directory(match_, subdirnames))
         elif len(matched) > 1:
-            [possibles.extend(find_under_directory(_, subdirnames)) for _ in set(matched)]
+            [possibles.extend(possibles_under_directory(_, subdirnames)) for _ in set(matched)]
     possibilities = PossiblePaths(possibles)
     if not possibilities:
         return None

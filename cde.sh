@@ -4,15 +4,14 @@ export CDE_SOURCE="$BASH_SOURCE"
 export CDE_NAME=$(basename "$CDE_SOURCE")
 export CDE_SOURCE_PATH=$(readlink -f "$CDE_SOURCE")
 export CDE_DIR=$(dirname "$CDE_SOURCE_PATH")
+export CDE_SCRIPT="$CDE_DIR"/bin/cde
 
 announce () {
-    set -x
     local _host=$(hostname -f)
     echo "$@" $CDE_NAME in $CDE_DIR on $_host
-    set +x
 }
 
-[[ $WELCOME_BYE ]] && announce Welcome to
+# [[ $WELCOME_BYE ]] && announce Welcome to
 
 
 # This script is intended to be sourced, not run
@@ -109,6 +108,21 @@ cdv () {
     $EDITOR $_files
 }
 
+ind () {
+    inx "$@"
+}
+
+inx () {
+    local _file="$(readlink -f '$1')"
+    shift
+    local _dir="$(dirname $_file)"
+    (
+        cd "$_dir"
+        [[ $1 =~ -q ]] || set -x
+        "$@"
+    )
+}
+
 venv_or_which () {
     local __doc__="""find an executable in cde's virtualenv, or which, or which with our PATH"""
     [[ "$1" ]] || return 1 
@@ -122,9 +136,9 @@ venv_or_which () {
 
 venv_or_shebang () {
     local _app=$1 _file=$2 
-    [[ "$_app" ]] || return 1
-    _app="${_app/%2/3}"
-    if [[ -e $_file ]]; then
+    [[ "$_app" && "$_file" ]] || return 1
+    _app="${_app/%2/3}"  # Change (e.g) python2 to python3
+    if [[ -f $_file ]]; then
         local _language=$(echo $_app | sed -e "s:[0-9]*$::" )
         local _shebang=$(headline "$_file")
         if [[ $_shebang =~ $_language ]]; then
@@ -144,25 +158,27 @@ venv_or_shebang () {
     return 0
 }
 
-bin_cde () {
-    echo "${CDE_DIR}/bin/cde"
+interpret_cde () {
+    local __doc__="""Interpret the cde script, setting PYTHONPATH"""
+    local _interpreter="$1"; shift
+    # set -x
+    [[ $_interpreter ]] || return 1
+    PYTHONPATH=${CDE_DIR}:$PYTHONPATH $_interpreter "$CDE_SCRIPT" "$@"
+    # set +x
 }
 
 cde_pudb () {
-    local __doc__="""Debug the cde program, with PATH/PYTHONPATH"""
-    local _cde_dir="$CDE_DIR" _interpreter=$(venv_or_shebang pudb)
-    [[ $? == 0 ]] || return 1
-    set -x
-    PYTHONPATH="$_cde_dir":$PYTHONPATH $_interpreter "$(bin_cde)" "$@"
-    set +x
+    local __doc__="""Debug the cde program"""
+    # set -x
+    local _interpreter=$(venv_or_which pudb3 2>/dev/null)
+    interpret_cde "$_interpreter" "$@"
+    # set +x
 }
 
 cde_python () {
-    local __doc__="""Run the cde python program, with PATH/PYTHONPATH"""
-    local _bin_cde="$(bin_cde)"
-    local _interpreter=$(venv_or_shebang python3 "$_bin_cde")
-    [[ $? == 0 ]] || return 1
-    PYTHONPATH=${CDE_DIR}:$PYTHONPATH $_interpreter "$_bin_cde" "$@"
+    local __doc__="""Run the cde program"""
+    local _interpreter=$(venv_or_shebang python3 "$CDE_SCRIPT")
+    interpret_cde "$_interpreter" "$@"
 }
 
 cls () {
@@ -778,4 +794,6 @@ cde_PYTHONPATH () {
     export PYTHONPATH
 }
 
-[[ $WELCOME_BYE ]] && announce Bye from
+cde_clean_eggs () {
+    rm -rf *.egg-info
+}
