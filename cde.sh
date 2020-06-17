@@ -12,14 +12,6 @@ export CDE_SOURCE_PATH=$(readlink -f "$CDE_SOURCE")
 export CDE_DIR=$(dirname "$CDE_SOURCE_PATH")
 export CDE_SCRIPT="$CDE_DIR"/bin/cde
 
-announce () {
-    local host_=$(hostname -f)
-    echo "$@" $CDE_NAME in $CDE_DIR on $host_
-}
-
-# [[ $WELCOME_BYE ]] && announce Welcome to
-
-
 # This script is intended to be sourced, not run
 if [[ $0 == "$CDE_SOURCE" ]]
 then
@@ -29,15 +21,12 @@ then
     echo "  sh $0"
 fi
 
-CD_PATH_ONLY=0
 export CDE_SOURCE=$BASH_SOURCE
 export CDE_NAME=$(basename $CDE_SOURCE)
 export CDE_DIR=$(dirname $(readlink -f $CDE_SOURCE))
 
-# _
 # x
-
-# _x
+# xx
 
 ., () {
     local destination_=$HOME
@@ -45,7 +34,6 @@ export CDE_DIR=$(dirname $(readlink -f $CDE_SOURCE))
     [[ $top_level_ ]] && destination_=$top_level_
 }
 
-# xx
 
 alias ..=cdup
 
@@ -69,24 +57,6 @@ cde () {
     cdpy "$@" || return 1
     [[ -d . ]] || return 1
     post_cdpy $quietly_
-}
-
-cdi () {
-    local _index=0
-    if [[ $1 =~ [0-2] ]]; then
-        _index=$1
-        shift
-    fi
-    cde -$_index "$@"
-}
-
-cdi () {
-    local _index=0
-    if [[ $1 =~ [0-2] ]]; then
-        _index=$1
-        shift
-    fi
-    cde -$_index "$@"
 }
 
 cdi () {
@@ -126,176 +96,13 @@ cdv () {
     $EDITOR $_files
 }
 
-ind () {
-    inx "$@"
-}
-
-inx () {
-    local _file="$(readlink -f '$1')"
-    shift
-    local _dir="$(dirname $_file)"
-    (
-        cd "$_dir"
-        [[ $1 =~ -q ]] || set -x
-        "$@"
-    )
-}
-
-cls () {
-    local __doc__="clean, clear, ls"
-    clean
-    clear
-    if [[ -n "$@" ]]; then
-        l "$@"
-    else
-        l .
-        echo
-    fi
-}
-
 cpp () {
     local __doc__="""Show where any args would cde to"""
     if [[ -n "$1" ]]; then
-        py_cp "$@"
+        cde_python "$@"
     else
-        py_cp .
+        cde_python .
     fi | grep -v -- '->'
-}
-
-
-ind () {
-    local _cd=cd
-    if [[ $1 == -e ]]; then
-        _cd="cde -q"
-        shift
-    fi
-    local _destination=$(py_cp "$1")
-    [[ -d "$_destination" ]] || return 1
-    (
-        $_cd "$_destination"
-        shift
-        "$@"
-    )
-}
-
-venv_or_which () {
-    local __doc__="""find an executable in cde's virtualenv, or which, or which with our PATH"""
-    [[ "$1" ]] || return 1
-    local _name="$1"; shift
-    local _app="${CDE_DIR}/.venv/bin/$_name"
-    [[ -e "$_app" ]] || _app=$(which $_name 2>/dev/null)
-    [[ -e "$_app" ]] || _app=$(PATH=~/bin:/usr/local/bin:/bin which $_name 2>/dev/null)
-    [[ -e "$_app" ]] && echo $_app
-    [[ -e "$_app" ]]
-}
-
-venv_or_shebang () {
-    local _app=$1 _file=$2
-    [[ "$_app" && "$_file" ]] || return 1
-    _app="${_app/%2/3}"  # Change (e.g) python2 to python3
-    if [[ -f $_file ]]; then
-        local _language=$(echo $_app | sed -e "s:[0-9]*$::" )
-        local _shebang=$(headline "$_file")
-        if [[ $_shebang =~ $_language ]]; then
-            if [[ $_shebang =~ usr.bin.env ]]; then
-                _interpreter=$_app
-            else
-                _interpreter=$_shebang
-            fi
-        fi
-    fi
-    local _interpreter=$(venv_or_which $_app)
-    if [[ ! -e $_interpreter ]]; then
-        echo "Could not find $_app" >&2
-        return 1
-    fi
-    echo $_interpreter
-    return 0
-}
-
-cdpy () {
-    local __doc__="""Ask cde.py for a destination"""
-    local _quiet=
-    if [[ $1 =~ quiet ]]; then
-        _quiet=1
-        shift
-    fi
-    local _project_dir=$CDE_DIR
-    local _python_dir="$_project_dir/cde"
-    # local _python_cde=$_python_dir/cde.py
-    # echo "_python_cde $_python_cde"
-    _bin_cde=$_project_dir/bin/cde
-    # echo "_bin_cde $_bin_cde"
-
-    local _cde_options=
-    [[ $CD_PATH_ONLY == 1 ]] && _cde_options=--first
-    local _python=$(which python 2>/dev/null)
-    [[ -z $_python ]] && _python=$(PATH=~/bin:/usr/local/bin:/bin which python)
-    # set +x
-    local _headline=$(head -n 1 $_bin_cde)
-    [[ $_headline =~ python ]] && _python=
-    local _python_command="$_python $_bin_cde $_cde_options"
-    local _cde_result=1
-    local _pythonpath=$PYTHONPATH
-    export PYTHONPATH=$_project_dir:$PYTHONPATH
-    if [[ $PUDB || $PUDB_CD ]]; then
-        set -x
-        local _pudb=$(which pudb3)
-        python -V | grep  -q ' 2' && _pudb=$(which pudb)
-        $_pudb $_bin_cde $_cde_options "$@"
-        set +x
-    elif ! destination=$($_python_command "$@" 2>&1)
-    then
-        echo "$destination"
-    elif [[ "$@" =~ ' -[lp]' ]]; then
-        echo "$destination"
-    elif [[ $destination =~ ^[uU]sage ]]; then
-        $_python_command --help
-    else
-        local real_destination=$(python -c "import os; print(os.path.realpath('$destination'))")
-        if [[ "$destination" != "$real_destination" ]]
-        then
-            echo "cd ($destination ->) $real_destination"
-            destination="$real_destination"
-        else
-            while [[ $1 =~ ^- ]]; do
-                shift
-            done
-            if [[ "$destination" != $(readlink -f "$1") ]]; then
-                [[ $_quiet ]] || echo "cd $destination"
-            fi
-        fi
-    fi
-    local _interpreter=$(venv_or_which $_app)
-    if [[ ! -e $_interpreter ]]; then
-        echo "Could not find $_app" >&2
-        return 1
-    fi
-    echo $_interpreter
-    return 0
-}
-
-interpret_cde () {
-    local __doc__="""Interpret the cde script, setting PYTHONPATH"""
-    local _interpreter="$1"; shift
-    # set -x
-    [[ $_interpreter ]] || return 1
-    PYTHONPATH=${CDE_DIR}:$PYTHONPATH $_interpreter "$CDE_SCRIPT" "$@"
-    # set +x
-}
-
-cde_pudb () {
-    local __doc__="""Debug the cde program"""
-    # set -x
-    local _interpreter=$(venv_or_which pudb3 2>/dev/null)
-    interpret_cde "$_interpreter" "$@"
-    # set +x
-}
-
-cde_python () {
-    local __doc__="""Run the cde program"""
-    local _interpreter=$(venv_or_shebang python3 "$CDE_SCRIPT")
-    interpret_cde "$_interpreter" "$@"
 }
 
 cls () {
@@ -316,15 +123,13 @@ ind () {
         _cd="cde -q"
         shift
     fi
-    local _destination=$(cde_first "$@")
-    if [[ -d "$_destination" ]]; then
+    local _destination=$(cde_python "$1")
+    [[ -d "$_destination" ]] || return 1
+    (
         $_cd "$_destination"
         shift
         "$@"
-    else
-        "$@"
-    fi
-    cd $_old
+    )
 }
 
 mkc () {
@@ -337,47 +142,13 @@ red () {
     coloured "$RED""$@"
 }
 
-green () {
-    coloured "$GREEN""$@"
-}
-
-blue () {
-    coloured "$BLUE""$@"
-}
-
-lblue () {
-    coloured "$LIGHT_BLUE""$@"
-}
-
-show_cmd () {
-    lblue "$@"
-}
-
-show_pass () {
-    green "$@"
-}
-
-show_fail () {
-    red "$@"
-}
-
-show_bash () {
-    show_cmd "$@"
-    local cde_="$CDE_DIR"
-    "$@" > $cde_/std.out 2> $cde_/std.err
-    show_pass $(cat $cde_/std.out)
-    show_fail $(cat $cde_/std.err)
-}
-
-coloured () {
-    printf "$@""${NO_COLOUR}"
-}
-
 alias ...="cdup 2"
 
 # xxxx
 
-alias cdee='c .'
+blue () {
+    coloured "$BLUE""$@"
+}
 
 cdll () {
     local __doc__="""cde $1; ls -l"""
@@ -389,29 +160,6 @@ cdll () {
 cdpu () {
     local __doc__="Debug the cdpy function and script"
     PUDB_CD=1 cdpy "$@"
-}
-
-ind () {
-    local _cd=cd
-    if [[ $1 == -e ]]; then
-        _cd="cde -q"
-        shift
-    fi
-    local _destination=$(py_cp "$1")
-    [[ -d "$_destination" ]] || return 1
-    (
-        $_cd "$_destination"
-        shift
-        "$@"
-    )
-}
-
-alias indd="ind -e"
-
-mkc () {
-    local _destination=$(py_cp "$1")
-    [[ -d "$_destination" ]] || mkdir -p "$_destination"
-    cde "$_destination"
 }
 
 cdpy () {
@@ -458,20 +206,6 @@ cdpy () {
     return 0
 }
 
-cdll () {
-    local __doc__="""cde $1; ls -l"""
-    local _dir="$@"
-    [[ $_dir ]] || _dir=.
-    cdl $_dir -lhtra
-}
-
-cdll () {
-    local __doc__="""cde $1; ls -l"""
-    local _dir="$@"
-    [[ $_dir ]] || _dir=.
-    cdl $_dir -lhtra
-}
-
 cdup () {
     local __doc__="""cde up a few levels, 'cdup' goes up 1 level, 'cdup 2' goes up 2"""
     local _level=1
@@ -491,12 +225,6 @@ cdup () {
     cde $_dir "$@"
 }
 
-alias indd="ind ind"
-
-inde () {
-    ind -e "$@"
-}
-
 pycd () {
     # Adapted from https://news.ycombinator.com/item?id=18898898
     local __doc__="""cde to directory of a iven Python module"""
@@ -512,16 +240,12 @@ cdupp () {
     cdup 2 "$@"
 }
 
-py_cg () {
-    local __doc__="Debug the cdpy function and script"
-    PUDB_CD=1 cdpy "$@"
+green () {
+    coloured "$GREEN""$@"
 }
 
-# xxxxx
-
-cdupp () {
-    local """cd up 2 levels"""
-    cdup 2 "$@"
+lblue () {
+    coloured "$LIGHT_BLUE""$@"
 }
 
 alias .....="cdup 4"
@@ -538,6 +262,7 @@ cduppp () {
     local """cd up ... etc, you get the idea"""
     cdup 3 "$@"
 }
+
 # xxxxxxx
 
 vim_cde () {
@@ -547,8 +272,6 @@ vim_cde () {
     . $CDE.sh
     [[ $_files ]] && . $_files
 }
-
-# _xxxxxx
 
 _active () {
     local __doc__="""Whether the $ACTIVATE script is in same dir as current python or virtualenv"""
@@ -562,7 +285,7 @@ _active () {
 _dot_cd () {
     local __doc__="""Look for .cd here and source it if found"""
     local _cd_here=./.cd
-    [[ -f $_cd_here ]] || cat_cd_templates > $_cd_here
+    [[ -f $_cd_here ]] || return 1
     grep -q activate $_cd_here && unhash_python_handlers
     . $_cd_here
     return 0
@@ -570,8 +293,16 @@ _dot_cd () {
 
 # xxxxxxxx
 
-headline () {
-    head -n 1 "$1"
+_here_ls () {
+    ls . 2>/dev/null
+}
+
+cde_pudb () {
+    local __doc__="""Debug the cde program"""
+    # set -x
+    local _interpreter=$(venv_or_which pudb3 2>/dev/null)
+    interpret_cde "$_interpreter" "$@"
+    # set +x
 }
 
 cde_help () {
@@ -580,13 +311,18 @@ cde_help () {
     cdpy -h
     return 0
 }
-# _xxxxxxx
 
-_here_ls () {
-    ls 2> ~/bash/null
+coloured () {
+    printf "$@""${NO_COLOUR}"
 }
 
-# xxxxxxxx
+headline () {
+    head -n 1 "$1"
+}
+
+show_cmd () {
+    lblue "$@"
+}
 
 say_path () {
     local _said=$(python << EOP
@@ -614,7 +350,7 @@ EOP
 
 # xxxxxxxxx
 
-cdpy_pre_ () {
+pre_cdpy () {
     cde_deactivate
     [[ -n $CDE_header ]] && echo $CDE_header
 }
@@ -631,21 +367,40 @@ echo_dirs () {
     return 0
 }
 
+post_cdpy () {
+    local _path=$(short_dir $PWD)
+    [[ $_path == "~" ]] && _path=HOME
+    [[ $_path =~ "wwts" ]] && _path="${_path/wwts/dub dub t s}"
+    [[ $1 =~ -q ]] && shift || say_path $_path
+    _dot_cd && return 0
+    cde_bin_PATH
+    cde_show_git_was_here
+    _here_python && _here_venv
+    [[ -n $1 ]] &&
+    _here_ls && here_clean
+}
+
 same_path () {
     [[ $(readlink -f "$1") == $(readlink -f "$2") ]]
 }
 
-# _xxxxxxxx
-
-_deactivate () {
-    # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
-    unhash_python_handlers
-    deactivate
-    if [[ $ACTIVE_PYTHON ]]; then
-        ACTIVATE="${ACTIVE_PYTHON/%python/activate}"
-        _activate
-    fi
+show_pass () {
+    green "$@"
 }
+
+show_fail () {
+    red "$@"
+}
+
+show_bash () {
+    show_cmd "$@"
+    local cde_="$CDE_DIR"
+    "$@" > $cde_/std.out 2> $cde_/std.err
+    show_pass $(cat $cde_/std.out)
+    show_fail $(cat $cde_/std.err)
+}
+
+# xxxxxxxxxx
 
 _activate () {
     # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
@@ -663,12 +418,6 @@ _dirnames () {
     done
     return $_result
 }
-
-_add_source_bin_to_PATH() {
-    [[ -d ./bin ]] && add_to_PATH ./bin
-}
-
-# _xxxxxxxxx
 
 _here_venv () {
     local _active_venv="$VIRTUAL_ENV"
@@ -696,14 +445,38 @@ _here_venv () {
     # set +x
 }
 
-# _xxxxxxxxxx
-
-_reactivate () {
-    _activate
+cde_python () {
+    local __doc__="""Run the cde program"""
+    local _interpreter=$(venv_or_shebang python3 "$CDE_SCRIPT")
+    interpret_cde "$_interpreter" "$@"
 }
 
+here_clean () {
+    for path in $(find . -type f -name '*.sw*'); do
+        ls -l $path 2> ~/bash/fd/2
+        rm -i $path && continue
+        [[ $? == 0 ]] || break
+    done
+}
 
-# _xxxxxxxxxxx
+# xxxxxxxxxxx
+
+_deactivate () {
+    # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
+    unhash_python_handlers
+    deactivate
+    if [[ $ACTIVE_PYTHON ]]; then
+        ACTIVATE="${ACTIVE_PYTHON/%python/activate}"
+        _activate
+    fi
+}
+
+cd_template () {
+    echo -n "$1/cd "
+    return 0
+}
+
+# xxxxxxxxxxxx
 
 _here_python () {
     any_python_scripts_here || return 0
@@ -719,38 +492,6 @@ _here_python () {
     return 0
 }
 
-# xxxxxxxxxx
-
-post_cdpy () {
-    local _path=$(short_dir $PWD)
-    [[ $_path == "~" ]] && _path=HOME
-    [[ $_path =~ "wwts" ]] && _path="${_path/wwts/dub dub t s}"
-    [[ $1 =~ -q ]] && shift || say_path $_path
-    _dot_cd && return 0
-    _add_source_bin_to_PATH
-    cde_show_git_was_here
-    _here_python && _here_venv
-    [[ -n $1 ]] &&
-    _here_ls && here_clean
-}
-
-here_clean () {
-    for path in $(find . -type f -name '*.sw*'); do
-        ls -l $path 2> ~/bash/fd/2
-        rm -i $path && continue
-        [[ $? == 0 ]] || break
-    done
-}
-
-# xxxxxxxxxxx
-
-cd_template () {
-    echo -n "$1/cd "
-    return 0
-}
-
-# xxxxxxxxxxxx
-
 bin_template () {
     [[ -d bin ]] || return 1
     echo -n "$1/bin "
@@ -764,6 +505,27 @@ git_template () {
 }
 
 # xxxxxxxxxxxxx
+
+interpret_cde () {
+    local __doc__="""Interpret the cde script, setting PYTHONPATH"""
+    local _interpreter="$1"; shift
+    # set -x
+    [[ $_interpreter ]] || return 1
+    PYTHONPATH=${CDE_DIR}:$PYTHONPATH $_interpreter "$CDE_SCRIPT" "$@"
+    # set +x
+}
+
+venv_or_which () {
+    local __doc__="""find an executable in cde's virtualenv, or which, or which with our PATH"""
+    [[ "$1" ]] || return 1
+    local _name="$1"; shift
+    local _app="${CDE_DIR}/.venv/bin/$_name"
+    [[ -e "$_app" ]] || _app=$(which $_name 2>/dev/null)
+    [[ -e "$_app" ]] || _app=$(PATH=~/bin:/usr/local/bin:/bin which $_name 2>/dev/null)
+    [[ -e "$_app" ]] && echo $_app
+    [[ -e "$_app" ]]
+}
+
 # xxxxxxxxxxxxxx
 
 venv_dirs_here () {
@@ -798,7 +560,29 @@ venv_directory () {
 
 # xxxxxxxxxxxxxxx
 
-# xxxxxxxxxxxxxxx
+venv_or_shebang () {
+    local _app=$1 _file=$2
+    [[ "$_app" && "$_file" ]] || return 1
+    _app="${_app/%2/3}"  # Change (e.g) python2 to python3
+    if [[ -f $_file ]]; then
+        local _language=$(echo $_app | sed -e "s:[0-9]*$::" )
+        local _shebang=$(headline "$_file")
+        if [[ $_shebang =~ $_language ]]; then
+            if [[ $_shebang =~ usr.bin.env ]]; then
+                _interpreter=$_app
+            else
+                _interpreter=$_shebang
+            fi
+        fi
+    fi
+    local _interpreter=$(venv_or_which $_app)
+    if [[ ! -e $_interpreter ]]; then
+        echo "Could not find $_app" >&2
+        return 1
+    fi
+    echo $_interpreter
+    return 0
+}
 
 python_template () {
     local _python_template="$1/python"
@@ -838,6 +622,7 @@ cat_cd_templates () {
 }
 
 # xxxxxxxxxxxxxxxxx
+
 project_venv_dirs () {
     local _top_dirs=
     local _git_top=$(git rev-parse --show-toplevel . 2>/dev/null | head -n 1)
@@ -869,6 +654,7 @@ unhash_file_handlers () {
     unhash_handlers  rm cp mv cat
 }
 
+# xxxxxxxxxxxxxxxxxxxxx
 # xxxxxxxxxxxxxxxxxxxxxx
 
 unhash_python_handlers () {
@@ -880,6 +666,8 @@ unhash_python_handlers () {
 any_python_scripts_here () {
     [[ $(find . -type f -name "*.py" -exec echo 1 \; -quit) == 1 ]]
 }
+
+# xxxxxxxxxxxxxxxxxxxxxxxx
 
 cde_find_activate_script () {
     local _here=$(pwd) _activate_dirs=
@@ -898,6 +686,9 @@ cde_find_activate_script () {
     export ACTIVATE
 }
 
+# 
+# After here functions are intended for use in .cd scripts
+#
 cde_activate_here () {
     cde_find_activate_script || return 1
     _active && cde_deactivate
@@ -925,87 +716,29 @@ cde_deactivate () {
 
 cde_show_git_was_here () {
     [[ -d ./.git ]] || return 0
-    show_git_time . | head -n ${LOG_LINES_ON_CD_GIT_DIR:-7}
-    local _branch=$(git rev-parse --abbrev-ref HEAD)
-    echo $_branch
-    git_simple_status .
-    show_version_here
-    gl11
-    return 0
-}
-
-cde_bin_PATH () {
-    local __doc__="""Adds /.cd/../bin to PATH"""
-    local _bin_path=$(readlink -f bin)
-    [[ -d "$1" ]] && _bin_path="$1"
-    [[ -d "$_bin_path" ]] || return 2
-    [[ $PATH =~ "$_bin_path" ]] && return 0
-    export PATH="$_bin_path:$PATH"
-}
-
-cde_activate_here () {
-    cde_find_activate_script || return 1
-    _active && cde_deactivate
-    _activate
-}
-
-cde_activate_home () {
-    cde_activate_there ~/.virtualenvs/$1
-}
-
-cde_activate_there () {
-    cde_find_activate_script "$@" || return 1
-    _active && cde_deactivate
-    _activate
-}
-
-cde_activate_venv () {
-    [[ "$@" ]] && cde_activate_there "$@" || cde_activate_here
-}
-
-cde_deactivate () {
-    deactivate >/dev/null 2>&1
-    unhash_python_handlers
-}
-
-cde_show_git_was_here () {
-    [[ -d ./.git ]] || return 0
-    show_git_time . | head -n ${LOG_LINES_ON_CD_GIT_DIR:-7}
-    local _branch=$(git rev-parse --abbrev-ref HEAD)
-    echo $_branch
     lblue "$(git config --local user.email), $(git remote get-url origin)\n"
-    [[ -f ".bumpversion.cfg" ]] && bump show
+    [[ -f ".bumpversion.cfg" ]] && grep ^current_version .bumpversion.cfg | grep --colour '\d[0-9a-z.]\+$'
     git status .
-    git branch | grep '^[*]' | sed -e 's,[*] *,,'
+    git rev-parse --abbrev-ref HEAD
     git lg -n 8
     return 0
 }
 
 cde_bin_PATH () {
     local __doc__="""Adds .cd/../bin to PATH"""
-    local _bin_path=$(readlink -f bin)
+    local _bin_path=$(cd bin 2>/dev/null && pwd)
     [[ -d "$1" ]] && _bin_path="$1"
     [[ -d "$_bin_path" ]] || return 2
-    [[ $PATH =~ "$_bin_path" ]] && return 0
+    [[ $PATH =~ "${_bin_path//\//.}" ]] && return 0
     PATH="$_bin_path:$PATH"
     export PATH
-}
-
-cde_PYTHONPATH () {
-    local __doc__="""Adds . to PATH"""
-    local _here_path=$(readlink -f .)
-    [[ -d "$1" ]] && _here_path="$1"
-    [[ -d "$_here_path" ]] || return 2
-    [[ $PYTHONPATH =~ "$_here_path" ]] && return 0
-    PYTHONPATH="$_here_path:$PYTHONPATH"
-    export PYTHONPATH
 }
 
 cde_PYTHONPATH () {
     local __doc__="""Adds .cd/.. to PYTHONPATH"""
     local _here=$(pwd)
     [[ $PYTHONPATH =~ ${_here//\//.} ]] && return 0
-    [[ PYTHONPATH ]] && PYTHONPATH="$PYTHONPATH:$_here" || PYTHONPATH="$_here"
+    [[ $PYTHONPATH ]] && PYTHONPATH="$PYTHONPATH:$_here" || PYTHONPATH="$_here"
     export PYTHONPATH
 }
 
