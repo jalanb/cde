@@ -854,14 +854,6 @@ prune_python_here () {
     return 0
 }
 
-show_version_here () {
-    local _config=./.bumpversion.cfg
-    if [[ -f $_config ]]; then
-        bump show
-        return
-    fi
-}
-
 # xxxxxxxxxxxxxxxxxx
 # xxxxxxxxxxxxxxxxxxx
 
@@ -981,9 +973,11 @@ cde_show_git_was_here () {
     show_git_time . | head -n ${LOG_LINES_ON_CD_GIT_DIR:-7}
     local _branch=$(git rev-parse --abbrev-ref HEAD)
     echo $_branch
+    lblue "$(git config --local user.email), $(git remote get-url origin)\n"
+    [[ -f ".bumpversion.cfg" ]] && bump show
     git status .
-    show_version_here
-    gl11
+    git branch | grep '^[*]' | sed -e 's,[*] *,,'
+    git lg -n 8
     return 0
 }
 
