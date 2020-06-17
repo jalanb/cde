@@ -1,7 +1,7 @@
 The timings module
 ==================
 
-    >>> import timings
+    >>> from cde import timings
     >>> assert 'handle times' in timings.__doc__
 
 Find the time since it happened

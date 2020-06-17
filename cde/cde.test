@@ -2,7 +2,7 @@ cde is a cd replacer
 ===================
 
     >>> from cde import cde
-    >>> assert "knows where you've been" in cde.__doc__
+    >>> assert "knows where you are going" in cde.__doc__
 
 More modules for testing
 ------------------------
@@ -49,9 +49,10 @@ Remembering history
 cde can also remember a list of paths
 
     >>> assert cde._path_to_history().endswith('cde/history')
-    >>> class Args:
-    ...     dirname = cde.__file__
-    >>> cde.add(Args())
+    >>> try:
+    ...     cde.add({'dirname': cde.__file__})
+    ... except SystemExit:
+    ...     pass
     >>> stored = False
     >>> for _rank, path, _time in cde.read_history():
     ...     if path == os.path.dirname(cde.__file__):

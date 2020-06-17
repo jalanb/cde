@@ -13,6 +13,7 @@ def add_args(parser):
     """Handle arguments from the command line"""
     parser.positional('directory', help='The directory to touch')
     parser.boolean('', 'python', help='Add Python commands')
+    return parser
 
 
 def templates():
@@ -29,18 +30,6 @@ def template(name):
     return os.path.join(templates, name)
 
 
-def read_old_args():
-    args = ArgumentsNamespace()
-    if not os.path.isfile('.cd'):
-        return args
-    with open('.cd') as stream:
-        for line in stream.readlines():
-            match = re.match('^## ([a-z]+)$', line)
-            if match:
-                setattr(args, match.group(1), True)
-    return args
-
-
 def arg_templates(args):
     texts = []
     for name in template_names():
@@ -53,7 +42,6 @@ def arg_templates(args):
 
 
 def main(new_args):
-    old_args = read_old_args()
     try:
         os.chdir(new_args.directory)
     except OSError:
