@@ -566,7 +566,7 @@ def add_path(path_to_add):
 
 def write_paths(paths_to_remember):
     """Write the given paths to the history file"""
-    with open(_path_to_history(), 'w') as stream:
+    with open(str(_path_to_history()), 'w') as stream:
         writer = csv.writer(stream, delimiter=',', quotechar='"',
                             quoting=csv.QUOTE_MINIMAL)
         writer.writerows(paths_to_remember)
