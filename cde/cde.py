@@ -480,7 +480,7 @@ def _path_to_config():
     stem = paths.path(__file__).namebase
     config = paths.home() / f'.config/{stem}'
     if not config.isdir():
-        os.makedirs(config)
+        os.makedirs(str(config))
     return config
 
 
