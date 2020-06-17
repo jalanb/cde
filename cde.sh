@@ -1,5 +1,11 @@
 #! /bin/cat
 
+export RED="\033[0;31m"
+export GREEN="\033[0;32m"
+export BLUE="\033[0;34m"
+export LIGHT_RED="\033[1;31m"
+export LIGHT_GREEN="\033[1;32m"
+export LIGHT_BLUE="\033[1;34m"
 export CDE_SOURCE="$BASH_SOURCE"
 export CDE_NAME=$(basename "$CDE_SOURCE")
 export CDE_SOURCE_PATH=$(readlink -f "$CDE_SOURCE")
@@ -327,6 +333,46 @@ mkc () {
     local _destination=$(cde_first "$@")
     [[ -d "$_destination" ]] || mkdir -p "$_destination"
     cde "$_destination"
+}
+
+red () {
+    coloured "$RED""$@"
+}
+
+green () {
+    coloured "$GREEN""$@"
+}
+
+blue () {
+    coloured "$BLUE""$@"
+}
+
+lblue () {
+    coloured "$LIGHT_BLUE""$@"
+}
+
+show_cmd () {
+    lblue "$@"
+}
+
+show_pass () {
+    green "$@"
+}
+
+show_fail () {
+    red "$@"
+}
+
+show_bash () {
+    show_cmd "$@"
+    local cde_="$CDE_DIR"
+    "$@" > $cde_/std.out 2> $cde_/std.err
+    show_pass $(cat $cde_/std.out)
+    show_fail $(cat $cde_/std.err)
+}
+
+coloured () {
+    printf "$@""${NO_COLOUR}"
 }
 
 alias ...="cdup 2"
