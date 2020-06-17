@@ -882,8 +882,8 @@ any_python_scripts_here () {
 }
 
 cde_find_activate_script () {
-    local _here=$(pwd)
-    local _activate_dirs=$(venv_directory "$@")
+    local _here=$(pwd) _activate_dirs=
+    [[ "$@" ]] && _activate_dirs=$(venv_directory "$@" 2>/dev/null)
     [[ $_activate_dirs ]] || _activate_dirs="$_here $(venv_dirs_here) $(project_venv_dirs)"
     [[ $_activate_dirs ]] || echo "No dirs available to find activate scripts" >&2
     [[ $_activate_dirs ]] || return 1
