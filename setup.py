@@ -1,28 +1,19 @@
 """Set up the cde project"""
 
-import os
 from setuptools import setup
-
-
-import cde
-
-
-p = os.path.join(os.path.dirname(__file__), 'requirements/requirements.txt')
-with open(p) as stream:
-    required = stream.read().splitlines()
 
 
 setup(
     name='cde',
-    version=cde.__version__,
+    version='0.7.4',
     url='https://github.com/jalanb/cde',
     license='MIT License',
     author="jalanb",
     author_email='github@al-got-rhythm.net',
-    description=cde.__doc__.splitlines()[0],
+    description='cde extends cd',
     platforms='Unix',
     classifiers=[
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Development Status :: 2 - Pre-Alpha',
         'Natural Language :: English',
         'Environment :: Console',
@@ -32,8 +23,15 @@ setup(
         'Operating System :: Unix',
         'Topic :: System :: Shells',
     ],
-    install_requires=required,
-    tests_require=['pytest'],
+    install_requires=[
+        'boltons',
+        'pysyte',
+    ],
+    tests_require=[
+        'pytest',
+        'pytest-cov',
+        'requests_mock',
+    ],
     extras_require={
         'docs': ['Sphinx'],
         'testing': ['pytest'],

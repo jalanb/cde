@@ -684,6 +684,13 @@ def _find_in_paths(item, subdirnames, frecent_paths):
     if not possibilities:
         return None
     if len(possibilities) > 1:
+        if i is not None:
+            try:
+                return possibilities[i]
+            except IndexError:
+                raise RangeError(i, possibilities)
+            except TypeError:
+                pass
         if not subdirnames:
             named = [p for p in possibilities if item == p.name]
             if len(named) == 1:

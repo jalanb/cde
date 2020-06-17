@@ -1,8 +1,8 @@
 Edge cases for cde
 =================
 
-    >>> import cde
-    >>> assert "remembers where you've been" in cde.__doc__
+    >>> from cde import cde
+    >>> assert "knows where you've been" in cde.__doc__
 
 More modules for testing
 ------------------------
@@ -84,9 +84,6 @@ Assuming we have remembered some paths
     >>> history = [
     ...     '/usr/bin',
     ...     '/usr/local/bin',
-    ...     '/usr/tin/local',
-    ...     '/usr/bin/vocal',
-    ...     '/usr/local/bib',
     ... ]
     >>> history_paths = [cde.paths.path(_) for _ in history]
 
@@ -100,13 +97,10 @@ Assuming we have remembered some paths
     >>> assert cde._find_in_paths('bin', ['1'], history_paths) == '/usr/local/bin'
     >>> assert cde._find_in_paths('bi', ['0'], history_paths) == '/usr/bin'
     >>> assert cde._find_in_paths('bi', ['1'], history_paths) == '/usr/local/bin'
-    >>> assert cde._find_in_paths('bi', ['2'], history_paths) == '/usr/local/bib'
-    >>> assert cde._find_in_paths('tin', [], history_paths) == '/usr/tin/local'
-    >>> assert cde._find_in_paths('ti', [], history_paths) == '/usr/tin/local'
+    >>> assert cde._find_in_paths('/b', ['0'], history_paths) == '/usr/bin'
+    >>> assert cde._find_in_paths('al/b', [], history_paths) == '/usr/local/bin'
+    >>> assert cde._find_in_paths('usr', ['1'], history_paths) == '/usr/local/bin'
     >>> assert not cde._find_in_paths('sin', [], history_paths)
-    >>> assert cde._find_in_paths('in/', ['0'], history_paths) == '/usr/tin/local'
-    >>> assert cde._find_in_paths('in/v', [], history_paths) == '/usr/bin/vocal'
-    >>> assert cde._find_in_paths('usr', ['3'], history_paths) == '/usr/bin/vocal'
 
 
     >>> path_to_item = '/i/was/here'
