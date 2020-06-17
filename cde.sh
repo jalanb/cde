@@ -13,8 +13,8 @@ export CDE_DIR=$(dirname "$CDE_SOURCE_PATH")
 export CDE_SCRIPT="$CDE_DIR"/bin/cde
 
 announce () {
-    local _host=$(hostname -f)
-    echo "$@" $CDE_NAME in $CDE_DIR on $_host
+    local host_=$(hostname -f)
+    echo "$@" $CDE_NAME in $CDE_DIR on $host_
 }
 
 # [[ $WELCOME_BYE ]] && announce Welcome to
@@ -40,9 +40,9 @@ export CDE_DIR=$(dirname $(readlink -f $CDE_SOURCE))
 # _x
 
 ., () {
-    local _destination=$HOME
-    local _top_level=$(git rev-parse --show-toplevel 2>/dev/null)
-    [[ $_top_level ]] && _destination=$_top_level
+    local destination_=$HOME
+    local top_level_=$(git rev-parse --show-toplevel 2>/dev/null)
+    [[ $top_level_ ]] && destination_=$top_level_
 }
 
 # xx
@@ -182,7 +182,7 @@ ind () {
 
 venv_or_which () {
     local __doc__="""find an executable in cde's virtualenv, or which, or which with our PATH"""
-    [[ "$1" ]] || return 1 
+    [[ "$1" ]] || return 1
     local _name="$1"; shift
     local _app="${CDE_DIR}/.venv/bin/$_name"
     [[ -e "$_app" ]] || _app=$(which $_name 2>/dev/null)
@@ -192,7 +192,7 @@ venv_or_which () {
 }
 
 venv_or_shebang () {
-    local _app=$1 _file=$2 
+    local _app=$1 _file=$2
     [[ "$_app" && "$_file" ]] || return 1
     _app="${_app/%2/3}"  # Change (e.g) python2 to python3
     if [[ -f $_file ]]; then
@@ -418,50 +418,45 @@ mkc () {
 
 cdpy () {
     local __doc__="""pushd to cde.py's destination"""
-    local _quiet= _Quiet=
-    if [[ $1 == -h || $1 == --help ]]; then
-        cde_python --help
-        return 0
-    fi
-    if [[ $1 =~ -q ]]; then
-        _quiet=1
-        shift
-    fi
+    local Quiet_= quietly_=
+    [[ $1 =~ -q ]] && quietly_=-q && shift
+    [[ $1 =~ -Q ]] && quietly_=-q && Quiet_=1 && shift
+    [[ $1 == -h || $1 == --help ]] && cde_python --help && return 0
     if [[ $1 =~ -Q ]]; then
-        _quiet=1
-        _Quiet=1
+        quietly_=1
+        Quiet_=1
         shift
     fi
     # set +x
     if [[ $PUDB || $PUDB_CD ]]; then
-        local _errors=0
-        cde_pudb "$@" || _errors=1
+        local errors_=0
+        cde_pudb "$@" || errors_=1
         export PUDB_CD=
-        return $_errors
+        return $errors_
     fi
-    local _cde_error= _cde_output=$(cde_python "$@")
-    [[ $? == 0 ]] || _cde_error=1
-    if [[ $? != 0 || $_cde_output =~ (^$|^Error|Try.again|^[uU]sage) ]]; then
-        [[ $_Quiet ]] || echo "$_cde_output" >&2
+    local cde_error_= cde_output_=$(cde_python "$@")
+    [[ $? == 0 ]] || cde_error_=1
+    if [[ $? != 0 || $cde_output_ =~ (^$|^Error|Try.again|^[uU]sage) ]]; then
+        [[ $Quiet_ ]] || echo "$cde_output_" >&2
         return 1
-    elif [[ $_cde_output =~ ^[uU]sage ]]; then
-        [[ $_Quiet ]] || cde_python --help
+    elif [[ $cde_output_ =~ ^[uU]sage ]]; then
+        [[ $Quiet_ ]] || cde_python --help
         return 0
     elif [[ "$@" =~  -[lp] ]]; then
-        [[ $_Quiet ]] || echo "$_cde_output"
+        [[ $Quiet_ ]] || echo "$cde_output_"
         return 0
     fi
-    local _cde_directory="$_cde_output"
-    same_path . "$_cde_directory" && return 0
-    local _linked_directory=$(readlink -f $_cde_directory)
-    local _cdpy_output="cd $_cde_output"
-    if [[ "$_cde_directory" != "$_linked_directory" ]]
+    local cde_directory_="$cde_output_"
+    same_path . "$cde_directory_" && return 0
+    local linked_directory_=$(readlink -f $cde_directory_)
+    local cdpy_output_="cd $cde_output_"
+    if [[ "$cde_directory_" != "$linked_directory_" ]]
     then
-        _cdpy_output="cd ($_cde_output ->) $_linked_directory"
+        cdpy_output_="cd ($cde_output_ ->) $linked_directory_"
     fi
-    same_path . "$_linked_directory" && return 0
-    [[ $_quiet ]] || echo $_cdpy_output
-    pushd "$_cde_directory" >/dev/null 2>&1
+    same_path . "$linked_directory_" && return 0
+    [[ $quietly_ ]] || echo $cdpy_output_
+    pushd "$cde_directory_" >/dev/null 2>&1
     return 0
 }
 
