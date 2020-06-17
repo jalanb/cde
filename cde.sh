@@ -62,15 +62,13 @@ cdd () {
 cde () {
     local __doc__="""find a dir and handle it"""
     [[ $1 =~ -h ]] && cde_help && return 0
-    local _say_quiet=
-    if [[ $1 =~ -q ]]; then
-        _say_quiet=quiet
-        shift
-    fi
-    pre_cdpy
+    [[ $1 =~ ^[.]$ ]] && cde $(readlink -f .) && return $?
+    local quietly_=
+    [[ $1 =~ -q ]] && quietly_=-q && shift
+    pre_cdpy $quietly_
     cdpy "$@" || return 1
     [[ -d . ]] || return 1
-    post_cdpy $_say_quiet
+    post_cdpy $quietly_
 }
 
 cdi () {
@@ -727,7 +725,7 @@ post_cdpy () {
     local _path=$(short_dir $PWD)
     [[ $_path == "~" ]] && _path=HOME
     [[ $_path =~ "wwts" ]] && _path="${_path/wwts/dub dub t s}"
-    [[ $1 =~ quiet ]] && shift || say_path $_path
+    [[ $1 =~ -q ]] && shift || say_path $_path
     _dot_cd && return 0
     _add_source_bin_to_PATH
     cde_show_git_was_here
