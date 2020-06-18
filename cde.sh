@@ -548,9 +548,9 @@ venv_directory () {
         if [[ -d "$_path_at_home" ]]; then
             _venv_dir="$_path_at_home"
         else
-            echo "Not a directory: '$_path_to_one'"
-            echo "Not a directory: '$_path_at_home'"
-            _venv_dir="nopath"
+            [[ $1 ]] && echo "Not a directory: '$_path_to_one'" >&2
+            echo "Not a directory: '$_path_at_home'" >&2
+            return 1
         fi
     fi
     [[ -d "$_venv_dir" ]] || return 1
