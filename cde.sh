@@ -106,15 +106,11 @@ cpp () {
 }
 
 cls () {
-    local __doc__="clean, clear, ls"
-    clean
+    local __doc__="clean, clear, ls" dir_=.
+    [[ "$@" ]] && dir_="$1"
     clear
-    if [[ -n "$@" ]]; then
-        l "$@"
-    else
-        l .
-        echo
-    fi
+    lo "$dir_"
+    [[ "$@" ]] || echo
 }
 
 ind () {
@@ -355,6 +351,17 @@ pre_cdpy () {
     [[ -n $CDE_header ]] && echo $CDE_header
 }
 
+echo_dir () {
+    if [[ -d "$1" ]]; then
+        echo $1
+    elif [[ -f "$1" ]]; then
+        rld "$1"
+    else
+        return 1
+    fi
+    return 0
+}
+
 echo_dirs () {
     local _echoed=
     for dir in "$@"; do
@@ -532,30 +539,20 @@ venv_dirs_here () {
     echo_dirs .venv/bin venv/bin bin
 }
 
-venv_directory () {
-    local _one=
-    [[ "$1" ]] && _one="$1"
-    [[ $_one ]] && shift 
-    local _path_to_one=$_one
-    [[ $_one ]] && _path_to_one=$(readlink -f $_one)
-    local _path_at_home="~/$_one"
-    [[ $_one ]] && _path_at_home=$(readlink -f ~/$_one)
-    [[ -f "$_path_to_one" ]] && _path_to_one=$(dirname "$_path_to_one")
-    local _venv_dir=
-    if [[ -d "$_path_to_one" ]]; then
-        _venv_dir="$_path_to_one"
-    else
-        if [[ -d "$_path_at_home" ]]; then
-            _venv_dir="$_path_at_home"
-        else
-            [[ $1 ]] && echo "Not a directory: '$_path_to_one'" >&2
-            echo "Not a directory: '$_path_at_home'" >&2
-            return 1
-        fi
+rld () {
+    dirname $( rlf "$1" ) 2>/dev/null
+}
+
+rlf () {
+    readlink -f "$1" 2>/dev/null
+}
+
+echo_venv_directory_from () {
+    if echo_dir "$1" || echo_dir "~/.virtualenvs/$1"; then
+        return 0
     fi
-    [[ -d "$_venv_dir" ]] || return 1
-    echo_dirs "$_venv_dir"
-    return 0
+    echo "Not a directory: '$1'" >&2
+    return 1
 }
 
 # xxxxxxxxxxxxxxx
@@ -631,8 +628,8 @@ project_venv_dirs () {
 }
 
 prune_python_here () {
-    local _here=$(readlink -f .)
-    local _home=$(readlink -f $HOME)
+    local _here=$(rlf .)
+    local _home=$(rlf $HOME)
     [[ ${_here:0:${#_home}} == $_home ]] || return 1
     [[ ${#_here} == ${#_home} ]] && return 1
     rf -qpr
@@ -669,20 +666,27 @@ any_python_scripts_here () {
 
 # xxxxxxxxxxxxxxxxxxxxxxxx
 
-cde_find_activate_script () {
-    local _here=$(pwd) _activate_dirs=
-    [[ "$@" ]] && _activate_dirs=$(venv_directory "$@" 2>/dev/null)
-    [[ $_activate_dirs ]] || _activate_dirs="$_here $(venv_dirs_here) $(project_venv_dirs)"
-    [[ $_activate_dirs ]] || echo "No dirs available to find activate scripts" >&2
-    [[ $_activate_dirs ]] || return 1
-    local _activate_dir=
-    local _activate_script=
-    for _activate_dir in $_activate_dirs; do
-        [[ -f $_activate_dir/bin/activate ]] && _activate_script=$_activate_dir/bin/activate
-        [[ -f $_activate_dir/activate ]] && _activate_script=$_activate_dir/activate
-        [[ -f "$_activate_script" ]] && break
+cde_test_activate_scripts () {
+    for python_root_ in "$@"; do
+        [[ -f ${python_root_}/bin/activate ]] && activate_=${python_root_}/bin/activate
+        [[ -f ${python_root_}/activate ]] && activate_=${python_root_}/activate
+        if [[ -f "$activate_" ]]; then
+            echo "$activate_"
+            return 0
+        fi
     done
-    [[ -f $_activate_script ]] && ACTIVATE="$(readlink -f $_activate_script)"
+    return 1
+}
+
+cde_find_activate_script () {
+    local python_roots_= _here=$(pwd)
+    [[ "$@" ]] && python_roots_=$(echo_venv_directory_from "$@" 2>/dev/null)
+    [[ $python_roots_ ]] || python_roots_="$_here $(venv_dirs_here) $(project_venv_dirs)"
+    [[ $python_roots_ ]] || echo "No dirs available to find activate scripts" >&2
+    [[ $python_roots_ ]] || return 1
+    local activate_=$(cde_test_activate_scripts $python_roots_) || return 1
+    # [[ -f $activate_ ]] || return 1
+    ACTIVATE="$(rlf $activate_)"
     export ACTIVATE
 }
 
