@@ -115,7 +115,7 @@ def first_integer(items):
     """Return the int value of the first item
 
     >>> assert first_integer(['3', '2']) == 3
-    >>> assert first_integer(['three', '2']) is 2
+    >>> assert first_integer(['three', '2']) == 2
     >>> assert first_integer(['three', 'two']) is None
     """
     try:
@@ -241,6 +241,7 @@ def find_at_home(item, subdirnames):
     Match on sub-directories first, then files
         Might return home directory itself
 
+    >>> import random
     >>> a_home_dir = random.choice(paths.home().dirs())
     >>> name = a_home_dir.name
     >>> assert find_at_home(name, []) == a_home_dir
