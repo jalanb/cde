@@ -22,16 +22,14 @@ def time_since(number_of_seconds):
     interval = int(time.time() - float(number_of_seconds))
     minutes, seconds = divmod(interval, 60)
     if not minutes:
-        return '%s seconds' % seconds
+        return "%s seconds" % seconds
     hours, minutes = divmod(minutes, 60)
     if not hours:
-        return '%s minutes, %s seconds' % (minutes, seconds)
+        return "%s minutes, %s seconds" % (minutes, seconds)
     days, hours = divmod(hours, 24)
     if not days:
-        return '%s hours, %s minutes' % (hours, minutes)
+        return "%s hours, %s minutes" % (hours, minutes)
     years, days = divmod(days, 365)
     if not years:
-        return '%s days, %s hours' % (days, hours)
-    return '%s years, %s days' % (years, days)
-
-
+        return "%s days, %s hours" % (days, hours)
+    return "%s years, %s days" % (years, days)

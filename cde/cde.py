@@ -20,15 +20,20 @@ from cde import __version__
 
 class ToDo(NotImplementedError):
     """Errors raised by this script"""
+
     pass
 
 
 class TryAgain(ValueError):
     """Warnings raised by this script"""
+
     def __init__(self, possibles):
         self.possibles = sorted(possibles)
         super().__init__(
-            'Too many possiblities\n\t%s' % as_menu_string(possibles))
+            "\n".join(
+                ("Too many possiblities", f"{as_menu_string(possibles)}")
+            )
+        )
 
     def trimmed(self):
         return trim(self.possibles)
@@ -50,14 +55,12 @@ def trim(possibles):
 class RangeError(ToDo):
     def __init__(self, i, matched):
         string = as_menu_string(matched)
-        ToDo.__init__(
-            self,
-            f'Your choice of {i} is out of range:\n\t{string}')
+        ToDo.__init__(self, f"Your choice of {i} is out of range:\n\t{string}")
 
 
 class FoundParent(ValueError):
     def __init__(self, parent):
-        super(FoundParent, self).__init__('Found a parent directory')
+        super(FoundParent, self).__init__("Found a parent directory")
         self.parent = parent
 
 
@@ -68,9 +71,10 @@ def matching_sub_directories(path_to_directory, prefix):
     Otherwise look for "prefix*"
         If that gives one exact match, prefer that
     """
-    prefix_glob = prefix.endswith('/') and prefix.rstrip('/') or f'{prefix}*'
+    prefix_glob = prefix.endswith("/") and prefix.rstrip("/") or f"{prefix}*"
     sub_directories = paths.list_sub_directories(
-        path_to_directory, prefix_glob)
+        path_to_directory, prefix_glob
+    )
 
     if len(sub_directories) < 2:
         return sub_directories
@@ -81,11 +85,11 @@ def matching_sub_directories(path_to_directory, prefix):
 
 
 def as_menu_items(strings):
-    return [f'{i:2} {p}' for i, p in enumerate(strings)]
+    return [""] + [f"{i:2} {p}" for i, p in enumerate(strings)]
 
 
 def as_menu_string(strings):
-    return '\n\t'.join(as_menu_items(strings))
+    return "\n\t".join(as_menu_items(strings))
 
 
 def take_first_integer(items):
@@ -136,7 +140,7 @@ def possibles_under_directory(path_to_directory, subdirnames):
     paths_to_match = matching_sub_directories(path_to_directory, prefix)
     if not paths_to_match:
         found = []
-        if paths.contains_file(path_to_directory, f'{prefix}*'):
+        if paths.contains_file(path_to_directory, f"{prefix}*"):
             found = [path_to_directory]
         else:
             path_to_prefix = path_to_directory / prefix
@@ -186,10 +190,10 @@ def find_python_root_dir(possibles):
     names = {_.basename() for _ in possibles}
     if len(names) == 1:
         for possible in possibles:
-            setup = possible / 'setup.py'
+            setup = possible / "setup.py"
             if setup.isfile():
                 return possible
-    eggless = {paths.path(p.replace('.egg-info', '')) for p in possibles}
+    eggless = {paths.path(p.replace(".egg-info", "")) for p in possibles}
     if len(eggless) == 1:
         return eggless.pop()
     return None
@@ -224,7 +228,7 @@ def find_in_environment_path(filename):
     """
     if not filename:
         return None
-    for path_to_directory in paths.environ_paths('PATH'):
+    for path_to_directory in paths.environ_paths("PATH"):
         if not path_to_directory:
             continue
         path_to_file = path_to_directory / filename
@@ -251,13 +255,13 @@ def find_at_home(item, subdirnames):
 
 
 def hidden(path_name):
-    return path_name[0] == '.'
+    return path_name[0] == "."
 
 
 def build_dir(directory):
-    return '.egg' in directory or directory in (
-        'htmlcov',
-        'build',
+    return ".egg" in directory or directory in (
+        "htmlcov",
+        "build",
     )
 
 
@@ -270,14 +274,15 @@ def find_path_to_item(item):
 
     Either the directory itself, or directory of the file itself, or nothing
     """
+
     def user_says_its_a_directory(p):
-        return p[-1] == '/'
+        return p[-1] == "/"
 
     def find_path_to_item_():
         if user_says_its_a_directory(item):
-            if item[0] == '/':
+            if item[0] == "/":
                 return paths.path(item)
-            return item.rstrip('/')
+            return item.rstrip("/")
         path_to_item = paths.path(item)
         if not path_to_item:
             return None
@@ -290,15 +295,18 @@ def find_path_to_item(item):
             parent = os.path.dirname(item)
             if os.path.isdir(parent):
                 return paths.makepath(parent)
-        pattern = f'{path_to_item.basename()}*'
+        pattern = f"{path_to_item.basename()}*"
         if paths.contains_directory(parent, pattern):
             patterned_sub_dirs = parent.dirs(pattern)
-            python_dir = (lambda x: not ignorable_dir(x)
+            python_dir = (
+                lambda x: not ignorable_dir(x)
                 if find_python_root_dir(patterned_sub_dirs)
                 else lambda x: True
             )
             python_dirs = [f for f in patterned_sub_dirs if python_dir(f)]
-            longest_first = sorted(python_dirs, key=lambda x: len(x), reverse=True)
+            longest_first = sorted(
+                python_dirs, key=lambda x: len(x), reverse=True
+            )
             longest_named_python_sub_dir = longest_first.pop()
             return longest_named_python_sub_dir
         elif paths.contains_glob(parent, pattern):
@@ -349,25 +357,27 @@ def find_directory(item, subdirnames):
     path_to_item = find_at_home(item, subdirnames)
     if path_to_item:
         return path_to_item
-    raise ToDo('could not use %r as a directory' % ' '.join([item] + subdirnames))
+    raise ToDo(
+        "could not use %r as a directory" % " ".join([item] + subdirnames)
+    )
 
 
 def version(_args):
     """Show version of the script"""
-    print(f'{sys.argv[0]} {__version__}')
+    print(f"{sys.argv[0]} {__version__}")
     raise SystemExit(os.EX_OK)
 
 
 def filename(_args):
     """Show filename of the script"""
-    print(f'{__file__}'.replace('.pyc','py'))
+    print(f"{__file__}".replace(".pyc", "py"))
     raise SystemExit(os.EX_OK)
 
 
 def unused(args):
-    used = ['-u', '--unused', args.dirname] + args.subdirnames
+    used = ["-u", "--unused", args.dirname] + args.subdirnames
     unused_args = [_ for _ in sys.argv[1:] if _ not in used]
-    print(' '.join(unused_args))
+    print(" ".join(unused_args))
     raise SystemExit(os.EX_OK)
 
 
@@ -380,17 +390,18 @@ def test(_args):
     """
     stem = paths.path(__file__).namebase
     from doctest import testfile, testmod, ELLIPSIS, NORMALIZE_WHITESPACE
+
     options = ELLIPSIS | NORMALIZE_WHITESPACE
-    failed, _ = testfile(f'{stem}.tests', optionflags=options)
+    failed, _ = testfile(f"{stem}.tests", optionflags=options)
     if failed:
         return
-    failed, _ = testfile(f'{stem}.test', optionflags=options)
+    failed, _ = testfile(f"{stem}.test", optionflags=options)
     if failed:
         return
     failed, _ = testmod(optionflags=options)
     if failed:
         return
-    print('All tests passed')
+    print("All tests passed")
 
 
 def makedir(args):
@@ -443,7 +454,7 @@ def delete(args):
 def add(args):
     """Add the dirname in args to the history"""
     try:
-        path_to_dirname = paths.path(args['dirname'])
+        path_to_dirname = paths.path(args["dirname"])
         add_path(path_to_dirname)
         error = 0
     except OSError as e:
@@ -467,10 +478,10 @@ def set_args_directory(args):
     if not args.dirname:
         args.subdirnames = []
         if args.add:
-            return '.'
+            return "."
         if not args.old:
             return paths.home()
-    if args.dirname == '-':
+    if args.dirname == "-":
         return previous_directory()
     return args.dirname
 
@@ -478,7 +489,7 @@ def set_args_directory(args):
 def _path_to_config():
     """Path where our config files are kept"""
     stem = paths.path(__file__).namebase
-    config = paths.home() / f'.config/{stem}'
+    config = paths.home() / f".config/{stem}"
     if not config.isdir():
         os.makedirs(str(config))
     return config
@@ -487,7 +498,7 @@ def _path_to_config():
 def _path_to_history():
     """Path to where history of paths is stored"""
     path_to_config = _path_to_config()
-    return path_to_config / 'history'
+    return path_to_config / "history"
 
 
 def read_history():
@@ -495,14 +506,14 @@ def read_history():
     path = _path_to_history()
     if not path.isfile():
         return []
-    with open(path, 'r') as stream:
+    with open(path, "r") as stream:
         reader = csv.reader(
-            stream, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            stream, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+        )
         return [_ for _ in reader if _]
 
 
 def sort_history(history):
-
     def as_key(item):
         rank, path, time = item
         return (rank, time, path)
@@ -566,9 +577,10 @@ def add_path(path_to_add):
 
 def write_paths(paths_to_remember):
     """Write the given paths to the history file"""
-    with open(str(_path_to_history()), 'w') as stream:
-        writer = csv.writer(stream, delimiter=',', quotechar='"',
-                            quoting=csv.QUOTE_MINIMAL)
+    with open(str(_path_to_history()), "w") as stream:
+        writer = csv.writer(
+            stream, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+        )
         writer.writerows(paths_to_remember)
 
 
@@ -636,10 +648,10 @@ def _find_in_paths(item, subdirnames, frecent_paths):
     """
     # pylint: disable=too-many-branches
     def double_globbed(p):
-        return fnmatch(p, f'*{item}*')
+        return fnmatch(p, f"*{item}*")
 
     def globbed(p):
-        return fnmatch(p, f'{item}*')
+        return fnmatch(p, f"{item}*")
 
     def glob_match(path):
         for p in path.split(os.path.sep):
@@ -671,7 +683,9 @@ def _find_in_paths(item, subdirnames, frecent_paths):
         if len(matched) == 1:
             if i:
                 raise RangeError(i, matched)
-            possibles.extend(possibles_under_directory(matched[0], subdirnames))
+            possibles.extend(
+                possibles_under_directory(matched[0], subdirnames)
+            )
         if i is not None:
             try:
                 match_ = matched[i]
@@ -679,7 +693,10 @@ def _find_in_paths(item, subdirnames, frecent_paths):
                 raise RangeError(i, matched)
             possibles.extend(possibles_under_directory(match_, subdirnames))
         elif len(matched) > 1:
-            [possibles.extend(possibles_under_directory(_, subdirnames)) for _ in set(matched)]
+            [
+                possibles.extend(possibles_under_directory(_, subdirnames))
+                for _ in set(matched)
+            ]
     possibilities = PossiblePaths(possibles)
     if not possibilities:
         return None
@@ -733,7 +750,6 @@ def delete_found_item(path_to_item):
 
 
 def cd(string):
-
     def chdir_found_item(path_to_item):
         os.chdir(path_to_item)
 
@@ -758,6 +774,6 @@ def show_paths():
     old_rank = None
     for order, (rank, p, atime) in enumerate(frecent_history()):
         if old_rank != rank:
-            print('      %s time%s:' % (rank, int(rank) > 1 and 's' or ''))
+            print("      %s time%s:" % (rank, int(rank) > 1 and "s" or ""))
             old_rank = rank
-        print('%3d: %s, %s ago' % (order + 1, p, timings.time_since(atime)))
+        print("%3d: %s, %s ago" % (order + 1, p, timings.time_since(atime)))

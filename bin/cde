@@ -14,26 +14,28 @@ def add_args(parser):
     """Get the arguments from the command line.
 
     Insist on at least one empty string"""
-    parser.boolean('0', 'first', help='Only show first path')
-    parser.boolean('1', 'second', help='Only show second path')
-    parser.boolean('2', 'third', help='Only show third path')
+    parser.boolean("0", "first", help="Only show first path")
+    parser.boolean("1", "second", help="Only show second path")
+    parser.boolean("2", "third", help="Only show third path")
     parser.optional(
-        'dirname', metavar='item', default='', help='(partial) directory name')
-    parser.positional('subdirnames', help='(partial) sub directory names')
+        "dirname", metavar="item", default="", help="(partial) directory name"
+    )
+    parser.positional("subdirnames", help="(partial) sub directory names")
     # From here argument names correspend to methods above
-    parser.boolean('a', 'add', help='add a path to history')
-    parser.boolean('c', 'complete', help='show all paths in history')
-    parser.boolean('d', 'delete', help='delete a path from history')
-    parser.boolean('e', 'existing', help='show all real paths in history')
-    parser.boolean('f', 'filename', help='show filename of the script')
-    parser.boolean('l', 'lost', help='show all unreal paths in history')
-    parser.boolean('m', 'makedir', help='Ensure the given directory exists')
-    parser.boolean('o', 'old', help='look for paths in history')
+    parser.boolean("a", "add", help="add a path to history")
+    parser.boolean("c", "complete", help="show all paths in history")
+    parser.boolean("d", "delete", help="delete a path from history")
+    parser.boolean("e", "existing", help="show all real paths in history")
+    parser.boolean("f", "filename", help="show filename of the script")
+    parser.boolean("l", "lost", help="show all unreal paths in history")
+    parser.boolean("m", "makedir", help="Ensure the given directory exists")
+    parser.boolean("o", "old", help="look for paths in history")
     parser.boolean(
-        'p', 'purge', help='remove all non-existent paths from history')
-    parser.boolean('t', 'test', help='test the script')
-    parser.boolean('u', 'unused', help='show unused args')
-    parser.boolean('v', 'version', help='show version of the script')
+        "p", "purge", help="remove all non-existent paths from history"
+    )
+    parser.boolean("t", "test", help="test the script")
+    parser.boolean("u", "unused", help="show unused args")
+    parser.boolean("v", "version", help="show version of the script")
     return parser
 
 
@@ -51,19 +53,19 @@ def run_args(args):
 def previous_directory():
     """Where we were (in bash) before this directory"""
     try:
-        return os.environ['OLDPWD']
+        return os.environ["OLDPWD"]
     except KeyError:
-        return '~'
+        return "~"
 
 
 def set_args_directory(args):
     if not args.dirname:
         args.subdirnames = []
         if args.add:
-            return '.'
+            return "."
         if not args.old:
             return paths.home()
-    if args.dirname == '-':
+    if args.dirname == "-":
         return previous_directory()
     return args.dirname
 
@@ -73,7 +75,8 @@ def post_parse(args):
     sub_numbers = [int(a) for a in args._result.subdirnames if a.isdigit()]
     if sub_numbers:
         args._result.subdirnames = [
-            a for a in args._result.subdirnames if not a.isdigit()]
+            a for a in args._result.subdirnames if not a.isdigit()
+        ]
         args._result.index = min(sub_numbers)
     if args.third:
         args._result.index = 2
@@ -95,7 +98,7 @@ def main(args):
     except (bdb.BdbQuit, SystemExit):
         return True
     except AttributeError as e:
-        go_away = 'attribute \'path\'" in <function _remove'
+        go_away = "attribute 'path'\" in <function _remove"
         if go_away not in str(e):
             raise
     except cde.TryAgain as e:
@@ -108,12 +111,11 @@ def main(args):
                 return True
             except IndexError:
                 pass
-        print('Try again:', e)
+        print("Try again:", e)
         return False
     except cde.ToDo as e:
-        print('Error:', e)
+        print("Error:", e)
         return False
 
 
-run(main, add_args, post_parse,
-    usage='%(prog)s [dirname [subdirname ...]')
+run(main, add_args, post_parse, usage="%(prog)s [dirname [subdirname ...]")
