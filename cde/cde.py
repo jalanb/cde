@@ -3,7 +3,6 @@
 
 import os
 import sys
-import random
 from fnmatch import fnmatch
 import csv
 
@@ -41,7 +40,6 @@ class TryAgain(ValueError):
 
 def trim(possibles):
     shortest_first = sorted(possibles)
-    stop = len(possibles)
     previous = shortest_first[0]
     result = [previous]
     for possible in shortest_first[1:]:
@@ -474,6 +472,14 @@ def run_args(args):
         method(args)
 
 
+def previous_directory():
+    """Where we were (in bash) before this directory"""
+    try:
+        return os.environ["OLDPWD"]
+    except KeyError:
+        return "~"
+
+
 def set_args_directory(args):
     if not args.dirname:
         args.subdirnames = []
@@ -713,11 +719,11 @@ def _find_in_paths(item, subdirnames, frecent_paths):
             if len(named) == 1:
                 return named.pop()
             if not named:
-                globbed = [p for p in possibilities if item in p.name]
-                if len(globbed) == 1:
-                    return globbed.pop()
-                if globbed:
-                    possibilities = globbed
+                globbed_ = [p for p in possibilities if item in p.name]
+                if len(globbed_) == 1:
+                    return globbed_.pop()
+                if globbed_:
+                    possibilities = globbed_
         raise TryAgain(possibilities)
     return possibilities.pop()
 
@@ -750,13 +756,7 @@ def delete_found_item(path_to_item):
 
 
 def cd(string):
-    def chdir_found_item(path_to_item):
-        os.chdir(path_to_item)
-
-    global show_found_item  # pylint: disable=global-variable-undefined
-    show_found_item = chdir_found_item
-    sys.argv = [__file__] + string.split()
-    main()
+    os.chdir(cde(string), [])
 
 
 def cde(item, subdirnames):

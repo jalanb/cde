@@ -2,7 +2,6 @@
 """cde knows where you are going because it knows where you've been"""
 import bdb
 import os
-import bdb
 
 from pysyte.cli.main import run
 from pysyte.types import paths
@@ -50,14 +49,6 @@ def run_args(args):
         method(args)
 
 
-def previous_directory():
-    """Where we were (in bash) before this directory"""
-    try:
-        return os.environ["OLDPWD"]
-    except KeyError:
-        return "~"
-
-
 def set_args_directory(args):
     if not args.dirname:
         args.subdirnames = []
@@ -66,7 +57,7 @@ def set_args_directory(args):
         if not args.old:
             return paths.home()
     if args.dirname == "-":
-        return previous_directory()
+        return cde.previous_directory()
     return args.dirname
 
 

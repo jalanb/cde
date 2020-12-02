@@ -16,7 +16,9 @@ def time_since(number_of_seconds):
 
     Retain only the two most significant numbers
 
-    >>> assert time_since(time.time() - (13*60*60 + 2*60 + 5)) == '13 hours, 2 minutes'
+    >>> expected = '13 hours, 2 minutes'
+    >>> actual = time_since(time.time() - (13*60*60 + 2*60 + 5))
+    >>> assert actual == expected
     """
     interval = int(abs(float(number_of_seconds)) - time.time())
     interval = int(time.time() - float(number_of_seconds))

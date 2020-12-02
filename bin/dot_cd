@@ -2,10 +2,8 @@
 """Add a .cd file to a directory"""
 
 import os
-import re
 import sys
 
-from pysyte.cli.arguments import ArgumentsNamespace
 from pysyte.cli.main import run
 
 
@@ -36,7 +34,7 @@ def arg_templates(args):
         if getattr(args, name, False):
             with open(template) as stream:
                 data = stream.read()
-                text = "\n## {name}\n\n{data}"
+                text = f"\n## {name}\n\n{data}"
                 texts.append(text)
     return "\n".join(texts)
 

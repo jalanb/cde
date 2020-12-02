@@ -2,6 +2,7 @@
 import os
 
 
+from pysyte.types import paths
 from pysyte.types.lists import UniquelyTrues
 
 
