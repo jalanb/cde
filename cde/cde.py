@@ -9,7 +9,7 @@ import csv
 
 from boltons.iterutils import unique
 from pysyte.types import paths
-from pysyte.types.numbers import as_int
+from pysyte.types.numbers import to_int
 from pysyte.iteration import first_that
 
 from . import timings
@@ -119,7 +119,7 @@ def first_integer(items):
     >>> assert first_integer(['three', 'two']) is None
     """
     try:
-        return first_that(lambda x: x is not None, [as_int(i) for i in items])
+        return first_that(lambda x: x is not None, [to_int(i) for i in items])
     except KeyError:
         return None
 
