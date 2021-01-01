@@ -1,2 +1,2 @@
 boltons
-pysyte>=0.7.41
+pysyte>=0.7.44
