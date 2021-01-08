@@ -114,16 +114,11 @@ cls () {
 }
 
 ind () {
-    local _old=$PWD _cd=cd
-    if [[ $1 == "ind" ]]; then
-        _cd="cde -q"
-        shift
-    fi
     local _destination=$(cde_python "$1")
     [[ -d "$_destination" ]] || return 1
+    shift
     (
-        $_cd "$_destination"
-        shift
+        cd "$_destination"
         "$@"
     )
 }
