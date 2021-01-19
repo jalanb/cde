@@ -119,9 +119,9 @@ ind () {
     fi
     local _destination=$(python_cde "$1")
     [[ -d "$_destination" ]] || return 1
+    shift
     (
-        $_cd "$_destination"
-        shift
+        cd "$_destination"
         "$@"
     )
 }
