@@ -1,19 +1,7 @@
 #! /bin/cat
 
-export RED="\033[0;31m"
-export GREEN="\033[0;32m"
-export BLUE="\033[0;34m"
-export LIGHT_RED="\033[1;31m"
-export LIGHT_GREEN="\033[1;32m"
-export LIGHT_BLUE="\033[1;34m"
-export CDE_SOURCE="$BASH_SOURCE"
-export CDE_NAME=$(basename "$CDE_SOURCE")
-export CDE_SOURCE_PATH=$(readlink -f "$CDE_SOURCE")
-export CDE_DIR=$(dirname "$CDE_SOURCE_PATH")
-export CDE_SCRIPT="$CDE_DIR"/bin/cde
-
 # This script is intended to be sourced, not run
-if [[ $0 == "$CDE_SOURCE" ]]
+if [[ $0 == "$CDE_BASH" ]]
 then
     echo "This file should be run as"
     echo "  source $0"
@@ -21,9 +9,19 @@ then
     echo "  sh $0"
 fi
 
-export CDE_SOURCE=$BASH_SOURCE
-export CDE_NAME=$(basename $CDE_SOURCE)
-export CDE_DIR=$(dirname $(readlink -f $CDE_SOURCE))
+export CDE_BASH="$BASH_SOURCE"  # .../cde.sh
+export CDE_NAME=$(basename "$CDE_BASH")  # cde.sh
+export CDE_BASH_PATH=$(readlink -f "$CDE_BASH")  # /.../cde.sh
+export CDE_DIR=$(dirname "$CDE_BASH_PATH")  # /.../
+export CDE_PYTHON="$CDE_DIR"/bin/cde  # /.../bin/cde
+
+
+export RED="\033[0;31m"
+export GREEN="\033[0;32m"
+export BLUE="\033[0;34m"
+export LIGHT_RED="\033[1;31m"
+export LIGHT_GREEN="\033[1;32m"
+export LIGHT_BLUE="\033[1;34m"
 
 # x
 # xx
@@ -99,9 +97,9 @@ cdv () {
 cpp () {
     local __doc__="""Show where any args would cde to"""
     if [[ -n "$1" ]]; then
-        cde_python "$@"
+        python_cde "$@"
     else
-        cde_python .
+        python_cde .
     fi | grep -v -- '->'
 }
 
@@ -114,7 +112,12 @@ cls () {
 }
 
 ind () {
-    local _destination=$(cde_python "$1")
+    local _old=$PWD _cd=cd
+    if [[ $1 == "ind" ]]; then
+        _cd="cde -q"
+        shift
+    fi
+    local _destination=$(python_cde "$1")
     [[ -d "$_destination" ]] || return 1
     shift
     (
@@ -158,7 +161,7 @@ cdpy () {
     local Quiet_= quietly_=
     [[ $1 =~ -q ]] && quietly_=-q && shift
     [[ $1 =~ -Q ]] && quietly_=-q && Quiet_=1 && shift
-    [[ $1 == -h || $1 == --help ]] && cde_python --help && return 0
+    [[ $1 == -h || $1 == --help ]] && python_cde --help && return 0
     if [[ $1 =~ -Q ]]; then
         quietly_=1
         Quiet_=1
@@ -167,17 +170,17 @@ cdpy () {
     # set +x
     if [[ $PUDB || $PUDB_CD ]]; then
         local errors_=0
-        cde_pudb "$@" || errors_=1
+        pudb_cde "$@" || errors_=1
         export PUDB_CD=
         return $errors_
     fi
-    local cde_error_= cde_output_=$(cde_python "$@")
+    local cde_error_= cde_output_=$(python_cde "$@")
     [[ $? == 0 ]] || cde_error_=1
     if [[ $? != 0 || $cde_output_ =~ (^$|^Error|Try.again|^[uU]sage) ]]; then
         [[ $Quiet_ ]] || echo "$cde_output_" >&2
         return 1
     elif [[ $cde_output_ =~ ^[uU]sage ]]; then
-        [[ $Quiet_ ]] || cde_python --help
+        [[ $Quiet_ ]] || python_cde --help
         return 0
     elif [[ "$@" =~  -[lp] ]]; then
         [[ $Quiet_ ]] || echo "$cde_output_"
@@ -286,14 +289,6 @@ _dot_cd () {
 
 _here_ls () {
     ls . 2>/dev/null
-}
-
-cde_pudb () {
-    local __doc__="""Debug the cde program"""
-    # set -x
-    local _interpreter=$(venv_or_which pudb3 2>/dev/null)
-    interpret_cde "$_interpreter" "$@"
-    # set +x
 }
 
 cde_help () {
@@ -447,10 +442,30 @@ _here_venv () {
     # set +x
 }
 
-cde_python () {
+run_cde () {
+    local __doc__="""Run the cde script, setting PYTHONPATH"""
+    local runner_="$1"; shift
+    # set -x
+    type $runner_ >/dev/null 2>&1 || return 1
+    local cde_python_==$CDE_DIR path_python_=
+    [[ $PYTHONPATH ]] && path_python_=":$PYTHONPATH"
+    (
+        export PYTHONPATH="$cde_python_$path_python_"
+        $runner_ "$CDE_PYTHON" "$@"
+    )
+    # set +x
+}
+
+pudb_cde () {
+    local __doc__="""Debug the cde program"""
+    # set -x
+    run_cde pudb3 "$@"
+    # set +x
+}
+
+python_cde () {
     local __doc__="""Run the cde program"""
-    local _interpreter=$(venv_or_shebang python3 "$CDE_SCRIPT")
-    interpret_cde "$_interpreter" "$@"
+    run_cde python3 "$@"
 }
 
 here_clean () {
@@ -508,24 +523,16 @@ git_template () {
 
 # xxxxxxxxxxxxx
 
-interpret_cde () {
-    local __doc__="""Interpret the cde script, setting PYTHONPATH"""
-    local _interpreter="$1"; shift
-    # set -x
-    [[ $_interpreter ]] || return 1
-    PYTHONPATH=${CDE_DIR}:$PYTHONPATH $_interpreter "$CDE_SCRIPT" "$@"
-    # set +x
-}
-
 venv_or_which () {
     local __doc__="""find an executable in cde's virtualenv, or which, or which with our PATH"""
     [[ "$1" ]] || return 1
     local _name="$1"; shift
     local _app="${CDE_DIR}/.venv/bin/$_name"
     [[ -e "$_app" ]] || _app=$(which $_name 2>/dev/null)
-    [[ -e "$_app" ]] || _app=$(PATH=~/bin:/usr/local/bin:/bin which $_name 2>/dev/null)
-    [[ -e "$_app" ]] && echo $_app
-    [[ -e "$_app" ]]
+    [[ -e "$_app" ]] || _app=$(PATH=~/bin:/usr/local/bin:/bin:/usr/bin which $_name 2>/dev/null)
+    [[ -e "$_app" ]] || return 1
+    echo $_app
+    return 0
 }
 
 # xxxxxxxxxxxxxx
@@ -552,30 +559,6 @@ echo_venv_directory_from () {
 
 # xxxxxxxxxxxxxxx
 
-venv_or_shebang () {
-    local _app=$1 _file=$2
-    [[ "$_app" && "$_file" ]] || return 1
-    _app="${_app/%2/3}"  # Change (e.g) python2 to python3
-    if [[ -f $_file ]]; then
-        local _language=$(echo $_app | sed -e "s:[0-9]*$::" )
-        local _shebang=$(headline "$_file")
-        if [[ $_shebang =~ $_language ]]; then
-            if [[ $_shebang =~ usr.bin.env ]]; then
-                _interpreter=$_app
-            else
-                _interpreter=$_shebang
-            fi
-        fi
-    fi
-    local _interpreter=$(venv_or_which $_app)
-    if [[ ! -e $_interpreter ]]; then
-        echo "Could not find $_app" >&2
-        return 1
-    fi
-    echo $_interpreter
-    return 0
-}
-
 python_template () {
     local _python_template="$1/python"
     local echo_template=
@@ -587,15 +570,11 @@ python_template () {
 }
 
 unhash_handlers () {
-    local _dehash=
+    local dehashed_=
     for arg in "$@"; do
-        if hash -l | grep " $arg[$]"; then
-            hash -d $arg
-            _dehash=1
-        fi
+        hash -d $arg 2>/dev/null && dehashed_=1
     done
-    [[ $_dehash ]] || return 0
-    return 0
+    [[ $dehashed_ ]] && return 0 || return 1
 }
 
 # xxxxxxxxxxxxxxxx
@@ -650,7 +629,7 @@ unhash_file_handlers () {
 # xxxxxxxxxxxxxxxxxxxxxx
 
 unhash_python_handlers () {
-    unhash_handlers '[ib]*python' 'pip[23]*' 'ipython[23]*' pdb ipdb pudb
+    unhash_handlers '[ib]*python' 'pip[23]*' 'ipython[23]*' pdb ipdb 'pudb3*'
 }
 
 # xxxxxxxxxxxxxxxxxxxxxxx

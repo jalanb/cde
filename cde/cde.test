@@ -23,13 +23,13 @@ Or a file
 
 Give it the name of a (possible) sub directory
     and it will combine them to one path
-    >>> assert cde.find_directory('/usr/local', ['sbin']) == '/usr/local/sbin'
+    >>> assert cde.find_directory('/usr/local', ['bin']) == '/usr/local/bin'
 
 The sub-dir can be a prefix
-    >>> assert cde.find_directory('/usr/local', ['sbi']) == '/usr/local/sbin'
+    >>> assert cde.find_directory('/usr/local', ['bi']) == '/usr/local/bin'
 
 It can handle many prefixes (albeit more slowly)
-    >>> assert cde.find_directory('/', ['us', 'loc', 'sbi']) == '/usr/local/sbin'
+    >>> assert cde.find_directory('/', ['us', 'loc', 'bi']) == '/usr/local/bin'
 
 In case of ambiguous sub-directories a number can choose one
     >>> assert cde.find_directory('/usr', ['li', '0']).startswith('/usr/li')
