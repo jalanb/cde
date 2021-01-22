@@ -74,13 +74,13 @@ cdl () {
     shift
     local _ls_options="$@"
     [[ $_ls_options ]] || _ls_options=" -1 "
-    green_line $PWD
+    show_green_line $PWD
     ls --color $_ls_options
 }
 
 cdr () {
     cde "$@"
-    green_line $PWD
+    show_green_line $PWD
 }
 
 cdv () {
@@ -132,17 +132,9 @@ mkc () {
     cde "$_destination"
 }
 
-red () {
-    coloured "$RED""$@"
-}
-
 alias ...="cdup 2"
 
 # xxxx
-
-blue () {
-    coloured "$BLUE""$@"
-}
 
 cdll () {
     local __doc__="""cde $1; ls -l"""
@@ -234,14 +226,6 @@ cdupp () {
     cdup 2 "$@"
 }
 
-green () {
-    coloured "$GREEN""$@"
-}
-
-lblue () {
-    coloured "$LIGHT_BLUE""$@"
-}
-
 alias .....="cdup 4"
 
 # xxxxxx
@@ -298,16 +282,8 @@ cde_help () {
     return 0
 }
 
-coloured () {
-    printf "$@""${NO_COLOUR}"
-}
-
 headline () {
     head -n 1 "$1"
-}
-
-show_cmd () {
-    lblue "$@"
 }
 
 say_path () {
@@ -381,16 +357,8 @@ same_path () {
     [[ $(readlink -f "$1") == $(readlink -f "$2") ]]
 }
 
-show_pass () {
-    green "$@"
-}
-
-show_fail () {
-    red "$@"
-}
-
 show_bash () {
-    show_cmd "$@"
+    show_cmnd "$@"
     local cde_="$CDE_DIR"
     "$@" > $cde_/std.out 2> $cde_/std.err
     show_pass $(cat $cde_/std.out)
@@ -664,7 +632,7 @@ cde_find_activate_script () {
     export ACTIVATE
 }
 
-# 
+#
 # After here functions are intended for use in .cd scripts
 #
 cde_activate_here () {
@@ -694,11 +662,13 @@ cde_deactivate () {
 
 cde_show_git_was_here () {
     [[ -d ./.git ]] || return 0
-    lblue "$(git config --local user.email), $(git remote get-url origin)\n"
-    [[ -f ".bumpversion.cfg" ]] && grep ^current_version .bumpversion.cfg | grep --colour '\d[0-9a-z.]\+$'
+    show_blue_line "$(git remote get-url origin) <$(git config user.name) $(git config user.email)>\n"
     git status .
-    git rev-parse --abbrev-ref HEAD
-    git lg -n 8
+    # git rev-parse --abbrev-ref HEAD
+    echo 
+    [[ -f ".bumpversion.cfg" ]] && grep ^current_version .bumpversion.cfg | grep --colour '\d[0-9a-z.]\+$'
+    echo 
+    git log -n 8 --color=always --decorate --oneline --graph --abbrev-commit --date=relative --pretty=format:'%Cgreen%cr%Creset, %C(blue)%aN%Creset,%C(auto)%d%Creset %C(auto)%h "%s"'
     return 0
 }
 
