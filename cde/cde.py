@@ -14,7 +14,7 @@ from pysyte.types import paths
 from pysyte.types.numbers import as_int
 from pysyte.iteration import first_that
 
-from . import timings
+from cde import timings
 from cde.types import PossiblePaths
 from cde.types import UniquePaths
 from cde import __version__
@@ -222,17 +222,17 @@ def find_under_here(*args):
         return []
 
 
-def find_in_environment_path(filename):
-    """Return the first directory in $PATH with a file called filename
+def find_in_environment_path(filename_):
+    """Return the first directory in $PATH with a file called filename_
 
     This is equivalent to "which" command for executable files
     """
-    if not filename:
+    if not filename_:
         return None
     for path_to_directory in paths.environ_paths("PATH"):
         if not path_to_directory:
             continue
-        path_to_file = path_to_directory / filename
+        path_to_file = path_to_directory / filename_
         if path_to_file.isfile():
             return path_to_directory
     return None
@@ -474,6 +474,7 @@ def run_args(args):
     methods = {a for a in args_in_globals if callable(a)}
     for method in methods:
         method(args)
+    return True
 
 
 def previous_directory():
@@ -691,11 +692,14 @@ def frecent_matchers(item: str) -> List[Callable[[str], bool]]:
     ]
     return result
 
+
 def frecently_matched(item, frecent_paths):
     for matcher in frecent_matchers(item):
         paths = [_ for _ in frecent_paths if matcher(_)]
         if paths:
             return UniquePaths(paths)
+    return UniquePaths([])
+
 
 def _find_in_paths(item, subdirnames, frecent_paths):
     """Get the first of those paths which meets one of the criteria:
@@ -717,9 +721,7 @@ def _find_in_paths(item, subdirnames, frecent_paths):
     elif len(matched) == 1:
         if i:
             raise RangeError(i, matched)
-        possibles.extend(
-            possibles_under_directory(matched[0], subdirnames)
-        )
+        possibles.extend(possibles_under_directory(matched[0], subdirnames))
     if i is not None:
         try:
             match_ = matched[i]
