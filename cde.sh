@@ -147,46 +147,35 @@ cdpu () {
     PUDB_CD=1 cdpy "$@"
 }
 
+q_echo () {
+    [[ $1 =~ -[qQ] ]] && return 0 || shift
+    echo "$@"
+}
+
 cdpy () {
     local __doc__="""pushd to cde.py's destination"""
-    local Quiet_= quietly_=
-    [[ $1 =~ -q ]] && quietly_=-q && shift
-    [[ $1 =~ -Q ]] && quietly_=-q && Quiet_=1 && shift
     [[ $1 == -h || $1 == --help ]] && python_cde --help && return 0
-    if [[ $1 =~ -Q ]]; then
-        quietly_=1
-        Quiet_=1
-        shift
-    fi
-    # set +x
-    if [[ $PUDB || $PUDB_CD ]]; then
-        local errors_=0
-        pudb_cde "$@" || errors_=1
-        export PUDB_CD=
-        return $errors_
-    fi
+    local no_stderr_= no_stdout_=
+    [[ $1 =~ -q ]] && no_stdout_=-q && shift
+    [[ $1 =~ -Q ]] && no_stdout_=-Q && no_stderr_=-Q && shift
     local cde_error_= cde_output_=$(python_cde "$@")
-    [[ $? == 0 ]] || cde_error_=1
-    if [[ $? != 0 || $cde_output_ =~ (^$|^Error|Try.again|^[uU]sage) ]]; then
-        [[ $Quiet_ ]] || echo "$cde_output_" >&2
-        return 1
-    elif [[ $cde_output_ =~ ^[uU]sage ]]; then
-        [[ $Quiet_ ]] || python_cde --help
-        return 0
-    elif [[ "$@" =~  -[lp] ]]; then
-        [[ $Quiet_ ]] || echo "$cde_output_"
+    local cde_return_=$?
+    [[ $cde_return_ == 0 ]] || cde_error_="cde error: $cde_return_"
+    if [[ $cde_error_ ]]; then
+        if [[ $cde_output_ =~ (^$|^Error|Try.again|^[uU]sage) ]]; then
+            q_echo $no_stderr_ "$cde_output_"
+            return 1
+        fi
+        [[ $cde_output_ =~ ^[uU]sage ]] && q_echo $no_stderr_ $(python_cde --help)
+        [[ "$@" =~  -[lp] ]] && q_echo $no_stderr_ "$cde_output_"
         return 0
     fi
-    local cde_directory_="$cde_output_"
-    same_path . "$cde_directory_" && return 0
-    local linked_directory_=$(readlink -f $cde_directory_)
+    same_path . "$cde_output_" && return 0
+    local cde_directory_="$cde_output_" readlink_directory_=$(readlink -f $cde_output_)
+    same_path . "$readlink_directory_" && return 0
     local cdpy_output_="cd $cde_output_"
-    if [[ "$cde_directory_" != "$linked_directory_" ]]
-    then
-        cdpy_output_="cd ($cde_output_ ->) $linked_directory_"
-    fi
-    same_path . "$linked_directory_" && return 0
-    [[ $quietly_ ]] || echo $cdpy_output_
+    [[ "$cde_directory_" != "$readlink_directory_" ]] && cdpy_output_="cd ($cde_output_ ->) $readlink_directory_"
+    [[ $no_stdout_ ]] || echo $cdpy_output_
     pushd "$cde_directory_" >/dev/null 2>&1
     return 0
 }
@@ -272,6 +261,14 @@ _dot_cd () {
 
 _here_ls () {
     ls . 2>/dev/null
+}
+
+pudb_cde () {
+    local __doc__="""Debug the cde program"""
+    # set -x
+    local interpreter_=$(venv_or_which pudb3 2>/dev/null)
+    interpret_cde "$interpreter_" "$@"
+    # set +x
 }
 
 cde_help () {
@@ -532,6 +529,32 @@ echo_venv_directory_from () {
 }
 
 # xxxxxxxxxxxxxxx
+
+get_interpreter () {
+    local language_=python
+    local app_=python3 file_=$1
+    [[ "$app_" && "$file_" ]] || return 1
+    shift
+    if [[ ! -f $file_ ]]; then
+        $app_
+        return 0
+    fi
+    local shebang_=$(headline "$file_")
+    if [[ $shebang_ =~ $language_ ]]; then
+        if [[ $shebang_ =~ usr.bin.env ]]; then
+            interpreter_=$app_
+        else
+            interpreter_=$shebang_
+        fi
+    fi
+    local interpreter_=$(venv_or_which $app_)
+    if [[ ! -e $interpreter_ ]]; then
+        echo "Could not find $app_" >&2
+        return 1
+    fi
+    echo $interpreter_
+    return 0
+}
 
 python_template () {
     local _python_template="$1/python"
