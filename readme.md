@@ -1,16 +1,16 @@
 cde
 ===
 
-`cde` is a shell function that needs a `cde.py` to find out how to get to a directory, but knows what to do once it gets there.
+`cde` extends `cd` to reach more paths easily, and know what to do once it gets there.
 
-`cde.py` knows where you are going because it knows where you've been, and what directory structures look like.
+`cde` knows where you are going because it knows where you've been, and what directory structures look like.
 
 Naming
 ------
 
-In an older version of this project the shell function was called `kd`.
+The name "`cde`" extends "`cd`" on a qwert keyboard.
 
-`cde` could be an acronym for "cd evolved/extra/egg salad/extended", but really it's just easier than `kd` on a `qwerty` keyboard.
+([In a simpler world](https://github.com/jalanb/cde/commit/eb5f6a8) the name was `kd`.)
 
 Install
 =======
@@ -25,7 +25,7 @@ $ git clone https://github.com/jalanb/cde/cde.git
 $ . cde/cde.sh
 ```
 
-And add similar to your `bashrc` if needed.
+And something similar to your `bashrc` if it works for you. And don't forget to hit the [Subscribe](https://github.com/jalanb
 
 Usage
 =====
