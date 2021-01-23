@@ -51,13 +51,13 @@ $ cd /; cde /u loc bi; pwd
 /usr/local/bin
 ```
 
-`cde` can be [abbreviated](https://github.com/jalanb/cde/blob/v0.7.27/cde.sh#L19) to just `c`, e.g.
+`cde` can be [abbreviated](https://github.com/jalanb/cde/blob/v0.7.29/cde.sh#L19) to just `c`, e.g.
 ```shell
 $ c ..; pwd
 /usr/local
 ```
 
-And sometimes can be [abbreviated](https://github.com/jalanb/cde/blob/v0.7.27/cde.sh#L90) away entirely, e.g.
+And sometimes can be [abbreviated](https://github.com/jalanb/cde/blob/v0.7.29/cde.sh#L90) away entirely, e.g.
 ```shell
 $ c /u l b; pwd
 /usr/local/bin
@@ -122,7 +122,7 @@ History
 $ c b
 ```
 
-If nothing matches then `c` [tries directories in $PATH which have matching executables](https://github.com/jalanb/cde/blob/v0.7.27/cde.py#L261). For example, this will give `/bin`:
+If nothing matches then `c` [tries directories in $PATH which have matching executables](https://github.com/jalanb/cde/blob/v0.7.29/cde.py#L261). For example, this will give `/bin`:
 
 ```shell
 $ c python; pwd
@@ -132,7 +132,7 @@ $ c python; pwd
 Biases
 ------
 
-When looking for partial names `c` will [look for each of these in turn](https://github.com/jalanb/cde/blob/v0.7.27/cde.py#L649), stopping as soon as it gets some match
+When looking for partial names `c` will [look for each of these in turn](https://github.com/jalanb/cde/blob/v0.7.29/cde.py#L649), stopping as soon as it gets some match
 
 1. directories with the same name
 2. directories that start with the given part
