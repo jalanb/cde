@@ -457,7 +457,9 @@ def add(args):
     """Add the dirname in args to the history"""
     try:
         path_to_dirname = paths.path(args["dirname"])
-        add_path(path_to_dirname)
+        path = path_to_dirname.realpath()
+        s = path.slashpath()
+        add_path(s)
         error = 0
     except OSError as e:
         error = str(e)
