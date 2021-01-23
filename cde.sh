@@ -13,7 +13,6 @@ export CDE_BASH="$BASH_SOURCE"  # .../cde.sh
 export CDE_NAME=$(basename "$CDE_BASH")  # cde.sh
 export CDE_BASH_PATH=$(readlink -f "$CDE_BASH")  # /.../cde.sh
 export CDE_DIR=$(dirname "$CDE_BASH_PATH")  # /.../
-export CDE_PYTHON="$CDE_DIR"/bin/cde  # /.../bin/cde
 
 
 export RED="\033[0;31m"
@@ -74,13 +73,13 @@ cdl () {
     shift
     local _ls_options="$@"
     [[ $_ls_options ]] || _ls_options=" -1 "
-    green_line $PWD
+    show_green_line $PWD
     ls --color $_ls_options
 }
 
 cdr () {
     cde "$@"
-    green_line $PWD
+    show_green_line $PWD
 }
 
 cdv () {
@@ -132,17 +131,9 @@ mkc () {
     cde "$_destination"
 }
 
-red () {
-    coloured "$RED""$@"
-}
-
 alias ...="cdup 2"
 
 # xxxx
-
-blue () {
-    coloured "$BLUE""$@"
-}
 
 cdll () {
     local __doc__="""cde $1; ls -l"""
@@ -234,14 +225,6 @@ cdupp () {
     cdup 2 "$@"
 }
 
-green () {
-    coloured "$GREEN""$@"
-}
-
-lblue () {
-    coloured "$LIGHT_BLUE""$@"
-}
-
 alias .....="cdup 4"
 
 # xxxxxx
@@ -298,16 +281,8 @@ cde_help () {
     return 0
 }
 
-coloured () {
-    printf "$@""${NO_COLOUR}"
-}
-
 headline () {
     head -n 1 "$1"
-}
-
-show_cmd () {
-    lblue "$@"
 }
 
 say_path () {
@@ -353,14 +328,12 @@ echo_dir () {
 }
 
 echo_dirs () {
-    local _echoed=
+    local dirs_=
     for dir in "$@"; do
-        [[ -d $dir ]] || continue
-        echo -n "$dir "
-        _echoed=1
+        [[ -d $dir ]] && dirs_="$dirs_ $dir"
     done
-    [[ $_echoed ]] || return 1
-    echo
+    [[ $dirs_ ]] || return 1
+    echo $dirs_
     return 0
 }
 
@@ -381,16 +354,8 @@ same_path () {
     [[ $(readlink -f "$1") == $(readlink -f "$2") ]]
 }
 
-show_pass () {
-    green "$@"
-}
-
-show_fail () {
-    red "$@"
-}
-
 show_bash () {
-    show_cmd "$@"
+    show_cmnd "$@"
     local cde_="$CDE_DIR"
     "$@" > $cde_/std.out 2> $cde_/std.err
     show_pass $(cat $cde_/std.out)
@@ -445,14 +410,21 @@ _here_venv () {
 run_cde () {
     local __doc__="""Run the cde script, setting PYTHONPATH"""
     local runner_="$1"; shift
+    [[ $runner_ ]] || return 1
+    local python_=$(venv_or_which "$runner_")
+    type $python_ >/dev/null 2>&1 || return 1
+    local cde_script_="$CDE_DIR"/bin/cde
+    local python_path_=$CDE_DIR command_="\"$python_\" \"$CDE_PYTHON\" $@"
     # set -x
-    type $runner_ >/dev/null 2>&1 || return 1
-    local cde_python_==$CDE_DIR path_python_=
-    [[ $PYTHONPATH ]] && path_python_=":$PYTHONPATH"
-    (
-        export PYTHONPATH="$cde_python_$path_python_"
-        $runner_ "$CDE_PYTHON" "$@"
-    )
+    [[ $PYTHONPATH ]] && python_path_="$CDE_DIR:$PYTHONPATH"
+    if [[ $python_ =~ venv[/] ]]; then
+        (
+        source "$(dirname $python_)/activate"
+        PYTHONPATH="$python_path_" "$python_" "$cde_script_" "$@"
+        )
+    else
+        PYTHONPATH="$python_path_" "$python_" "$cde_script_" "$@"
+    fi
     # set +x
 }
 
@@ -527,11 +499,11 @@ venv_or_which () {
     local __doc__="""find an executable in cde's virtualenv, or which, or which with our PATH"""
     [[ "$1" ]] || return 1
     local _name="$1"; shift
-    local _app="${CDE_DIR}/.venv/bin/$_name"
-    [[ -e "$_app" ]] || _app=$(which $_name 2>/dev/null)
-    [[ -e "$_app" ]] || _app=$(PATH=~/bin:/usr/local/bin:/bin:/usr/bin which $_name 2>/dev/null)
-    [[ -e "$_app" ]] || return 1
-    echo $_app
+    local app_="${CDE_DIR}/.venv/bin/$_name"
+    [[ -e "$app_" ]] || app_=$(which $_name 2>/dev/null)
+    [[ -e "$app_" ]] || app_=$(PATH=~/bin:/usr/local/bin:/bin:/usr/bin which $_name 2>/dev/null)
+    [[ -e "$app_" ]] || return 1
+    echo $app_
     return 0
 }
 
@@ -546,7 +518,9 @@ rld () {
 }
 
 rlf () {
-    readlink -f "$1" 2>/dev/null
+    local path_=.
+    [[ -e "$1" ]] && path_="$1"
+    readlink -f "$path_" 2>/dev/null
 }
 
 echo_venv_directory_from () {
@@ -664,7 +638,7 @@ cde_find_activate_script () {
     export ACTIVATE
 }
 
-# 
+#
 # After here functions are intended for use in .cd scripts
 #
 cde_activate_here () {
@@ -694,11 +668,13 @@ cde_deactivate () {
 
 cde_show_git_was_here () {
     [[ -d ./.git ]] || return 0
-    lblue "$(git config --local user.email), $(git remote get-url origin)\n"
-    [[ -f ".bumpversion.cfg" ]] && grep ^current_version .bumpversion.cfg | grep --colour '\d[0-9a-z.]\+$'
+    show_blue_line "$(git remote get-url origin) <$(git config user.name) $(git config user.email)>\n"
     git status .
-    git rev-parse --abbrev-ref HEAD
-    git lg -n 8
+    # git rev-parse --abbrev-ref HEAD
+    echo 
+    [[ -f ".bumpversion.cfg" ]] && grep ^current_version .bumpversion.cfg | grep --colour '\d[0-9a-z.]\+$'
+    echo 
+    git log -n 8 --color=always --decorate --oneline --graph --abbrev-commit --date=relative --pretty=format:'%Cgreen%cr%Creset, %C(blue)%aN%Creset,%C(auto)%d%Creset %C(auto)%h "%s"'
     return 0
 }
 

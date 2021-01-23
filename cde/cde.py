@@ -5,6 +5,8 @@ import os
 import sys
 from fnmatch import fnmatch
 import csv
+from typing import Callable
+from typing import List
 
 
 from boltons.iterutils import unique
@@ -12,8 +14,9 @@ from pysyte.types import paths
 from pysyte.types.numbers import as_int
 from pysyte.iteration import first_that
 
-from . import timings
+from cde import timings
 from cde.types import PossiblePaths
+from cde.types import UniquePaths
 from cde import __version__
 
 
@@ -219,17 +222,17 @@ def find_under_here(*args):
         return []
 
 
-def find_in_environment_path(filename):
-    """Return the first directory in $PATH with a file called filename
+def find_in_environment_path(filename_):
+    """Return the first directory in $PATH with a file called filename_
 
     This is equivalent to "which" command for executable files
     """
-    if not filename:
+    if not filename_:
         return None
     for path_to_directory in paths.environ_paths("PATH"):
         if not path_to_directory:
             continue
-        path_to_file = path_to_directory / filename
+        path_to_file = path_to_directory / filename_
         if path_to_file.isfile():
             return path_to_directory
     return None
@@ -471,6 +474,7 @@ def run_args(args):
     methods = {a for a in args_in_globals if callable(a)}
     for method in methods:
         method(args)
+    return True
 
 
 def previous_directory():
@@ -641,6 +645,62 @@ def find_in_history(item, subdirnames):
         return _find_in_paths(item, subdirnames, frecent_paths)
 
 
+def frecent_matchers(item: str) -> List[Callable[[str], bool]]:
+    """Make a list of matchers for that item"""
+
+    def globbed(p):
+        return fnmatch(str(p), f"{item}*")
+
+    def glob_match(path):
+        for p in path.split(os.path.sep):
+            if globbed(p):
+                return True
+        return False
+
+    def same(p):
+        return item == p
+
+    def within(p):
+        return item in p
+
+    def same_base(p):
+        return item == p.basename()
+
+    def glob_base(p):
+        return globbed(p.basename())
+
+    def glob_base_glob(p):
+        return globbed(f"*{p.basename()}")
+
+    def ancestor(p):
+        return item in p.split(os.path.sep)
+
+    def with_path(p):
+        if os.path.sep in item:
+            return item in p
+        return False
+
+    result = [
+        same,
+        same_base,
+        glob_base,
+        ancestor,
+        glob_match,
+        glob_base_glob,
+        with_path,
+        within,
+    ]
+    return result
+
+
+def frecently_matched(item, frecent_paths):
+    for matcher in frecent_matchers(item):
+        paths = [_ for _ in frecent_paths if matcher(_)]
+        if paths:
+            return UniquePaths(paths)
+    return UniquePaths([])
+
+
 def _find_in_paths(item, subdirnames, frecent_paths):
     """Get the first of those paths which meets one of the criteria:
 
@@ -653,57 +713,26 @@ def _find_in_paths(item, subdirnames, frecent_paths):
 
     paths are assumed to be ordered, so first matching path wins
     """
-    # pylint: disable=too-many-branches
-    def double_globbed(p):
-        return fnmatch(p, f"*{item}*")
-
-    def globbed(p):
-        return fnmatch(p, f"{item}*")
-
-    def glob_match(path):
-        for p in path.split(os.path.sep):
-            if globbed(p):
-                return True
-        return False
-
-    matchers = [
-        lambda p: item == p,
-        lambda p: item == p.basename(),
-        lambda p: globbed(p.basename()),
-        lambda p: item in p.split(os.path.sep),
-        #  pylint: disable=unnecessary-lambda
-        #  (lambda *is* necessary (stops E0601: "using path before assign..."))
-        lambda p: glob_match(p),
-        lambda p: double_globbed(p.basename()),
-    ]
-    if os.path.sep in item:
-        matchers.insert(0, lambda p: item in p)
+    possibles = UniquePaths([])
+    matched = frecently_matched(item, frecent_paths)
     i = take_first_integer(subdirnames)
-    possibles = PossiblePaths([])
-    for match in matchers:
-        matched = [_ for _ in frecent_paths if match(_)]
-        if not matched:
-            continue
-        if not subdirnames:
-            possibles.extend(matched)
-            continue
-        if len(matched) == 1:
-            if i:
-                raise RangeError(i, matched)
-            possibles.extend(
-                possibles_under_directory(matched[0], subdirnames)
-            )
-        if i is not None:
-            try:
-                match_ = matched[i]
-            except IndexError:
-                raise RangeError(i, matched)
-            possibles.extend(possibles_under_directory(match_, subdirnames))
-        elif len(matched) > 1:
-            [
-                possibles.extend(possibles_under_directory(_, subdirnames))
-                for _ in set(matched)
-            ]
+    if not subdirnames:
+        possibles.extend(matched)
+    elif len(matched) == 1:
+        if i:
+            raise RangeError(i, matched)
+        possibles.extend(possibles_under_directory(matched[0], subdirnames))
+    if i is not None:
+        try:
+            match_ = matched[i]
+        except IndexError:
+            raise RangeError(i, matched)
+        possibles.extend(possibles_under_directory(match_, subdirnames))
+    elif len(matched) > 1:
+        [
+            possibles.extend(possibles_under_directory(_, subdirnames))
+            for _ in set(matched)
+        ]
     possibilities = PossiblePaths(possibles)
     if not possibilities:
         return None
