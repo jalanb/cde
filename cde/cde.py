@@ -34,9 +34,7 @@ class TryAgain(ValueError):
     def __init__(self, possibles):
         self.possibles = sorted(possibles)
         super().__init__(
-            "\n".join(
-                ("Too many possiblities", f"{as_menu_string(possibles)}")
-            )
+            "\n".join(("Too many possiblities", f"{as_menu_string(possibles)}"))
         )
 
     def trimmed(self):
@@ -75,9 +73,7 @@ def matching_sub_directories(path_to_dir_: str, prefix: str) -> List[paths.Strin
         If that gives one exact match, prefer that
     """
     prefix_glob = prefix.endswith("/") and prefix.rstrip("/") or f"{prefix}*"
-    sub_directories = paths.list_sub_directories(
-        path_to_dir_, prefix_glob
-    )
+    sub_directories = paths.list_sub_directories(path_to_dir_, prefix_glob)
 
     if len(sub_directories) < 2:
         return sub_directories
@@ -129,7 +125,9 @@ def first_integer(items):
         return None
 
 
-def possibles_under_directory(path_to_dir_: paths.StringPath, sub_dirs: List[str]) -> PossiblePaths:
+def possibles_under_directory(
+    path_to_dir_: paths.StringPath, sub_dirs: List[str]
+) -> PossiblePaths:
     """Look under the given directory for matching sub-directories
 
     Sub-directories match if they are prefixed with given sub_dirs
@@ -279,7 +277,9 @@ def find_path_to_dir(dir_: str) -> paths.StringPath:
     Either the directory itself, or directory of the file itself, or nothing
     """
 
-    def select_sub_dir(parent: paths.StringPath, patterned_sub_dirs: List[paths.StringPath]) -> paths.StringPath:
+    def select_sub_dir(
+        parent: paths.StringPath, patterned_sub_dirs: List[paths.StringPath]
+    ) -> paths.StringPath:
         python_dir = (
             lambda x: not ignorable_dir(x)
             if find_python_root_dir(patterned_sub_dirs)
@@ -371,9 +371,7 @@ def find_directory(dir_: str, sub_dirs: List[str]):
     path_to_dir_ = find_at_home(dir_, sub_dirs)
     if path_to_dir_:
         return path_to_dir_
-    raise ToDo(
-        "could not use %r as a directory" % " ".join([dir_] + sub_dirs)
-    )
+    raise ToDo("could not use %r as a directory" % " ".join([dir_] + sub_dirs))
 
 
 def version(_args):
@@ -724,7 +722,9 @@ def possible_i(possibilities, i):
         pass
 
 
-def _find_in_paths(dir_: str, sub_dirs: List[str], frecent_paths: List[str]) -> Optional[paths.StringPath]:
+def _find_in_paths(
+    dir_: str, sub_dirs: List[str], frecent_paths: List[str]
+) -> Optional[paths.StringPath]:
     """Get the first of those paths which meets one of the criteria:
 
     1. has any substring that matches (as long as the dir_ contains a "/")
@@ -752,10 +752,7 @@ def _find_in_paths(dir_: str, sub_dirs: List[str], frecent_paths: List[str]) -> 
             raise RangeError(i, matched)
         possibles.extend(possibles_under_directory(match_, sub_dirs))
     elif len(matched) > 1:
-        [
-            possibles.extend(possibles_under_directory(_, sub_dirs))
-            for _ in set(matched)
-        ]
+        [possibles.extend(possibles_under_directory(_, sub_dirs)) for _ in set(matched)]
     possibilities = PossiblePaths(possibles)
     if not possibilities:
         return None
