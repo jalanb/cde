@@ -537,8 +537,8 @@ def read_history():
 
 
 def sort_history(history):
-    def as_key(dir_: str):
-        rank, path, time = dir_
+    def as_key(arg):
+        rank, path, time = arg
         return (rank, time, path)
 
     return sorted(history, key=as_key)
@@ -810,7 +810,7 @@ def delete_found_item(path_to_dir_):
 
 
 def cd(string: str) -> None:
-    os.chdir(cde(string), [])
+    os.chdir(cde(string, []))
 
 
 def cde(dir_: str, sub_dirs: List[str]):

@@ -42,3 +42,4 @@ class Roots(UniquePaths):
                 break
         else:
             self[i] = path_
+        return False
