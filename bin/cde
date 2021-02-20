@@ -85,7 +85,8 @@ def main(args):
     try:
         if args.unused:
             pass
-        return cde.cde(args.dirname, args.subdirnames)
+        dir_, sub_dirs = args.dirname, args.subdirnames
+        return cde.cde(dir_, sub_dirs)
     except (bdb.BdbQuit, SystemExit):
         return True
     except AttributeError as e:
