@@ -25,7 +25,7 @@ setup(
     ],
     install_requires=[
         'boltons',
-        'pysyte',
+        'pysyte>=0.7.50',
     ],
     tests_require=[
         'pytest',

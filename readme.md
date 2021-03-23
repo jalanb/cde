@@ -1,7 +1,7 @@
 cde
 ===
 
-`cde` extends `cd` to reach more paths easily, and know what to do once it gets there.
+`cde` extends `cd` to reach more paths easily, and knows what to do once it gets there.
 
 `cde` knows where you are going because it knows where you've been, and what directory structures look like.
 
@@ -25,7 +25,7 @@ $ git clone https://github.com/jalanb/cde/cde.git
 $ . cde/cde.sh
 ```
 
-And something similar to your `bashrc` if it works for you. And don't forget to hit the [Subscribe](https://github.com/jalanb
+And something similar to your `bashrc` if it works for you. 
 
 Usage
 =====
@@ -51,13 +51,13 @@ $ cd /; cde /u loc bi; pwd
 /usr/local/bin
 ```
 
-`cde` can be [abbreviated](https://github.com/jalanb/cde/blob/v0.7.31/cde.sh#L19) to just `c`, e.g.
+`cde` can be [abbreviated](https://github.com/jalanb/cde/blob/v0.7.29/cde.sh#L19) to just `c`, e.g.
 ```shell
 $ c ..; pwd
 /usr/local
 ```
 
-And sometimes can be [abbreviated](https://github.com/jalanb/cde/blob/v0.7.31/cde.sh#L90) away entirely, e.g.
+And sometimes can be [abbreviated](https://github.com/jalanb/cde/blob/v0.7.29/cde.sh#L90) away entirely, e.g.
 ```shell
 $ c /u l b; pwd
 /usr/local/bin
@@ -68,29 +68,29 @@ $ ...; pwd
 args
 ----
 
-The first argument to `c` is a `dirname`, further arguments are `subdirnames`. This makes it easier to leave out all those annoying "/"s, e.g.
+The first argument to `cde` is a `dirname`, further arguments are `subdirnames`. This makes it easier to leave out all those annoying "/"s, e.g.
 ```shell
 $ cd /usr/local/bin; pwd
 /usr/local/bin
-$ c /usr local bin; pwd
+$ cde /usr local bin; pwd
 /usr/local/bin
 ```
 
 A full path to a directory works as a `dirname`
 ```shell
-$ c /usr/local/bin; pwd
+$ cde /usr/local/bin; pwd
 /usr/local/bin
 ```
 
-A full path to a file can also be a dirname `dirname` (`c` will use the parent directory).
+A full path to a file can also be a `dirname` as `cd` will use the parent directory.
 ```shell
-$ c /usr/local/bin/python; pwd
+$ cde /usr/local/bin/python; pwd
 /usr/local/bin
 ```
 
-A globbed path to a file or directory can also be a `dirname` (`c` will take the first match). For example, `/bin/l*` matches `/bin/ls`, which is an existing file, whose parent is `/bin`, so
+A globbed path to a file or directory can also be a `dirname` (`cde` will take the first match). For example, `/bin/l*` matches `/bin/ls`, which is an existing file, whose parent is `/bin`, so
 ```shell
-$ c /bin/l*; pwd
+$ cde /bin/l*; pwd
 /bin
 ```
 
@@ -99,44 +99,43 @@ A "dirname" can be a short name for a directory, and a "subdirname" can be a pre
 ```shell
 $ cd /usr/local/bin; pwd
 /usr/local/bin
-$ c /u lo b; pwd
+$ cde /u lo b; pwd
 /usr/local/bin
 ```
 
-If you abbreviate too much, `c` will refuse to guess, unless told to
+If you abbreviate too much, `cde` will refuse to guess, unless told to
 ```shell
-$ c /u l
+$ cde /u l
 Try again: Too many possiblities
 	 0: /usr/lib
 	 1: /usr/libexec
 	 2: /usr/local
-$ c -1 /u l; pwd
+$ cde -1 /u l; pwd
 /usr/lbexec
 ```
 
 History
 -------
 
-`c` keeps a history of everywhere it has been to, and so a `dirname` can just use the old directory's name (not path). For example, given that we have `cde`'d to it already, we can get back to /usr/local/bin (from anywhere else) by simply
+`cde` keeps a history of everywhere it has been to, and so a `dirname` can just use the old directory's name (not path). For example, given that we have `cde`'d to it already, we can get back to /usr/local/bin (from anywhere else) by simply
 ```shell
-$ c b
+$ cde b
 ```
 
-If nothing matches then `c` [tries directories in $PATH which have matching executables](https://github.com/jalanb/cde/blob/v0.7.31/cde.py#L261). For example, this will give `/bin`:
+If nothing matches then `cde` [tries directories in $PATH which have matching executables](https://github.com/jalanb/cde/blob/v0.7.29/cde.py#L261). For example:
 
 ```shell
-$ c python; pwd
+$ cde python; pwd
 /usr/local/bin
 ```
 
 Biases
 ------
 
-When looking for partial names `c` will [look for each of these in turn](https://github.com/jalanb/cde/blob/v0.7.31/cde.py#L649), stopping as soon as it gets some match
+When looking for partial names `cde` will [look for each of these in turn](https://github.com/jalanb/cde/blob/v0.7.29/cde.py#L649), stopping as soon as it gets some match
 
 1. directories with the same name
-2. directories that start with the given part
-3. files that start with the given part
-4. directories with the part in their name
-5. files with the part in their name
-
+2. directories that start with that name
+3. files that start with that name
+4. directories with that in their name
+5. files with that in their name

@@ -29,9 +29,7 @@ def add_args(parser):
     parser.boolean("l", "lost", help="show all unreal paths in history")
     parser.boolean("m", "makedir", help="Ensure the given directory exists")
     parser.boolean("o", "old", help="look for paths in history")
-    parser.boolean(
-        "p", "purge", help="remove all non-existent paths from history"
-    )
+    parser.boolean("p", "purge", help="remove all non-existent paths from history")
     parser.boolean("t", "test", help="test the script")
     parser.boolean("u", "unused", help="show unused args")
     parser.boolean("v", "version", help="show version of the script")
@@ -85,7 +83,8 @@ def main(args):
     try:
         if args.unused:
             pass
-        return cde.cde(args.dirname, args.subdirnames)
+        dir_, sub_dirs = args.dirname, args.subdirnames
+        return cde.cde(dir_, sub_dirs)
     except (bdb.BdbQuit, SystemExit):
         return True
     except AttributeError as e:
