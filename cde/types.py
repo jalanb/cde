@@ -39,7 +39,6 @@ class Roots(UniquePaths):
             return False
         for i, root in enumerate(self):
             if root.parent.same_path(path_):
+                self[i] = path_
                 break
-        else:
-            self[i] = path_
         return False

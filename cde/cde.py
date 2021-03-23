@@ -673,7 +673,7 @@ def frecent_matchers(dir_: str) -> List[Callable[[str], bool]]:
         return dir_ == p
 
     def within(p):
-        return dir_ in p
+        return dir_ in str(p)
 
     def same_base(p):
         return dir_ == p.basename()
@@ -745,7 +745,7 @@ def _find_in_paths(
         if i:
             raise RangeError(i, matched)
         possibles.extend(possibles_under_directory(matched[0], sub_dirs))
-    if i is not None:
+    if matched and i is not None:
         try:
             match_ = matched[i]
         except IndexError:

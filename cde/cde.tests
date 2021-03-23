@@ -88,7 +88,7 @@ Assuming we have remembered some paths
     >>> history_paths = [cde.paths.path(_) for _ in history]
 
     >>> try:
-    ...     cde._find_in_paths('bin', [], history_paths)
+    ...     _ = cde._find_in_paths('bin', [], history_paths)
     ... except cde.TryAgain as e:
     ...     assert '/usr/bin' in e.possibles
     ...     assert '/usr/local/bin' in e.possibles
