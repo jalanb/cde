@@ -133,14 +133,10 @@ Badges
 Build status
 ------------
 
-.. image:: https://travis-ci.com/jalanb/cde.svg?branch=__main__
-   :target: https://travis-ci.com/jalanb/cde
-   :alt: Build Status
-
+![Travis (.com)](https://img.shields.io/travis/com/jalanb/cde)
 
 Test Coverage
 -------------
 
-.. image:: https://codecov.io/gh/jalanb/cde/branch/__main__/graph/badge.svg
-   :target: https://codecov.io/gh/jalanb/cde
-   :alt: Test Coverage
+[![codecov](https://codecov.io/gh/jalanb/cde/branch/master/graph/badge.svg)](https://codecov.io/gh/jalanb/cde)
+
