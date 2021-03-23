@@ -108,7 +108,7 @@ History
 $ cde b
 ```
 
-If nothing matches then `cde` [tries directories in $PATH which have matching executables](https://github.com/jalanb/cde/blob/v0.7.32/cde/cde.py#L226). For example:
+If nothing matches then `cde` [tries directories in $PATH which have matching executables](https://github.com/jalanb/cde/blob/v0.7.34/cde/cde.py#L226). For example:
 
 ```shell
 $ cde python; pwd
@@ -118,7 +118,7 @@ $ cde python; pwd
 Biases
 ------
 
-When looking for partial names `cde` will [look for each of these in turn](https://github.com/jalanb/cde/blob/v0.7.32/cde/cde.py#L339), stopping as soon as it gets some match
+When looking for partial names `cde` will [look for each of these in turn](https://github.com/jalanb/cde/blob/v0.7.34/cde/cde.py#L339), stopping as soon as it gets some match
 
 1. directories with the same name
 2. directories that start with that name
