@@ -181,7 +181,7 @@ cdpy () {
     local cde_directory_="$cde_output_" readlink_directory_=$(readlink -f $cde_output_)
     same_path . "$readlink_directory_" && return 0
     local cdpy_output_="cd $cde_output_"
-    [[ "$cde_directory_" != "$readlink_directory_" ]] && cdpy_output_="cd ($cde_output_ ->) $readlink_directory_"
+    [[ "$cde_directory_" != "$readlink_directory_" ]] && cdpy_output_="cd ($cde_directory_ ->) $readlink_directory_"
     [[ $no_stdout_ ]] || echo $cdpy_output_
     pushd "$cde_directory_" >/dev/null 2>&1
     return 0
@@ -423,7 +423,6 @@ run_cde () {
     local python_cde_="$cde_root_/bin/cde"
     local python_path_="$cde_root_" command_="\"$python_\" \"$CDE_PYTHON\" $@"
     [[ $PYTHONPATH ]] && python_path_="$CDE_DIR:$PYTHONPATH"
-    show_command "PYTHONPATH=$python_path_ $python_ $python_cde_ $@"
     if [[ $python_ =~ venv[/] ]]; then
         (
         source "$(dirname $python_)/activate"
