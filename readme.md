@@ -125,3 +125,22 @@ When looking for partial names `cde` will [look for each of these in turn](https
 3. files that start with that name
 4. directories with that in their name
 5. files with that in their name
+
+
+Badges
+======
+
+Build status
+------------
+
+.. image:: https://travis-ci.com/jalanb/cde.svg?branch=__main__
+   :target: https://travis-ci.com/jalanb/cde
+   :alt: Build Status
+
+
+Test Coverage
+-------------
+
+.. image:: https://codecov.io/gh/jalanb/cde/branch/__main__/graph/badge.svg
+   :target: https://codecov.io/gh/jalanb/cde
+   :alt: Test Coverage
