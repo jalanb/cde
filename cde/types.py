@@ -4,7 +4,7 @@ from typing import List
 
 
 from pysyte.types import paths
-from pysyte.types.lists import Unique
+from pysyte.types.lists import Uniques
 from pysyte.types.lists import UniquelyTrues
 
 
@@ -23,7 +23,7 @@ class PossiblePaths(UniquelyTrues):
 
 
 class UniquePaths(PossiblePaths):
-    def __contains__(self, item: Unique) -> bool:
+    def __contains__(self, item: Uniques) -> bool:
         for path in self:
             if path.same_path(item):
                 return True
