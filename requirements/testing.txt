@@ -1,6 +1,7 @@
 -r requirements.txt
 -r linting.txt
 
+codecov
 coverage
 mock
 pytest

@@ -3,6 +3,8 @@ python:
 - '3.7'
 install: pip install -r requirements/testing.txt
 script: tox
+after_success:
+  - codecov
 notifications:
   email: false
   slack:
