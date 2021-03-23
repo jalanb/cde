@@ -51,20 +51,6 @@ $ cd /; cde /u loc bi; pwd
 /usr/local/bin
 ```
 
-`cde` can be [abbreviated](https://github.com/jalanb/cde/blob/v0.7.32/cde.sh#L19) to just `c`, e.g.
-```shell
-$ c ..; pwd
-/usr/local
-```
-
-And sometimes can be [abbreviated](https://github.com/jalanb/cde/blob/v0.7.32/cde.sh#L90) away entirely, e.g.
-```shell
-$ c /u l b; pwd
-/usr/local/bin
-$ ...; pwd
-/usr
-```
-
 args
 ----
 
@@ -122,7 +108,7 @@ History
 $ cde b
 ```
 
-If nothing matches then `cde` [tries directories in $PATH which have matching executables](https://github.com/jalanb/cde/blob/v0.7.32/cde.py#L261). For example:
+If nothing matches then `cde` [tries directories in $PATH which have matching executables](https://github.com/jalanb/cde/blob/v0.7.32/cde/cde.py#L226). For example:
 
 ```shell
 $ cde python; pwd
@@ -132,7 +118,7 @@ $ cde python; pwd
 Biases
 ------
 
-When looking for partial names `cde` will [look for each of these in turn](https://github.com/jalanb/cde/blob/v0.7.32/cde.py#L649), stopping as soon as it gets some match
+When looking for partial names `cde` will [look for each of these in turn](https://github.com/jalanb/cde/blob/v0.7.32/cde/cde.py#L339), stopping as soon as it gets some match
 
 1. directories with the same name
 2. directories that start with that name
