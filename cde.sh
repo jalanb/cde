@@ -295,6 +295,11 @@ _here_ls () {
     quietly ls .
 }
 
+pre_cdpy () {
+    cde_deactivate
+    [[ -n $CDE_header ]] && echo $CDE_header
+}
+
 pudb_cde () {
     local __doc__="""Debug the cde program"""
     local interpreter_=$(quietly venv_or_which pudb3)
@@ -341,11 +346,6 @@ EOP
 }
 
 # xxxxxxxxx
-
-pre_cdpy () {
-    cde_deactivate
-    [[ -n $CDE_header ]] && echo $CDE_header
-}
 
 echo_dir () {
     if [[ -d "$1" ]]; then
