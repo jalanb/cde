@@ -48,6 +48,7 @@ cde () {
     local __doc__="""find a dir and handle it"""
     local quietly_=
     [[ $1 =~ -h ]] && cde_help && return 0
+    [[ $1 =~ -a ]] && python_cde "$@" && return 0
     [[ $1 =~ -q ]] && quietly_=-q && shift
     [[ $1 =~ ^[.]$ ]] && cde $(readlink -f .) && return $?
     pre_cdpy $quietly_
