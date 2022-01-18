@@ -397,7 +397,6 @@ show_bash () {
 # xxxxxxxxxx
 
 _activate () {
-    # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
     unhash_python_handlers
     [[ -f $ACTIVATE ]] && . $ACTIVATE
 }
