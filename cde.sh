@@ -476,7 +476,7 @@ here_clean () {
 
 # xxxxxxxxxxx
 
-cd_template () {
+cde_template () {
     echo -n "$1/cd "
     return 0
 }
@@ -595,9 +595,9 @@ unhash_handlers () {
 
 # xxxxxxxxxxxxxxxx
 
-cat_cd_templates () {
+cat_cde_templates () {
     local _template_dir="$CDE_DIR/templates"
-    cat $(cd_template "$_template_dir")
+    cat $(cde_template "$_template_dir")
     local _template=
     for method in bin git python ; do
         _template=$(${method}_template "$_template_dir")
