@@ -477,16 +477,6 @@ here_clean () {
 
 # xxxxxxxxxxx
 
-_deactivate () {
-    # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
-    unhash_python_handlers
-    deactivate
-    if [[ $ACTIVE_PYTHON ]]; then
-        ACTIVATE="${ACTIVE_PYTHON/%python/activate}"
-        _activate
-    fi
-}
-
 cd_template () {
     echo -n "$1/cd "
     return 0
@@ -637,6 +627,11 @@ prune_python_here () {
     return 0
 }
 
+unhash_deactivate () {
+    unhash_python_handlers
+    [[ $VIRTUAL_ENV ]] && deactivate
+}
+
 # xxxxxxxxxxxxxxxxxx
 # xxxxxxxxxxxxxxxxxxx
 
@@ -656,7 +651,8 @@ unhash_file_handlers () {
 # xxxxxxxxxxxxxxxxxxxxxx
 
 unhash_python_handlers () {
-    unhash_handlers '[ib]*python' 'pip[23]*' 'ipython[23]*' pdb ipdb 'pudb3*'
+    # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
+    unhash_handlers python python2 python3 ipython ipython2 ipython3 pudb pudb3 pdb ipdb pip pip2 pip3
 }
 
 # xxxxxxxxxxxxxxxxxxxxxxx
@@ -720,8 +716,11 @@ cde_activate_venv () {
 }
 
 cde_deactivate () {
-    deactivate >/dev/null 2>&1
-    unhash_python_handlers
+    unhash_deactivate
+    if [[ $ACTIVE_PYTHON ]]; then
+        ACTIVATE="${ACTIVE_PYTHON/%python/activate}"
+        _activate
+    fi
 }
 
 cde_show_git_was_here () {
