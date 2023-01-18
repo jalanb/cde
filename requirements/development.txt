@@ -1,8 +1,8 @@
 -r testing.txt
 
 bumpversion
+rich-cli
 ipython
-pprintpp
 pudb
 pytest-sugar
 requests
