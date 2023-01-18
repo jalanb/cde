@@ -14,14 +14,6 @@ export CDE_NAME=$(basename "$CDE_BASH")  # cde.sh
 export CDE_BASH_PATH=$(readlink -f "$CDE_BASH")  # /.../cde.sh
 export CDE_DIR=$(dirname "$CDE_BASH_PATH")  # /.../
 
-
-export RED="\033[0;31m"
-export GREEN="\033[0;32m"
-export BLUE="\033[0;34m"
-export LIGHT_RED="\033[1;31m"
-export LIGHT_GREEN="\033[1;32m"
-export LIGHT_BLUE="\033[1;34m"
-
 # x
 # xx
 
