@@ -55,18 +55,6 @@ cdq () {
     QUIETLY cde -q "$@"
 }
 
-cdu () {
-    (set -x
-        local __doc__="""debug cde"""
-        [[ $1 =~ -h ]] && cde_help >&2 && return 1
-        [[ $1 =~ -q ]] && echo 👿 >&2 && shift
-        [[ $1 =~ ^[.]$ ]] && cdu $(readlink -f .)
-        pre_cdpy
-        cdpu "$@" || echo "Fail" >&2
-        # [[ -d . ]] && post_cdpy || echo ". is not a dir! 😳" >&2 
-    )
-}
-
 cdi () {
     local _index=0
     if [[ $1 =~ [0-2] ]]; then
@@ -91,6 +79,18 @@ cdl () {
 cdr () {
     cde "$@"
     show_green_line $(readlink -f .)
+}
+
+cdu () {
+    (set -x
+        local __doc__="""debug cde"""
+        [[ $1 =~ -h ]] && cde_help >&2 && return 1
+        [[ $1 =~ -q ]] && echo 👿 >&2 && shift
+        [[ $1 =~ ^[.]$ ]] && cdu $(readlink -f .)
+        pre_cdpy
+        cdpu "$@" || echo "Fail" >&2
+        # [[ -d . ]] && post_cdpy || echo ". is not a dir! 😳" >&2 
+    )
 }
 
 cdv () {
@@ -734,7 +734,7 @@ cde_deactivate () {
 
 cde_show_git_was_here () {
     [[ -d ./.git ]] || return 0
-    show_blue_line "$(git remote get-url origin) <$(git config user.name) $(git config user.email)>\n"
+    blue_line "$(git remote get-url origin) <$(git config user.name) $(git config user.email)>\n"
     git status .
     # git rev-parse --abbrev-ref HEAD
     echo
