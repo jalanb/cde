@@ -52,7 +52,7 @@ cde () {
 }
 
 cdq () {
-    cde -q "$@"
+    QUIETLY cde -q "$@"
 }
 
 cdu () {
@@ -182,7 +182,7 @@ cdpy () {
     local cdpy_output_="cd $cde_output_"
     [[ "$cde_directory_" != "$readlink_directory_" ]] && cdpy_output_="cd ($cde_directory_ ->) $readlink_directory_"
     [[ $no_stdout_ ]] || echo $cdpy_output_
-    QUIETLY pushd "$cde_directory_"
+    pusq "$cde_directory_"
     return 0
 }
 
@@ -207,15 +207,23 @@ cdup () {
         shift
     fi
     local _dir=$(readlink -f ..)
-    QUIETLY pushd
+    (
     while true; do
         _level=$(( $_level - 1 ))
         [[ $_level -le 0 ]] && break
         cd ..
         _dir=$(readlink -f .)
     done
-    QUIETLY popd
+    )
     cde $_dir "$@"
+}
+
+popq () {
+    QUIETLY popd
+}
+
+pusq () {
+    QUIETLY pushd "$@"
 }
 
 pycd () {
