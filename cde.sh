@@ -184,6 +184,19 @@ cdpy () {
     return 0
 }
 
+cdrl () {
+    cdq "$@" || return 1
+    green_line $(rlf)
+    lo 
+}
+
+cdrr () {
+    cdq "$@" || return 1
+    green_line $(rlf .)
+    llr
+}
+
+
 cdup () {
     local __doc__="""cde up a few levels, 'cdup' goes up 1 level, 'cdup 2' goes up 2"""
     local _level=1
