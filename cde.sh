@@ -29,8 +29,10 @@ alias ..=cdup
 # xxx
 
 cdd () {
-    local __doc__"""cde here"""
-    cde .
+    local __doc__="""cde here"""
+    local dir_=
+    [[ -d "$1" ]] && dir_="$1" && shift
+    cde ./"$dir_"
 }
 
 # rule 1: Leave system commands alone
