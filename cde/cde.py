@@ -357,6 +357,9 @@ def find_directory(dir_: str, sub_dirs: List[str]):
         path_to_prefix = find_under_directory(path_to_dir_, sub_dirs)
         if path_to_prefix:
             return path_to_prefix
+        path_to_history = find_in_history(dir_, sub_dirs)
+        if path_to_history:
+            return path_to_history
     else:
         args = ([dir_] if dir_ else []) + sub_dirs
         path_to_dir_ = find_under_here(args)
