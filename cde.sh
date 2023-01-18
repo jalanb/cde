@@ -144,16 +144,16 @@ alias ...="cdup 2"
 
 # xxxx
 
+cdeg () {
+    local __doc__="""Debug the cde program"""
+    pudb_cde "$@"
+}
+
 cdll () {
     local __doc__="""cde $1; ls -l"""
     local _dir="$@"
     [[ $_dir ]] || _dir=.
     cdl $_dir -lhtra
-}
-
-cdpu () {
-    local __doc__="Debug the cdpy function and script"
-    pudb_cde "$@"
 }
 
 cdpy () {
@@ -293,12 +293,6 @@ pre_cdpy () {
     [[ -n $CDE_header ]] && echo $CDE_header
 }
 
-pudb_cde () {
-    local __doc__="""Debug the cde program"""
-    local interpreter_=$(quietly venv_or_which pudb3)
-    interpret_cde "$interpreter_" "$@"
-}
-
 cde_help () {
     echo "cd to a dir and react to it"
     echo
@@ -308,6 +302,11 @@ cde_help () {
 
 headline () {
     head -n 1 "$1"
+}
+
+pudb_cde () {
+    local __doc__="""Debug the cde program"""
+    run_cde pudb3 "$@"
 }
 
 say_path () {
@@ -447,11 +446,6 @@ run_cde () {
     else
         PYTHONPATH="$python_path_" "$python_" "$python_cde_" "$@"
     fi
-}
-
-pudb_cde () {
-    local __doc__="""Debug the cde program"""
-    run_cde pudb3 "$@"
 }
 
 python_cde () {
