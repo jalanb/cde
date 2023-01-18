@@ -215,7 +215,7 @@ def first_possible(possibles):
 
 
 def find_under_here(*args):
-    """Look for some other directories under current directory """
+    """Look for some other directories under current directory"""
     try:
         return find_under_directory(paths.pwd(), *args)
     except OSError:
