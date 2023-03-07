@@ -329,7 +329,10 @@ headline () {
 
 pudb_cde () {
     local __doc__="""Debug the cde program"""
-    run_cde pudb3 "$@"
+    local debugger_=$(venv_app pudb)
+    [[ $debugger_ ]] || debugger_=$(venv_app pudb3)
+    [[ -e $debugger_ ]] || return 1
+    run_cde $debugger_ "$@"
 }
 
 say_path () {
@@ -358,6 +361,16 @@ sys.stdout.write(out.replace('/', ' '))
 EOP
 )
     is_type sai && sai "$said_"
+}
+
+venv_app () {
+    local __doc__="""find an executable in cde's virtualenv"""
+    [[ "$1" ]] || return 1
+    local _name="$1"; shift
+    local app_="${CDE_DIR}/.venv/bin/$_name"
+    [[ -e "$app_" ]] || return 2
+    echo $app_
+    return 0
 }
 
 # xxxxxxxxx
@@ -455,7 +468,8 @@ run_cde () {
     local __doc__="""Run the cde script, setting PYTHONPATH"""
     local runner_="$1"; shift
     [[ $runner_ ]] || return 1
-    local python_=$(venv_or_which "$runner_")
+    local python_="$runner_"
+    [[ -e $python_ ]] || python_="$(venv_or_which "$runner_")"
     is_type $python_ || return 1
     local cde_root_="$CDE_DIR"
     local python_cde_="$cde_root_/bin/cde"
@@ -524,8 +538,7 @@ git_template () {
 venv_or_which () {
     local __doc__="""find an executable in cde's virtualenv, or which, or which with our PATH"""
     [[ "$1" ]] || return 1
-    local _name="$1"; shift
-    local app_="${CDE_DIR}/.venv/bin/$_name"
+    local app_=$(venv_app "$1")
     [[ -e "$app_" ]] || app_=$(whichly $_name)
     [[ -e "$app_" ]] || app_=$(PATH=~/bin:/usr/local/bin:/bin:/usr/bin whichly $_name)
     [[ -e "$app_" ]] || return 1
