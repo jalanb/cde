@@ -175,6 +175,7 @@ cdpy () {
         [[ "$@" =~  -[lp] ]] && q_echo $no_stderr_ "$cde_output_"
         return 0
     fi
+    python_cde --add $cde_output_
     same_path . "$cde_output_" && return 0
     local cde_directory_="$cde_output_" readlink_directory_=$(readlink -f $cde_output_)
     same_path . "$readlink_directory_" && return 0
