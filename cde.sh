@@ -72,7 +72,6 @@ cdl () {
     local _ls_options="$@"
     [[ $_ls_options ]] || _ls_options=" -a "
     cde $dir_
-    # show_green_line $PWD
     ls --color $_ls_options
 }
 
@@ -341,7 +340,6 @@ say_path () {
     [[ $path_ =~ "wwts" ]] && path_="${path_/wwts/dub dub t s}"
     [[ $path_ ]] || return 1
     local said_=$(python << EOP
-# coding=utf8
 import os, sys
 path=os.path.expanduser(os.path.expandvars('$path_'))
 home='%s/' % os.path.expanduser('~')
@@ -353,7 +351,6 @@ else:
     out=path
 replacements = (
     ('/wwts', '/dub dub t s'),
-    ('/䷃ ZatSo ?', '/is that so?'),
 )
 for old, new in replacements:
     out = out.replace(old, new)
