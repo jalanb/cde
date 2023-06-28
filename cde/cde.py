@@ -65,19 +65,19 @@ class FoundParent(ValueError):
         self.parent = parent
 
 
-def matching_sub_directories(path_to_dir_: str, prefix: str) -> List[paths.StringPath]:
-    """A list of all sub-directories named with the given prefix
+def matching_sub_directories(path_to_dir_: str, pattern: str) -> List[paths.StringPath]:
+    """A list of all sub-directories named with the given pattern
 
-    If the prefix ends with "/" then look for an exact match only
-    Otherwise look for "prefix*"
+    If the pattern ends with "/" then look for an exact match only
+    Otherwise look for "pattern*"
         If that gives one exact match, prefer that
     """
-    prefix_glob = prefix.endswith("/") and prefix.rstrip("/") or f"{prefix}*"
-    sub_directories = paths.list_sub_directories(path_to_dir_, prefix_glob)
+    pattern_glob = pattern.endswith("/") and pattern.rstrip("/") or f"*{pattern}*"
+    sub_directories = paths.list_sub_directories(path_to_dir_, pattern_glob)
 
     if len(sub_directories) < 2:
         return sub_directories
-    exacts = [_ for _ in sub_directories if _.basename() == prefix]
+    exacts = [_ for _ in sub_directories if _.basename() == pattern]
     if exacts:
         return exacts
     return sub_directories
@@ -215,7 +215,7 @@ def first_possible(possibles):
 
 
 def find_under_here(*args):
-    """Look for some other directories under current directory """
+    """Look for some other directories under current directory"""
     try:
         return find_under_directory(paths.pwd(), *args)
     except OSError:
@@ -357,6 +357,9 @@ def find_directory(dir_: str, sub_dirs: List[str]):
         path_to_prefix = find_under_directory(path_to_dir_, sub_dirs)
         if path_to_prefix:
             return path_to_prefix
+        path_to_history = find_in_history(dir_, sub_dirs)
+        if path_to_history:
+            return path_to_history
     else:
         args = ([dir_] if dir_ else []) + sub_dirs
         path_to_dir_ = find_under_here(args)
@@ -760,14 +763,13 @@ def _find_in_paths(
         return possibilities.pop()
     if i is not None:
         return possible_i(possibilities, i)
-    named = [p for p in possibilities if dir_ == p.name]
+    name = sub_dirs[-1] if sub_dirs else dir_
+    named = [p for p in possibilities if name == p.name]
     if len(named) == 1:
         return named.pop()
     roots = Roots(named)
     if len(roots) == 1:
         return roots.pop()
-    if sub_dirs:
-        raise TryAgain(possibilities)
     if named:
         ordered = sorted(named, key=lambda x: -len(x))
         shorter, *more = [str(_) for _ in ordered]
@@ -776,9 +778,13 @@ def _find_in_paths(
                 return shorter
             shorter = longer
         return shorter
-    globbed_ = [p for p in possibilities if dir_ in p.name]
+    globbed_ = [p for p in possibilities if name in p.name]
     if len(globbed_) == 1:
         return globbed_.pop()
+    elif globbed_:
+        possibilities = PossiblePaths(globbed_)
+    if sub_dirs:
+        raise TryAgain(possibilities)
     raise TryAgain(named)
 
 

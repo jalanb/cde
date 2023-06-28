@@ -14,20 +14,12 @@ export CDE_NAME=$(basename "$CDE_BASH")  # cde.sh
 export CDE_BASH_PATH=$(readlink -f "$CDE_BASH")  # /.../cde.sh
 export CDE_DIR=$(dirname "$CDE_BASH_PATH")  # /.../
 
-
-export RED="\033[0;31m"
-export GREEN="\033[0;32m"
-export BLUE="\033[0;34m"
-export LIGHT_RED="\033[1;31m"
-export LIGHT_GREEN="\033[1;32m"
-export LIGHT_BLUE="\033[1;34m"
-
 # x
 # xx
 
 ., () {
     local destination_=$HOME
-    local top_level_=$(git rev-parse --show-toplevel 2>/dev/null)
+    local top_level_=$(quietly git rev-parse --show-toplevel)
     [[ $top_level_ ]] && destination_=$top_level_
 }
 
@@ -37,8 +29,10 @@ alias ..=cdup
 # xxx
 
 cdd () {
-    local __doc__"""cde here"""
-    cde .
+    local __doc__="""cde here"""
+    local dir_=
+    [[ -d "$1" ]] && dir_="$1" && shift
+    cde ./"$dir_"
 }
 
 # rule 1: Leave system commands alone
@@ -48,6 +42,7 @@ cde () {
     local __doc__="""find a dir and handle it"""
     local quietly_=
     [[ $1 =~ -h ]] && cde_help && return 0
+    [[ $1 =~ -a ]] && python_cde "$@" && return 0
     [[ $1 =~ -q ]] && quietly_=-q && shift
     [[ $1 =~ ^[.]$ ]] && cde $(readlink -f .) && return $?
     pre_cdpy $quietly_
@@ -56,16 +51,8 @@ cde () {
     post_cdpy $quietly_
 }
 
-cdu () {
-    (set -x
-        local __doc__="""debug cde"""
-        [[ $1 =~ -h ]] && cde_help >&2 && return 1
-        [[ $1 =~ -q ]] && echo 👿 >&2 && shift
-        [[ $1 =~ ^[.]$ ]] && cdu $(readlink -f .)
-        pre_cdpy
-        cdpu "$@" || echo "Fail" >&2
-        # [[ -d . ]] && post_cdpy || echo ". is not a dir! 😳" >&2 
-    )
+cdq () {
+    QUIETLY cde -q "$@"
 }
 
 cdi () {
@@ -85,13 +72,24 @@ cdl () {
     local _ls_options="$@"
     [[ $_ls_options ]] || _ls_options=" -a "
     cde $dir_
-    # show_green_line $PWD
     ls --color $_ls_options
 }
 
 cdr () {
     cde "$@"
     show_green_line $(readlink -f .)
+}
+
+cdu () {
+    (set -x
+        local __doc__="""debug cde"""
+        [[ $1 =~ -h ]] && cde_help >&2 && return 1
+        [[ $1 =~ -q ]] && echo 👿 >&2 && shift
+        [[ $1 =~ ^[.]$ ]] && cdu $(readlink -f .)
+        pre_cdpy
+        cdpu "$@" || echo "Fail" >&2
+        # [[ -d . ]] && post_cdpy || echo ". is not a dir! 😳" >&2 
+    )
 }
 
 cdv () {
@@ -147,16 +145,16 @@ alias ...="cdup 2"
 
 # xxxx
 
+cdeg () {
+    local __doc__="""Debug the cde program"""
+    pudb_cde "$@"
+}
+
 cdll () {
     local __doc__="""cde $1; ls -l"""
     local _dir="$@"
     [[ $_dir ]] || _dir=.
     cdl $_dir -lhtra
-}
-
-cdpu () {
-    local __doc__="Debug the cdpy function and script"
-    pudb_cde "$@"
 }
 
 cdpy () {
@@ -177,15 +175,29 @@ cdpy () {
         [[ "$@" =~  -[lp] ]] && q_echo $no_stderr_ "$cde_output_"
         return 0
     fi
+    python_cde --add $cde_output_
     same_path . "$cde_output_" && return 0
     local cde_directory_="$cde_output_" readlink_directory_=$(readlink -f $cde_output_)
     same_path . "$readlink_directory_" && return 0
     local cdpy_output_="cd $cde_output_"
     [[ "$cde_directory_" != "$readlink_directory_" ]] && cdpy_output_="cd ($cde_directory_ ->) $readlink_directory_"
     [[ $no_stdout_ ]] || echo $cdpy_output_
-    pushd "$cde_directory_" >/dev/null 2>&1
+    pusq "$cde_directory_"
     return 0
 }
+
+cdrl () {
+    cdq "$@" || return 1
+    green_line $(rlf)
+    lo 
+}
+
+cdrr () {
+    cdq "$@" || return 1
+    green_line $(rlf .)
+    llr
+}
+
 
 cdup () {
     local __doc__="""cde up a few levels, 'cdup' goes up 1 level, 'cdup 2' goes up 2"""
@@ -195,15 +207,23 @@ cdup () {
         shift
     fi
     local _dir=$(readlink -f ..)
-    pushd >/dev/null 2>&1
+    (
     while true; do
         _level=$(( $_level - 1 ))
         [[ $_level -le 0 ]] && break
         cd ..
         _dir=$(readlink -f .)
     done
-    popd >/dev/null 2>&1
+    )
     cde $_dir "$@"
+}
+
+popq () {
+    QUIETLY popd
+}
+
+pusq () {
+    QUIETLY pushd "$@"
 }
 
 pycd () {
@@ -243,6 +263,22 @@ q_echo () {
 
 # xxxxxxx
 
+is_type () {
+    QUIETLY type "$@"
+}
+
+whichly () {
+    quietly which "$@"
+}
+
+quietly () {
+    "$@" 2>/dev/null
+}
+
+QUIETLY () {
+    "$@" >/dev/null 2>&1
+}
+
 vim_cde () {
     local _files=
     [[ -f .cd ]] && _files=.cd
@@ -272,13 +308,12 @@ _dot_cd () {
 # xxxxxxxx
 
 _here_ls () {
-    ls . 2>/dev/null
+    quietly ls .
 }
 
-pudb_cde () {
-    local __doc__="""Debug the cde program"""
-    local interpreter_=$(venv_or_which pudb3 2>/dev/null)
-    interpret_cde "$interpreter_" "$@"
+pre_cdpy () {
+    cde_deactivate
+    [[ -n $CDE_header ]] && echo $CDE_header
 }
 
 cde_help () {
@@ -292,13 +327,20 @@ headline () {
     head -n 1 "$1"
 }
 
+pudb_cde () {
+    local __doc__="""Debug the cde program"""
+    local debugger_=$(venv_app pudb)
+    [[ $debugger_ ]] || debugger_=$(venv_app pudb3)
+    [[ -e $debugger_ ]] || return 1
+    run_cde $debugger_ "$@"
+}
+
 say_path () {
     local path_=$PWD
     [[ $path_ == "$HOME" ]] && path_=HOME
     [[ $path_ =~ "wwts" ]] && path_="${path_/wwts/dub dub t s}"
     [[ $path_ ]] || return 1
     local said_=$(python << EOP
-# coding=utf8
 import os, sys
 path=os.path.expanduser(os.path.expandvars('$path_'))
 home='%s/' % os.path.expanduser('~')
@@ -310,22 +352,26 @@ else:
     out=path
 replacements = (
     ('/wwts', '/dub dub t s'),
-    ('/䷃ ZatSo ?', '/is that so?'),
 )
 for old, new in replacements:
     out = out.replace(old, new)
 sys.stdout.write(out.replace('/', ' '))
 EOP
 )
-    type sai >/dev/null 2>&1 && sai "$said_"
+    is_type sai && sai "$said_"
+}
+
+venv_app () {
+    local __doc__="""find an executable in cde's virtualenv"""
+    [[ "$1" ]] || return 1
+    local _name="$1"; shift
+    local app_="${CDE_DIR}/.venv/bin/$_name"
+    [[ -e "$app_" ]] || return 2
+    echo $app_
+    return 0
 }
 
 # xxxxxxxxx
-
-pre_cdpy () {
-    cde_deactivate
-    [[ -n $CDE_header ]] && echo $CDE_header
-}
 
 echo_dir () {
     if [[ -d "$1" ]]; then
@@ -358,6 +404,10 @@ post_cdpy () {
     _here_ls && here_clean
 }
 
+quiet_out () {
+    "$@" >/dev/null
+}
+
 same_path () {
     [[ $(readlink -f "$1") == $(readlink -f "$2") ]]
 }
@@ -373,7 +423,6 @@ show_bash () {
 # xxxxxxxxxx
 
 _activate () {
-    # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
     unhash_python_handlers
     [[ -f $ACTIVATE ]] && . $ACTIVATE
 }
@@ -417,8 +466,9 @@ run_cde () {
     local __doc__="""Run the cde script, setting PYTHONPATH"""
     local runner_="$1"; shift
     [[ $runner_ ]] || return 1
-    local python_=$(venv_or_which "$runner_")
-    type $python_ >/dev/null 2>&1 || return 1
+    local python_="$runner_"
+    [[ -e $python_ ]] || python_="$(venv_or_which "$runner_")"
+    is_type $python_ || return 1
     local cde_root_="$CDE_DIR"
     local python_cde_="$cde_root_/bin/cde"
     local python_path_="$cde_root_" command_="\"$python_\" \"$CDE_PYTHON\" $@"
@@ -431,11 +481,6 @@ run_cde () {
     else
         PYTHONPATH="$python_path_" "$python_" "$python_cde_" "$@"
     fi
-}
-
-pudb_cde () {
-    local __doc__="""Debug the cde program"""
-    run_cde pudb3 "$@"
 }
 
 python_cde () {
@@ -453,17 +498,7 @@ here_clean () {
 
 # xxxxxxxxxxx
 
-_deactivate () {
-    # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
-    unhash_python_handlers
-    deactivate
-    if [[ $ACTIVE_PYTHON ]]; then
-        ACTIVATE="${ACTIVE_PYTHON/%python/activate}"
-        _activate
-    fi
-}
-
-cd_template () {
+cde_template () {
     echo -n "$1/cd "
     return 0
 }
@@ -501,10 +536,9 @@ git_template () {
 venv_or_which () {
     local __doc__="""find an executable in cde's virtualenv, or which, or which with our PATH"""
     [[ "$1" ]] || return 1
-    local _name="$1"; shift
-    local app_="${CDE_DIR}/.venv/bin/$_name"
-    [[ -e "$app_" ]] || app_=$(which $_name 2>/dev/null)
-    [[ -e "$app_" ]] || app_=$(PATH=~/bin:/usr/local/bin:/bin:/usr/bin which $_name 2>/dev/null)
+    local app_=$(venv_app "$1")
+    [[ -e "$app_" ]] || app_=$(whichly $_name)
+    [[ -e "$app_" ]] || app_=$(PATH=~/bin:/usr/local/bin:/bin:/usr/bin whichly $_name)
     [[ -e "$app_" ]] || return 1
     echo $app_
     return 0
@@ -517,20 +551,20 @@ venv_dirs_here () {
 }
 
 rld () {
-    dirname $( rlf "$1" ) 2>/dev/null
+    [[ -e "$1" ]] || return 1
+    quietly dirname $( rlf "$1" )
 }
 
 rlf () {
     local path_=.
     [[ -e "$1" ]] && path_="$1"
-    readlink -f "$path_" 2>/dev/null
+    quietly readlink -f "$path_"
 }
 
 echo_venv_directory_from () {
     if echo_dir "$1" || echo_dir "~/.virtualenvs/$1"; then
         return 0
     fi
-    echo "Not a directory: '$1'" >&2
     return 1
 }
 
@@ -575,16 +609,16 @@ python_template () {
 unhash_handlers () {
     local dehashed_=
     for arg in "$@"; do
-        hash -d $arg 2>/dev/null && dehashed_=1
+        quietly hash -d $arg && dehashed_=1
     done
     [[ $dehashed_ ]] && return 0 || return 1
 }
 
 # xxxxxxxxxxxxxxxx
 
-cat_cd_templates () {
+cat_cde_templates () {
     local _template_dir="$CDE_DIR/templates"
-    cat $(cd_template "$_template_dir")
+    cat $(cde_template "$_template_dir")
     local _template=
     for method in bin git python ; do
         _template=$(${method}_template "$_template_dir")
@@ -599,7 +633,7 @@ cat_cd_templates () {
 
 project_venv_dirs () {
     local _top_dirs=
-    local _git_top=$(git rev-parse --show-toplevel . 2>/dev/null | head -n 1)
+    local _git_top=$(quietly git rev-parse --show-toplevel . | head -n 1)
     [[ -d $_git_top ]] && _top_dirs="$_git_top/venv/bin $_git_top/.venv/bin $_git_top/bin"
     echo_dirs $_top_dirs
 }
@@ -611,6 +645,11 @@ prune_python_here () {
     [[ ${#_here} == ${#_home} ]] && return 1
     rf -qpr
     return 0
+}
+
+unhash_deactivate () {
+    unhash_python_handlers
+    [[ $VIRTUAL_ENV ]] && deactivate
 }
 
 # xxxxxxxxxxxxxxxxxx
@@ -632,7 +671,8 @@ unhash_file_handlers () {
 # xxxxxxxxxxxxxxxxxxxxxx
 
 unhash_python_handlers () {
-    unhash_handlers '[ib]*python' 'pip[23]*' 'ipython[23]*' pdb ipdb 'pudb3*'
+    # Thanks to @nxnev at https://unix.stackexchange.com/a/443256/32775
+    unhash_handlers python python2 python3 ipython ipython2 ipython3 pudb pudb3 pdb ipdb pip pip2 pip3
 }
 
 # xxxxxxxxxxxxxxxxxxxxxxx
@@ -661,7 +701,7 @@ cde_find_activate_script () {
     if [[ -f "$1" && $(basename "$1") == "activate" ]]; then
         activate_="$1"
     else
-        [[ "$@" ]] && python_roots_=$(echo_venv_directory_from "$@" 2>/dev/null)
+        [[ "$@" ]] && python_roots_=$(echo_venv_directory_from "$@")
         [[ $python_roots_ ]] || python_roots_="$_here $(venv_dirs_here) $(project_venv_dirs)"
         [[ $python_roots_ ]] || echo "No dirs available to find activate scripts" >&2
         [[ $python_roots_ ]] || return 1
@@ -696,13 +736,16 @@ cde_activate_venv () {
 }
 
 cde_deactivate () {
-    deactivate >/dev/null 2>&1
-    unhash_python_handlers
+    unhash_deactivate
+    if [[ $ACTIVE_PYTHON ]]; then
+        ACTIVATE="${ACTIVE_PYTHON/%python/activate}"
+        _activate
+    fi
 }
 
 cde_show_git_was_here () {
     [[ -d ./.git ]] || return 0
-    show_blue_line "$(git remote get-url origin) <$(git config user.name) $(git config user.email)>\n"
+    blue_line "$(git remote get-url origin) <$(git config user.name) $(git config user.email)>\n"
     git status .
     # git rev-parse --abbrev-ref HEAD
     echo
@@ -714,7 +757,7 @@ cde_show_git_was_here () {
 
 cde_bin_PATH () {
     local __doc__="""Adds .cd/../bin to PATH"""
-    local _bin_path=$(cd bin 2>/dev/null && pwd)
+    local _bin_path=$(quietly cd bin && pwd)
     [[ -d "$1" ]] && _bin_path="$1"
     [[ -d "$_bin_path" ]] || return 2
     [[ $PATH =~ "${_bin_path//\//.}" ]] && return 0

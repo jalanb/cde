@@ -2,7 +2,6 @@
 
 bumpversion
 ipython
-pprintpp
 pudb
 pytest-sugar
 requests
