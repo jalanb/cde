@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='cde',
-    version='0.7.35',
+    version='0.7.36',
     url='https://github.com/jalanb/cde',
     license='MIT License',
     author="jalanb",
