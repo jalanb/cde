@@ -6,3 +6,4 @@ pudb
 pytest-sugar
 requests
 sh
+httpie

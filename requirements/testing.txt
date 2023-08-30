@@ -3,7 +3,6 @@
 
 codecov
 coverage
-mock
 pytest
 pytest-cov
 requests_mock
