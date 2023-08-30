@@ -62,7 +62,6 @@ show_blue_line () {
     show_colour_line $LIGHT_BLUE "$*"
 }
 alias blue_line=show_blue_line
-alias show_cmnd=show_blue_line
 # xxxxxxxxxxxxxxx
 
 show_green_line () {

@@ -43,13 +43,13 @@ class TryAgain(ValueError):
 
 def trim(possibles):
     shortest_first = sorted(possibles)
-    previous = shortest_first[0]
-    result = [previous]
+    previous_ = shortest_first[0]
+    result = [previous_]
     for possible in shortest_first[1:]:
-        if possible in previous:
+        if possible in previous_:
             continue
         result.append(possible)
-        previous = possible
+        previous_ = possible
     return result
 
 
@@ -65,7 +65,7 @@ class FoundParent(ValueError):
         self.parent = parent
 
 
-def matching_sub_directories(path_to_dir_: str, pattern: str) -> List[paths.StringPath]:
+def matching_sub_directories(path_to_dir: str, pattern: str) -> List[paths.StringPath]:
     """A list of all sub-directories named with the given pattern
 
     If the pattern ends with "/" then look for an exact match only
@@ -73,7 +73,7 @@ def matching_sub_directories(path_to_dir_: str, pattern: str) -> List[paths.Stri
         If that gives one exact match, prefer that
     """
     pattern_glob = pattern.endswith("/") and pattern.rstrip("/") or f"*{pattern}*"
-    sub_directories = paths.list_sub_directories(path_to_dir_, pattern_glob)
+    sub_directories = paths.list_sub_directories(path_to_dir, pattern_glob)
 
     if len(sub_directories) < 2:
         return sub_directories
@@ -126,7 +126,7 @@ def first_integer(items):
 
 
 def possibles_under_directory(
-    path_to_dir_: paths.StringPath, sub_dirs: List[str]
+    cde_path: paths.StringPath, sub_dirs: List[str]
 ) -> PossiblePaths:
     """Look under the given directory for matching sub-directories
 
@@ -135,16 +135,16 @@ def possibles_under_directory(
         then use the directory
     """
     if not sub_dirs:
-        return PossiblePaths([path_to_dir_])
+        return PossiblePaths([cde_path])
     possibles = PossiblePaths()
     prefix, sub_dirs = sub_dirs[0], sub_dirs[1:]
-    paths_to_match = matching_sub_directories(path_to_dir_, prefix)
+    paths_to_match = matching_sub_directories(cde_path, prefix)
     if not paths_to_match:
         found = []
-        if paths.contains_file(path_to_dir_, f"{prefix}*"):
-            found = [path_to_dir_]
+        if paths.contains_file(cde_path, f"{prefix}*"):
+            found = [cde_path]
         else:
-            path_to_prefix = path_to_dir_ / prefix
+            path_to_prefix = cde_path / prefix
             if path_to_prefix.isdir():
                 found = [path_to_prefix]
         possibles.extend(found)
@@ -163,15 +163,15 @@ def possibles_under_directory(
     return possibles
 
 
-def find_under_directory(path_to_dir_: str, sub_dirs: List[str]):
-    """Find one directory under path_to_dir_, matching sub_dirs
+def find_under_directory(cde_path: str, sub_dirs: List[str]):
+    """Find one directory under cde_path, matching sub_dirs
 
     Try any prefixed sub-directories
         then any prefixed files
 
     Can give None (no matches), or the match, or an Exception
     """
-    possibles = possibles_under_directory(path_to_dir_, sub_dirs)
+    possibles = possibles_under_directory(cde_path, sub_dirs)
     return first_possible(possibles)
 
 
@@ -229,12 +229,12 @@ def find_in_environment_path(filename_):
     """
     if not filename_:
         return None
-    for path_to_dir_ in paths.environ_paths("PATH"):
-        if not path_to_dir_:
+    for cde_path in paths.environ_paths("PATH"):
+        if not cde_path:
             continue
-        path_to_file = path_to_dir_ / filename_
+        path_to_file = cde_path / filename_
         if path_to_file.isfile():
-            return path_to_dir_
+            return cde_path
     return None
 
 
@@ -296,7 +296,7 @@ def find_path_to_dir(dir_: str) -> paths.StringPath:
     def trailing_slash(p):
         return p[-1] == "/"
 
-    def find_path_to_dir_(dir_: str) -> paths.StringPath:
+    def find_cde_path(dir_: str) -> paths.StringPath:
         user_says_its_a_directory = trailing_slash(dir_)
         if user_says_its_a_directory:
             dir_ = dir_.rstrip("/")
@@ -330,7 +330,7 @@ def find_path_to_dir(dir_: str) -> paths.StringPath:
         return paths.path(None)
 
     try:
-        return find_path_to_dir_(dir_)
+        return find_cde_path(dir_)
     except FoundParent:
         return paths.path(None)
 
@@ -350,11 +350,11 @@ def find_directory(dir_: str, sub_dirs: List[str]):
         or a directory under $HOME
     Otherwise look for sub_dirs as a partial match
     """
-    path_to_dir_ = find_path_to_dir(dir_)
-    if path_to_dir_:
+    cde_path = find_path_to_dir(dir_)
+    if cde_path:
         if not sub_dirs:
-            return path_to_dir_
-        path_to_prefix = find_under_directory(path_to_dir_, sub_dirs)
+            return cde_path
+        path_to_prefix = find_under_directory(cde_path, sub_dirs)
         if path_to_prefix:
             return path_to_prefix
         path_to_history = find_in_history(dir_, sub_dirs)
@@ -362,37 +362,47 @@ def find_directory(dir_: str, sub_dirs: List[str]):
             return path_to_history
     else:
         args = ([dir_] if dir_ else []) + sub_dirs
-        path_to_dir_ = find_under_here(args)
-    if path_to_dir_:
-        return path_to_dir_
-    path_to_dir_ = find_in_history(dir_, sub_dirs)
-    if path_to_dir_:
-        return path_to_dir_
-    path_to_dir_ = find_in_environment_path(dir_)
-    if path_to_dir_:
-        return path_to_dir_
-    path_to_dir_ = find_at_home(dir_, sub_dirs)
-    if path_to_dir_:
-        return path_to_dir_
+        cde_path = find_under_here(args)
+    if cde_path:
+        return cde_path
+    cde_path = find_in_history(dir_, sub_dirs)
+    if cde_path:
+        return cde_path
+    cde_path = find_in_environment_path(dir_)
+    if cde_path:
+        return cde_path
+    cde_path = find_at_home(dir_, sub_dirs)
+    if cde_path:
+        return cde_path
     raise ToDo("could not use %r as a directory" % " ".join([dir_] + sub_dirs))
+
+
+def stdout(fred: str):
+    fred = fred if fred else ""
+    sys.stdout.write(f"{fred}\n")
+
+
+def stderr(fred: str):
+    fred = fred if fred else ""
+    sys.stderr.write(f"{fred}\n")
 
 
 def version(_args):
     """Show version of the script"""
-    print(f"{sys.argv[0]} {__version__}")
+    stdout(f"{sys.argv[0]} {__version__}")
     raise SystemExit(os.EX_OK)
 
 
 def filename(_args):
     """Show filename of the script"""
-    print(f"{__file__}".replace(".pyc", "py"))
+    stdout(f"{__file__}".replace(".pyc", "py"))
     raise SystemExit(os.EX_OK)
 
 
 def unused(args):
     used = ["-u", "--unused", args.dirname] + args.sub_dirs
     unused_args = [_ for _ in sys.argv[1:] if _ not in used]
-    print(" ".join(unused_args))
+    stdout(" ".join(unused_args))
     raise SystemExit(os.EX_OK)
 
 
@@ -416,7 +426,7 @@ def test(_args):
     failed, _ = testmod(optionflags=options)
     if failed:
         return
-    print("All tests passed")
+    stdout("All tests passed")
 
 
 def makedir(args):
@@ -439,7 +449,7 @@ def complete(_args=None):
     """Show all paths in history"""
     history_items = read_history()
     for _rank, path, _time in history_items:
-        print(path)
+        stdout(path)
     raise SystemExit(os.EX_OK)
 
 
@@ -448,14 +458,14 @@ def existing(_args=None):
     history_items = read_history()
     for _rank, path, _time in history_items:
         if os.path.exists(path):
-            print(path)
+            stdout(path)
     raise SystemExit(os.EX_OK)
 
 
 def lost(_args=None):
     lost_paths = [p for r, p, t in read_history() if not os.path.isdir(p)]
     for path in lost_paths:
-        print(path)
+        stdout(path)
     raise SystemExit(os.EX_OK)
 
 
@@ -469,7 +479,7 @@ def delete(args):
 def add(args):
     """Add the dirname in args to the history"""
     try:
-        path_to_dirname = paths.path(args["dirname"])
+        path_to_dirname = paths.path(args.dirnames)
         path = path_to_dirname.realpath()
         s = path.slashpath()
         add_path(s)
@@ -492,7 +502,7 @@ def run_args(args):
     return True
 
 
-def previous_directory():
+def previous():
     """Where we were (in bash) before this directory"""
     try:
         return os.environ["OLDPWD"]
@@ -508,7 +518,7 @@ def set_args_directory(args):
         if not args.old:
             return paths.home()
     if args.dirname == "-":
-        return previous_directory()
+        return previous()
     return args.dirname
 
 
@@ -610,6 +620,21 @@ def write_paths(paths_to_remember):
         writer.writerows(paths_to_remember)
 
 
+def quietly(_args=None):
+    global stderr
+    stderr = lambda x: ""
+
+
+def Quietly(_args=None):
+    global stdout
+    stdout = lambda x: ""
+
+
+def QUIETLY(_args=None):
+    """Bash readers like this one"""
+    Quietly
+    quietly
+
 def purge(_args=None):
     """Delete the given path from the history"""
     history_items = read_history()
@@ -629,19 +654,19 @@ def keep_existing_paths(history_items):
     return new_items, changed
 
 
-def rewrite_history_without_path(path_to_dir_):
+def rewrite_history_without_path(cde_path):
     """Delete the given path from the history"""
     history_items = read_history()
-    new_items, changed = exclude_path_from_items(history_items, path_to_dir_)
+    new_items, changed = exclude_path_from_items(history_items, cde_path)
     if changed:
         write_paths(new_items)
 
 
-def exclude_path_from_items(history_items, path_to_dir_):
+def exclude_path_from_items(history_items, cde_path):
     new_items = []
     changed = False
     for rank, path, time in history_items:
-        if path == path_to_dir_:
+        if path == cde_path:
             changed = True
         else:
             new_items.append((rank, path, time))
@@ -790,29 +815,29 @@ def _find_in_paths(
 
 def show_path_to_historical_dir(dir_: str, sub_dirs: List[str]):
     """Get a path for the given dir_ from history and show it"""
-    path_to_dir_ = find_in_history(dir_, sub_dirs)
-    return show_found_item(path_to_dir_)
+    cde_path = find_in_history(dir_, sub_dirs)
+    return show_found_item(cde_path)
 
 
 def delete_path_to_historical_dir(dir_: str, sub_dirs: List[str]):
     """Get a path for the given dir_ from history and remove it from history"""
-    path_to_dir_ = find_in_history(dir_, sub_dirs)
-    delete_found_item(path_to_dir_)
+    cde_path = find_in_history(dir_, sub_dirs)
+    delete_found_item(cde_path)
 
 
-def show_found_item(path_to_dir_) -> bool:
+def show_found_item(cde_path) -> bool:
     """Show the path to the user, and the history"""
-    if not path_to_dir_:
+    if not cde_path:
         return False
-    add_path(path_to_dir_)
-    print(str(path_to_dir_))
+    add_path(cde_path)
+    stdout(str(cde_path))
     return True
 
 
-def delete_found_item(path_to_dir_):
+def delete_found_item(cde_path):
     """Delete the path from the history"""
-    if path_to_dir_:
-        rewrite_history_without_path(path_to_dir_)
+    if cde_path:
+        rewrite_history_without_path(cde_path)
 
 
 def cd(string: str) -> None:
@@ -825,8 +850,8 @@ def cde(dir_: str, sub_dirs: List[str]):
     >>> _ = cde('/', ['us', 'lo'])
     /usr/local
     """
-    path_to_dir_ = find_directory(dir_, sub_dirs)
-    return show_found_item(path_to_dir_)
+    cde_path = find_directory(dir_, sub_dirs)
+    return show_found_item(cde_path)
 
 
 def show_paths():
@@ -834,6 +859,37 @@ def show_paths():
     old_rank = None
     for order, (rank, p, atime) in enumerate(frecent_history()):
         if old_rank != rank:
-            print("      %s time%s:" % (rank, int(rank) > 1 and "s" or ""))
+            stdout("      %s time%s:" % (rank, int(rank) > 1 and "s" or ""))
             old_rank = rank
-        print("%3d: %s, %s ago" % (order + 1, p, timings.time_since(atime)))
+        stdout("%3d: %s, %s ago" % (order + 1, p, timings.time_since(atime)))
+
+
+def previous():
+    return cde.previous()
+
+
+def args_directory(args):
+    breakpoint()
+    dirname, dirnames = args.dirnames
+    if dirname:
+        return previous() if dirname == "-" else dirname
+    if args.add:
+        return "."
+    if not args.old:
+        return paths.home()
+    return args.dirnames
+
+
+
+def valued_args(args, valuer: Callable):
+    cde = vars(valued_args)
+    breakpoint()
+    if not args:
+        return False
+    args_ = args.get_args()
+    result = {k for k, v in args_.items() if v}
+    cde_args = {getattr(cde, _, None) for _ in dir(cde) if _ in result}
+    cde_methods = {a for a in cde_args if callable(a)}
+    return cde_methods
+    for method in cde_methods:
+        method(args)
