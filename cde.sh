@@ -446,6 +446,33 @@ dot_cd () {
     [[ -f $cd_sh_ ]] && bash $cd_sh_
 }
 
+say_path () {
+    local path_=$PWD
+    [[ $path_ == "$HOME" ]] && path_=HOME
+    [[ $path_ =~ "wwts" ]] && path_="${path_/wwts/dub dub t s}"
+    [[ $path_ ]] || return 1
+    local said_=$(python << EOP
+import os, sys
+path=os.path.expanduser(os.path.expandvars('$path_'))
+home='%s/' % os.path.expanduser('~')
+if path.startswith(home):
+    out=path.replace(home, 'home ')
+elif path[0] == '/':
+    out='root %s' % path[1:]
+else:
+    out=path
+replacements = (
+    ('/wwts', '/dub dub t s'),
+)
+for old, new in replacements:
+    out = out.replace(old, new)
+sys.stdout.write(out.replace('/', ' '))
+EOP
+)
+    is_type sai && sai "$said_"
+}
+
+
 post_cdpy () {
     [[ $1 =~ -q ]] && shift || say_path $path_
     new_dot
