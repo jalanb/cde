@@ -11,6 +11,7 @@ setup(
     author="jalanb",
     author_email='github@al-got-rhythm.net',
     description='cde extends cd',
+    packages=['cde'],
     platforms='Unix',
     classifiers=[
         'Programming Language :: Python :: 3.7',
