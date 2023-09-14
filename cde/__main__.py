@@ -4,37 +4,38 @@ import bdb
 
 from pysyte.types import lists
 from pysyte.types import paths
+from pysyte.cli import arguments
 from pysyte.cli.main import run
 
 from cde import cde
 
 
-def add_args(parser):
-    """Get the arguments from the command line.
+def add_args(parser: arguments.ArgumentsParser):
+    """Set the arguments, options for the command line.
 
     Insist on at least one empty string"""
     parser.positionals("dirnames", default=".", help="fuzzy directory names")
 
-    parser.option("0", "first", help="Only show first path")
-    parser.option("1", "second", help="Only show second path")
-    parser.option("2", "third", help="Only show third path")
+    parser.opt("0", "first", help="Only show first path")
+    parser.opt("1", "second", help="Only show second path")
+    parser.opt("2", "third", help="Only show third path")
 
     # From here argument names correspend to methods in the cde module
-    parser.option("a", "add", help="add a path to history")
-    parser.option("c", "complete", help="show all paths in history")
-    parser.option("d", "delete", help="delete a path from history")
-    parser.option("e", "existing", help="show all real paths in history")
-    parser.option("f", "filename", help="show filename of the script")
-    parser.option("l", "lost", help="show all unreal paths in history")
-    parser.option("m", "makedir", help="Ensure the given directory exists")
-    parser.option("o", "old", help="look for paths in history")
-    parser.option("p", "purge", help="remove all non-existent paths from history")
-    parser.option("q", "quietly", help="do not write to stderr")
-#   parser.option(" ", "Quietly", help="do not write to stdout")
-    parser.option("Q", "QUIETLY", help="do not write to stdout, nor stderr")
-    parser.option("t", "test", help="test the script")
-    parser.option("u", "unused", help="show unused args")
-    parser.option("v", "version", help="show version of the script")
+    parser.opt("a", "add", help="add a path to history")
+    parser.opt("c", "complete", help="show all paths in history")
+    parser.opt("d", "delete", help="delete a path from history")
+    parser.opt("e", "existing", help="show all real paths in history")
+    parser.opt("f", "filename", help="show filename of the script")
+    parser.opt("l", "lost", help="show all unreal paths in history")
+    parser.opt("m", "makedir", help="Ensure the given directory exists")
+    parser.opt("o", "old", help="look for paths in history")
+    parser.opt("p", "purge", help="remove all non-existent paths from history")
+    parser.opt("q", "quietly", help="do not write to stderr")
+    #   parser.opt(" ", "Quietly", help="do not write to stdout")
+    parser.opt("Q", "QUIETLY", help="do not write to stdout, nor stderr")
+    parser.opt("t", "test", help="test the script")
+    parser.opt("u", "unused", help="show unused args")
+    parser.opt("v", "version", help="show version of the script")
     return parser
 
 
