@@ -635,6 +635,7 @@ def QUIETLY(_args=None):
     Quietly
     quietly
 
+
 def purge(_args=None):
     """Delete the given path from the history"""
     history_items = read_history()
@@ -878,7 +879,6 @@ def args_directory(args):
     if not args.old:
         return paths.home()
     return args.dirnames
-
 
 
 def valued_args(args, valuer: Callable):

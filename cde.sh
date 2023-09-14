@@ -87,7 +87,7 @@ cde () {
 # So, to debug:
 #     1. Show any bash debugging tips
 #     2. Ignore all the checks
-#     3. Change the interpreter for cde from `python3` to `pudb3`
+#     3. Change the interpreter for cde from `python3` to `pudb`
 #
 gde () {
     local __doc__="Run cde in pudb"
@@ -98,7 +98,10 @@ gde () {
 }
 
 cdg () {
-    [[ -z "$1" ]] && qt whyp && whyp cdg && return $?
+    if [[ -z "$1" ]]; then
+        qt whyp && whyp cdg 
+        return $?
+    fi
     (set -x
         local __doc__="""debug cde"""
         [[ $1 =~ -h ]] && cde_help >&2 && return 1

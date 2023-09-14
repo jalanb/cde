@@ -51,7 +51,7 @@ def run_args(args, dirnames_):
 
 
 def dirnames(names):
-    result = {'~': paths.home()}
+    result = {"~": paths.home()}
     for dirname in names:
         if dirname == "-":
             dirname = previous()
@@ -113,10 +113,4 @@ def main(args):
         return False
 
 
-run(
-    main,
-    add_args,
-    post_parse,
-    usage="%(prog)s [dirname [subdirname ...]"
-)
-
+run(main, add_args, post_parse, usage="%(prog)s [dirname [subdirname ...]")
