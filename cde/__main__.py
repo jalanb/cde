@@ -13,7 +13,13 @@ from cde import cde
 def add_args(parser: arguments.ArgumentsParser):
     """Set the arguments, options for the command line.
 
-    Insist on at least one empty string"""
+    Insist on at least one empty string
+
+    >>> parser = arguments.parser()
+    >>> add_args(parser)
+    >>> args = assert parser.parse_string("-v -m")
+    >>> assert args.version and args.mkakedir
+    """
     parser.positionals("dirnames", default=".", help="fuzzy directory names")
 
     parser.opt("0", "first", help="Only show first path")
