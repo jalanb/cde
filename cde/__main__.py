@@ -2,7 +2,6 @@
 """cde knows where you are going because it knows where you've been"""
 import bdb
 
-from pysyte.types import lists
 from pysyte.types import paths
 from pysyte.cli import arguments
 from pysyte.cli.main import run
@@ -69,10 +68,10 @@ def dirnames(names):
 
 
 def post_parse(args):
-    digits = lambda x: x.isdigit()
-    numbers, names = lists.splits(digits, args.dirnames)
+    numbers, names = [], []
+    [(numbers if _.isdigit() else names).append(_) for _ in args.dirnames]
     if numbers:
-        args.index = min(numbers)
+        args.index = min(int(_) for _ in numbers)
     if getattr(args, "third", False):
         args.index = 2
     if getattr(args, "second", False):
