@@ -112,10 +112,10 @@ def main(args):
                 return True
             except IndexError:
                 pass
-        cde.stderr("Try again:", e)
+        cde.stderr(f"Try again: {e}")
         return False
     except cde.ToDo as e:
-        cde.stderr("Error:", e)
+        cde.stderr(f"Error: {e}")
         return False
 
 

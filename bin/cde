@@ -8,33 +8,6 @@ from pysyte.types import paths
 from cde import cde
 
 
-def add_args(parser):
-    """Get the arguments from the command line.
-
-    Insist on at least one empty string"""
-    parser.boolean("0", "first", help="Only show first path")
-    parser.boolean("1", "second", help="Only show second path")
-    parser.boolean("2", "third", help="Only show third path")
-    parser.optional(
-        "dirname", metavar="item", default="", help="(partial) directory name"
-    )
-    parser.positional("subdirnames", help="(partial) sub directory names")
-    # From here argument names correspend to methods above
-    parser.boolean("a", "add", help="add a path to history")
-    parser.boolean("c", "complete", help="show all paths in history")
-    parser.boolean("d", "delete", help="delete a path from history")
-    parser.boolean("e", "existing", help="show all real paths in history")
-    parser.boolean("f", "filename", help="show filename of the script")
-    parser.boolean("l", "lost", help="show all unreal paths in history")
-    parser.boolean("m", "makedir", help="Ensure the given directory exists")
-    parser.boolean("o", "old", help="look for paths in history")
-    parser.boolean("p", "purge", help="remove all non-existent paths from history")
-    parser.boolean("t", "test", help="test the script")
-    parser.boolean("u", "unused", help="show unused args")
-    parser.boolean("v", "version", help="show version of the script")
-    return parser
-
-
 def run_args(args):
     """Run any methods in cde module that are eponymous with args"""
     if not args:

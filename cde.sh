@@ -22,7 +22,7 @@ then
     exit 1
 fi
 
-export CDE_SOURCE=$(readlink -f "$BASH_SOURCE")  # .../cde.sh
+export CDE_SOURCE=$(rlf "$BASH_SOURCE")  # .../cde.sh
 export CDE_NAME=$(basename "$CDE_SOURCE")  # cde.sh
 export CDE_DIR=$(dirname "$CDE_SOURCE")  # /.../
 
@@ -89,26 +89,18 @@ cde () {
 #     2. Ignore all the checks
 #     3. Change the interpreter for cde from `python3` to `pudb`
 #
-gde () {
-    local __doc__="Run cde in pudb"
-    (
-        set -x;
-        run_cde pudb "$@"
-    )
-}
-
 cdg () {
     if [[ -z "$1" ]]; then
-        qt whyp && whyp cdg 
+        qt whyp && whyp cdg
         return $?
     fi
     (set -x
         local __doc__="""debug cde"""
         [[ $1 =~ -h ]] && cde_help >&2 && return 1
         [[ $1 =~ -q ]] && echo 👿 >&2 && shift
-        [[ $1 =~ ^[.]$ ]] && cdu $(readlink -f .)
+        [[ $1 =~ ^[.]$ ]] && cdu $(rlf .)
         pre_cdpy
-        cdpu "$@" || echo "Fail" >&2
+        pudb_cde "$@"
         # [[ -d . ]] && post_cdpy || echo ". is not a dir! 😳" >&2
     )
 }
@@ -120,8 +112,9 @@ cdl () {
     shift
     local ls_options_="$@"
     [[ $ls_options_ ]] || ls_options_=" -a "
-    cde $dir_
-    ls --color $_ls_options
+    # cde $dir_
+    cdr $dir_
+    ls --color $_ls_options "$@"
 }
 
 cdq () {
@@ -130,19 +123,8 @@ cdq () {
 
 cdr () {
     cde "$@"
-    show_green_line $(readlink -f .)
-}
-
-cdu () {
-    (set -x
-        local __doc__="""debug cde"""
-        [[ $1 =~ -h ]] && cde_help >&2 && return 1
-        [[ $1 =~ -q ]] && echo 👿 >&2 && shift
-        [[ $1 =~ ^[.]$ ]] && cdu $(readlink -f .)
-        pre_cdpy
-        cdpu "$@" || echo "Fail" >&2
-        # [[ -d . ]] && post_cdpy || echo ". is not a dir! 😳" >&2 
-    )
+    [[ -d . ]] || return 1
+    show_green_line $(rlf .)
 }
 
 cdv () {
@@ -217,7 +199,7 @@ cdpy () {
     [[ $cde_output_ ]] || return $?
     python_cde --add $cde_output_
     same_path . "$cde_output_" && return 0
-    local cde_directory_="$cde_output_" readlink_directory_=$(readlink -f $cde_output_)
+    local cde_directory_="$cde_output_" readlink_directory_=$(rlf $cde_output_)
     same_path . "$readlink_directory_" && return 0
     local cdpy_output_="cd $cde_output_"
     [[ "$cde_directory_" != "$readlink_directory_" ]] && cdpy_output_="cd ($cde_directory_ ->) $readlink_directory_"
@@ -229,7 +211,7 @@ cdpy () {
 cdrl () {
     cdq "$@" || return 1
     green_line $(rlf)
-    lo 
+    lo
 }
 
 cdrr () {
@@ -246,20 +228,20 @@ cdup () {
         level_=$1
         shift
     fi
-    local dir_=$(readlink -f ..)
+    local dir_=$(rlf ..)
     pushd >/dev/null 2>&1
     while true; do
         level_=$(( $level_ - 1 ))
         [[ $level_ -le 0 ]] && break
         cd ..
-        dir_=$(readlink -f .)
+        dir_=$(rlf .)
     done
     popd >/dev/null 2>&1
     cde $dir_ "$@"
 }
 
 here () {
-    readlink -f .
+    rlf .
 }
 
 popq () {
@@ -308,6 +290,7 @@ q_echo () {
 # xxxxxxx
 
 is_type () {
+    [[ $1 ]] || return 1
     QUIETLY type "$@"
 }
 
@@ -336,7 +319,7 @@ vim_cde () {
 _active () {
     local __doc__="""Whether the $ACTIVATE script is in same dir as current python or virtualenv"""
     local activate_dir_=$(_dirnames $ACTIVATE)
-    local python_dir_=$(_dirnames $(readlink -f $(command -v python)))
+    local python_dir_=$(_dirnames $(rlf $(command -v python)))
     same_path $activate_dir_ $python_dir_ && return 0
     local venv_bin_="$VIRTUAL_ENV/bin"
     same_path $activate_dir_ $venv_bin_
@@ -384,6 +367,11 @@ headline () {
     [[ $1 ]] && head -n 1 "$1" || cat | head -n 1
 }
 
+show_fail () {
+    show_red_line "Fail"  >&2
+    return 1
+}
+
 is_command () {
     qt "$1"
 }
@@ -397,21 +385,16 @@ pudb_cde () {
     local __doc__="""Debug the cde program"""
     local debugger_=$(venv_app pudb)
     [[ $debugger_ ]] || debugger_=$(venv_app pudb3)
-    [[ -e $debugger_ ]] || return 1
-    run_cde $debugger_ "$@"
+    [[ $debugger_ ]] || return 1
+    [[ -e $debugger_ ]] || return 2
+    run_cde $(basename "$debugger_") "$@" || show_fail
 }
 
 # xxxxxxxxx
 
 echo_dir () {
-    if [[ -d "$1" ]]; then
-        echo $1
-    elif [[ -f "$1" ]]; then
-        rld "$1"
-    else
-        return 1
-    fi
-    return 0
+    [[ -e $1 ]] || return 1
+    [[ -d "$1" ]] && echo $1 || rld "$1"
 }
 
 echo_dirs () {
@@ -435,7 +418,7 @@ new_dot () {
 
     echo "#! /usr/bin/env bash" > .cd.sh
     echo "" >> .cd.sh
-    echo "readlink -f ." >> .cd.sh
+    echo $(rlf .) >> .cd.sh
 }
 
 dot_cd () {
@@ -489,17 +472,7 @@ quiet_out () {
 same_path () {
     [[ $1 ]] && [[ ! $2 ]] && return 1
     [[ ! $1 ]] && [[ $2 ]] && return 2
-    [[ $(readlink -f "$1") == $(readlink -f "$2") ]]
-}
-
-cde_bash () {
-    show_command "$@"
-    local cde_="$CDE_DIR" cde_out_="$cde_/std.out" cde_err_=$cde_/std.err
-    local result_=0
-    "$@" > $cde_out 2> $cde_err && result_=$?
-    show_pass $(cat $cde_out)
-    show_fail $(cat $cde_err)
-    return $result_
+    [[ $(rlf "$1") == $(rlf "$2") ]]
 }
 
 # xxxxxxxxxx
@@ -521,12 +494,10 @@ _dirnames () {
 }
 
 cde_dot_venv () {
-    local active_venv_="$VIRTUAL_ENV"
-    local active_bin_="$active_venv_/bin"
     cde_activate_here && return 0
     local venvs_=$HOME/.virtualenvs
     [[ -d $venvs_ ]] || return 0
-    local here_=$(readlink -f $(pwd))
+    local here_=$(rlf $(pwd))
     local name_="not_a_name"
     [[ -e $here_ ]] && name_=$(basename $here_)
     [[ $name_ == "not_a_name" ]] && return 1
@@ -544,32 +515,20 @@ cde_dot_venv () {
     return 0
 }
 
-find_cde_python () {
-    [[ $1 ]] || return 1
-    venv_or_which "$1"
-    shift
-    local python_path_="$cde_root_" command_="\"$python_\" \"$CDE_PYTHON\" $@"
-    [[ $PYTHONPATH ]] && python_path_="$CDE_DIR:$PYTHONPATH"
-}
-
 run_cde () {
     local __doc__="""Run the cde script, setting PYTHONPATH"""
-    local runner_=$(find_cde_python "$1") || return 1
+    local app_=$(venv_or_which "$1") || return 1
     shift
-    [[ $runner_ ]] || return 1
-    local python_="$runner_"
-    [[ -e $python_ ]] || python_="$(venv_or_which "$runner_")"
-    is_type $python_ || return 1
-    local cde_root_="$CDE_DIR"
-    local python_path_="$cde_root_" command_="\"$python_\" \"$CDE_PYTHON\" $@"
-    [[ $PYTHONPATH ]] && python_path_="$CDE_DIR:$PYTHONPATH"
-    if [[ $python_ =~ venv[/] ]]; then
+    local command_="$app_ -m cde"
+    local python_path_="$CDE_DIR"
+    [[ $PYTHONPATH ]] && python_path_="$python_path_:$PYTHONPATH"
+    if [[ $app_ =~ venv[/] ]]; then
         (
-        source "$(dirname $python_)/activate"
-        PYTHONPATH="$python_path_" "$python_" -m cde "$@"
+        source "$(dirname $app_)/activate"
+        PYTHONPATH="$python_path_" "$app_" -m cde "$@"
         )
     else
-        PYTHONPATH="$python_path_" "$python_" -m cde "$@"
+        PYTHONPATH="$python_path_" "$app_" -m cde "$@"
     fi
 }
 
@@ -606,7 +565,7 @@ cde_template () {
 
 cde_dot_python () {
     any_python_scripts_here || return 0
-    local dir_=$(readlink -f .)
+    local dir_=$(rlf .)
     local dir_name_=$(basename $dir_)
     python_project_here $dir_name_ || return 0
     prune_python_here
@@ -634,6 +593,10 @@ git_template () {
 
 # xxxxxxxxxxxxx
 
+venv_app () {
+    quietly ls "${CDE_DIR}/.venv/bin/$1"
+}
+
 venv_or_which () {
     local __doc__="""find an executable in cde's virtualenv, or which, or which with our PATH"""
     [[ "$1" ]] || return 1
@@ -641,7 +604,7 @@ venv_or_which () {
     local app_="${CDE_DIR}/.venv/bin/$name_"
     [[ -x "$app_" ]] || app_=$(quietly which $name_)
     [[ -x "$app_" ]] || app_=$(PATH=~/bin:/usr/local/bin:/bin:/usr/bin quietly which $name_)
-    [[ -e "$app_" ]] || return 1
+    is_type $app_ || return 1
     echo $app_
     return 0
 }
@@ -777,6 +740,7 @@ cde_find_activate_script () {
     local python_roots_=  activate_=
     if [[ -f "$1" && $(basename "$1") == "activate" ]]; then
         activate_="$1"
+        shift
     else
         [[ "$@" ]] && python_roots_=$(echo_venv_directory_from "$@" )
         [[ $python_roots_ ]] || python_roots_="$(pwd) $(venv_dirs_here) $(project_venv_dirs)"
@@ -787,6 +751,7 @@ cde_find_activate_script () {
     # [[ -f $activate_ ]] || return 1
     ACTIVATE="$(rlf $activate_)"
     export ACTIVATE
+    test -f $ACTIVATE
 }
 
 #
@@ -807,7 +772,7 @@ cde_activate_venv () {
 }
 
 cde_activate_here () {
-    cde_find_activate_script || return 1
+    cde_find_activate_script . || return 1
     _active && cde_deactivate
     _activate
 }
