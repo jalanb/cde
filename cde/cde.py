@@ -479,10 +479,11 @@ def delete(args):
 def add(args):
     """Add the dirname in args to the history"""
     try:
-        path_to_dirname = paths.path(args.dirnames)
-        path = path_to_dirname.realpath()
-        s = path.slashpath()
-        add_path(s)
+        for dirname in args.dirnames:
+            path_to_dirname = paths.path(dirname)
+            path = path_to_dirname.realpath()
+            s = path.slashpath()
+            add_path(s)
         error = 0
     except OSError as e:
         error = str(e)
