@@ -477,7 +477,7 @@ def delete(args):
 
 
 def add(args):
-    """Add the dirname in args to the history"""
+    """Add the dirnames in args to the history"""
     try:
         for dirname in args.dirnames:
             path_to_dirname = paths.path(dirname)
@@ -766,6 +766,7 @@ def _find_in_paths(
 
     paths are assumed to be ordered, so first matching path wins
     """
+    # breakpoint()
     possibles = UniquePaths([])
     matched = frecently_matched(dir_, frecent_paths)
     i = take_first_integer(sub_dirs)
