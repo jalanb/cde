@@ -22,11 +22,9 @@ then
     exit 1
 fi
 
-export CDE_SOURCE=$(rlf "$BASH_SOURCE")  # .../cde.sh
+export CDE_SOURCE=$(readlink -f "$BASH_SOURCE")  # .../cde.sh
 export CDE_NAME=$(basename "$CDE_SOURCE")  # cde.sh
 export CDE_DIR=$(dirname "$CDE_SOURCE")  # /.../
-
-
 
 # x
 # xx
@@ -35,6 +33,10 @@ export CDE_DIR=$(dirname "$CDE_SOURCE")  # /.../
     local destination_=$HOME
     local top_level_=$(quietly git rev-parse --show-toplevel)
     [[ $top_level_ ]] && destination_=$top_level_
+}
+
+.c () {
+    source "$CDE_SOURCE"
 }
 
 
@@ -69,7 +71,7 @@ cde () {
     [[ $1 =~ -a ]] && python_cde "$@" && return 0
     [[ $1 =~ -q ]] && quietly_=-q && shift
     if [[ $1 =~ ^[.]$ ]]; then
-        cde $(here);
+        cdd
         return $?
     fi
     pre_cdpy $quietly_
@@ -98,11 +100,19 @@ cdg () {
         local __doc__="""debug cde"""
         [[ $1 =~ -h ]] && cde_help >&2 && return 1
         [[ $1 =~ -q ]] && echo 👿 >&2 && shift
-        [[ $1 =~ ^[.]$ ]] && cdu $(rlf .)
+        [[ $1 =~ ^[.]$ ]] && cdd
         pre_cdpy
         pudb_cde "$@"
         # [[ -d . ]] && post_cdpy || echo ". is not a dir! 😳" >&2
     )
+}
+
+
+cdgg () {
+    # KISS
+    PYTHONPATH=/opt/clones/github/jalanb/cds/cde:/opt/clones/github/jalanb/bashrcs/jab/src/python/site \
+         /opt/clones/github/jalanb/cds/cde/.venv/bin/pudb -m cde \
+         "$@"
 }
 
 cdl () {
@@ -122,9 +132,10 @@ cdq () {
 }
 
 cdr () {
-    cde "$@"
+    cdq "$@"
     [[ -d . ]] || return 1
-    show_green_line $(rlf .)
+    green_line $(here)
+    return 0
 }
 
 cdv () {
@@ -209,14 +220,12 @@ cdpy () {
 }
 
 cdrl () {
-    cdq "$@" || return 1
-    green_line $(rlf)
+    cdr "$@" || return 1
     lo
 }
 
 cdrr () {
-    cdq "$@" || return 1
-    green_line $(rlf .)
+    cdr "$@" || return 1
     llr
 }
 
@@ -234,7 +243,7 @@ cdup () {
         level_=$(( $level_ - 1 ))
         [[ $level_ -le 0 ]] && break
         cd ..
-        dir_=$(rlf .)
+        dir_=$(here)
     done
     popd >/dev/null 2>&1
     cde $dir_ "$@"
@@ -367,11 +376,6 @@ headline () {
     [[ $1 ]] && head -n 1 "$1" || cat | head -n 1
 }
 
-show_fail () {
-    show_red_line "Fail"  >&2
-    return 1
-}
-
 is_command () {
     qt "$1"
 }
@@ -387,7 +391,7 @@ pudb_cde () {
     [[ $debugger_ ]] || debugger_=$(venv_app pudb3)
     [[ $debugger_ ]] || return 1
     [[ -e $debugger_ ]] || return 2
-    run_cde $(basename "$debugger_") "$@" || show_fail
+    run_cde $(basename "$debugger_") "$@" || echo "Failed to run $debugger_" >&2
 }
 
 # xxxxxxxxx
@@ -418,7 +422,7 @@ new_dot () {
 
     echo "#! /usr/bin/env bash" > .cd.sh
     echo "" >> .cd.sh
-    echo $(rlf .) >> .cd.sh
+    echo $(here) >> .cd.sh
 }
 
 dot_cd () {
@@ -539,8 +543,8 @@ python_cde () {
 
 cde_dot_clean () {
     for path in $(find . -type f -name '*.sw*'); do
-        ls -l $path 2> ~/bash/fd/2
-        rm -f $path && continue
+        quietly ls -l $path
+        quietly rm -f $path && continue
         [[ $? == 0 ]] || break
     done
 }
@@ -564,19 +568,17 @@ cde_template () {
 # xxxxxxxxxxxx
 
 cde_dot_python () {
-    any_python_scripts_here || return 0
-    local dir_=$(rlf .)
+    local result_=1
+    [[ -f .venv/bin/activate ]] && result_=0
+    any_python_scripts_here || return $result_
+    local dir_=$(here)
     local dir_name_=$(basename $dir_)
-    python_project_here $dir_name_ || return 0
+    python_project_here $dir_name_ || return $result_
     prune_python_here
     cde_activate_here
     local egg_info=${dir_name_}.egg-info
-    if [[ -d $egg_info ]]; then
-        (set -x;
-        echo  $egg_info
-        ri $egg_info)
-    fi
-    return 0
+    [[ -d $egg_info ]] && rm -rf $egg_info
+    return $result_
 }
 
 bin_template () {
@@ -679,7 +681,7 @@ project_venv_dirs () {
 }
 
 prune_python_here () {
-    local here_=$(rlf .)
+    local here_=$(here)
     local home_=$(rlf $HOME)
     [[ ${here_:0:${#home_}} == $home_ ]] || return 1
     [[ ${#here_} == ${#home_} ]] && return 1
@@ -763,10 +765,21 @@ cde_dot_activate () {
 }
 
 cde_activate_venv () {
-    local bin_=.venv/bin
-    [[ -d $bin_ ]] || return 1
     cde_deactivate
-    [[ -e bin ]] || ln -s .venv/bin bin
+    local bin_=.venv/bin
+    if [[ ! -d $bin_ ]]; then
+        if [[ -d "$1" ]]; then
+            if [[ $(basename "$1") == "bin" ]]; then
+                bin_="$1"
+            elif [[ -d "$1/bin" ]]; then
+                bin_="$1/bin"
+            else
+                return 1
+            fi
+        else
+            return 1
+        fi
+    fi
     . $bin_/activate
     $bin_/python -V
 }

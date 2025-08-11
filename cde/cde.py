@@ -477,12 +477,13 @@ def delete(args):
 
 
 def add(args):
-    """Add the dirname in args to the history"""
+    """Add the dirnames in args to the history"""
     try:
-        path_to_dirname = paths.path(args.dirnames)
-        path = path_to_dirname.realpath()
-        s = path.slashpath()
-        add_path(s)
+        for dirname in args.dirnames:
+            path_to_dirname = paths.path(dirname)
+            path = path_to_dirname.realpath()
+            s = path.slashpath()
+            add_path(s)
         error = 0
     except OSError as e:
         error = str(e)
@@ -765,6 +766,7 @@ def _find_in_paths(
 
     paths are assumed to be ordered, so first matching path wins
     """
+    # breakpoint()
     possibles = UniquePaths([])
     matched = frecently_matched(dir_, frecent_paths)
     i = take_first_integer(sub_dirs)
