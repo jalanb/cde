@@ -264,7 +264,7 @@ pusq () {
 pycd () {
     # Adapted from https://news.ycombinator.com/item?id=18898898
     local __doc__="""cde to directory of a iven Python module"""
-    cde $(python -c "import os.path, $1; print(os.path.dirname($1.__file__))");
+    cde $($(python_) -c "import os.path, $1; print(os.path.dirname($1.__file__))");
 }
 
 alias ....="cdup 3"
@@ -305,6 +305,10 @@ is_type () {
 
 whichly () {
     quietly which "$@"
+}
+
+python_ () {
+    which python || which python3
 }
 
 quietly () {
@@ -441,7 +445,7 @@ say_path () {
     [[ $path_ == "$HOME" ]] && path_=HOME
     [[ $path_ =~ "wwts" ]] && path_="${path_/wwts/dub dub t s}"
     [[ $path_ ]] || return 1
-    local said_=$(python << EOP
+    local said_=$($(python_) << EOP
 import os, sys
 path=os.path.expanduser(os.path.expandvars('$path_'))
 home='%s/' % os.path.expanduser('~')
@@ -465,7 +469,7 @@ EOP
 
 post_cdpy () {
     [[ $1 =~ -q ]] && shift || say_path $path_
-    new_dot
+#   new_dot
     dot_cd
 }
 
@@ -662,7 +666,7 @@ cat_cde_templates () {
     local _template_dir="$CDE_DIR/templates"
     cat $(cde_template "$_template_dir")
     local _template=
-    for method in bin git python ; do
+    for method in bin git $(python_) ; do
         template_=$(${method}template_ "$template_dir_")
         [[ $template_ ]] || continue
         local cat_=cat
@@ -838,3 +842,10 @@ cde_PYTHONPATH () {
 cde_clean_eggs () {
     rm -rf *.egg-info
 }
+
+# And that's nearly complete now
+
+_cde_complete() {
+    COMPREPLY=($(compgen -d -- "${COMP_WORDS[1]}"))
+}
+complete -F _cde_complete cde
